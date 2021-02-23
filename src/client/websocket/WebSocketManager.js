@@ -135,7 +135,7 @@ class WebSocketManager extends EventEmitter {
       url: gatewayURL,
       shards: recommendedShards,
       session_start_limit: sessionStartLimit,
-    } = await this.client.api.gateway.bot.get().catch(error => {
+    } = await this.client.skip.api.gateway.bot.get().catch(error => {
       throw error.httpStatus === 401 ? invalidToken : error;
     });
 
@@ -344,7 +344,7 @@ class WebSocketManager extends EventEmitter {
    */
   async _handleSessionLimit(remaining, resetAfter) {
     if (typeof remaining === 'undefined' && typeof resetAfter === 'undefined') {
-      const { session_start_limit } = await this.client.api.gateway.bot.get();
+      const { session_start_limit } = await this.client.skip.api.gateway.bot.get();
       this.sessionStartLimit = session_start_limit;
       remaining = session_start_limit.remaining;
       resetAfter = session_start_limit.reset_after;
