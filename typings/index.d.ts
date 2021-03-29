@@ -293,6 +293,7 @@ declare module 'discord.js' {
     public readonly client: Client;
     public collected: Collection<K, V>;
     public ended: boolean;
+    public abstract endReason: string | null;
     public filter: CollectorFilter;
     public readonly next: Promise<V>;
     public options: CollectorOptions;
@@ -307,7 +308,6 @@ declare module 'discord.js' {
     protected listener: (...args: any[]) => void;
     public abstract collect(...args: any[]): K;
     public abstract dispose(...args: any[]): K;
-    public abstract endReason(): void;
 
     public on(event: 'collect' | 'dispose', listener: (...args: any[]) => void): this;
     public on(event: 'end', listener: (collected: Collection<K, V>, reason: string) => void): this;
@@ -1046,12 +1046,12 @@ declare module 'discord.js' {
     private _handleGuildDeletion(guild: Guild): void;
 
     public channel: Channel;
+    public readonly endReason: string | null;
     public options: MessageCollectorOptions;
     public received: number;
 
     public collect(message: Message): Snowflake;
     public dispose(message: Message): Snowflake;
-    public endReason(): string;
   }
 
   export class MessageEmbed {
@@ -1144,7 +1144,7 @@ declare module 'discord.js' {
     public count: number | null;
     public readonly emoji: GuildEmoji | ReactionEmoji;
     public me: boolean;
-    public message: Message;
+    public message: Message | PartialMessage;
     public readonly partial: boolean;
     public users: ReactionUserManager;
     public remove(): Promise<MessageReaction>;
@@ -1186,7 +1186,7 @@ declare module 'discord.js' {
     public delete(reason?: string): Promise<PermissionOverwrites>;
     public toJSON(): object;
     public static resolveOverwriteOptions(
-      options: ResolvedOverwriteOptions,
+      options: PermissionOverwriteOption,
       initialPermissions: { allow?: PermissionResolvable; deny?: PermissionResolvable },
     ): ResolvedOverwriteOptions;
     public static resolve(overwrite: OverwriteResolvable, guild: Guild): RawOverwriteData;
@@ -1223,6 +1223,7 @@ declare module 'discord.js' {
     private _handleGuildDeletion(guild: Guild): void;
     private _handleMessageDeletion(message: Message): void;
 
+    public readonly endReason: string | null;
     public message: Message;
     public options: ReactionCollectorOptions;
     public total: number;
@@ -1233,7 +1234,6 @@ declare module 'discord.js' {
     public collect(reaction: MessageReaction): Snowflake | string;
     public dispose(reaction: MessageReaction, user: User): Snowflake | string;
     public empty(): void;
-    public endReason(): string | null;
 
     public on(event: 'collect' | 'dispose' | 'remove', listener: (reaction: MessageReaction, user: User) => void): this;
     public on(
@@ -1772,7 +1772,6 @@ declare module 'discord.js' {
     private packetQueue: object[];
     private destroyed: boolean;
     private reconnecting: boolean;
-    private sessionStartLimit: { total: number; remaining: number; reset_after: number } | null;
 
     public readonly client: Client;
     public gateway: string | null;
@@ -1789,7 +1788,6 @@ declare module 'discord.js' {
     private reconnect(): Promise<void>;
     private broadcast(packet: object): void;
     private destroy(): void;
-    private _handleSessionLimit(remaining?: number, resetAfter?: number): Promise<void>;
     private handlePacket(packet?: object, shard?: WebSocketShard): boolean;
     private checkShardsReady(): void;
     private triggerClientReady(): void;
@@ -1893,7 +1891,7 @@ declare module 'discord.js' {
 
   export class ChannelManager extends BaseManager<Snowflake, Channel, ChannelResolvable> {
     constructor(client: Client, iterable: Iterable<any>);
-    public fetch(id: Snowflake, cache?: boolean, force?: boolean): Promise<Channel>;
+    public fetch(id: Snowflake, cache?: boolean, force?: boolean): Promise<Channel | null>;
   }
 
   export class GuildChannelManager extends BaseManager<Snowflake, GuildChannel, GuildChannelResolvable> {
@@ -2009,11 +2007,7 @@ declare module 'discord.js' {
   export class ReactionUserManager extends BaseManager<Snowflake, User, UserResolvable> {
     constructor(client: Client, iterable: Iterable<any> | undefined, reaction: MessageReaction);
     public reaction: MessageReaction;
-    public fetch(options?: {
-      limit?: number;
-      after?: Snowflake;
-      before?: Snowflake;
-    }): Promise<Collection<Snowflake, User>>;
+    public fetch(options?: { limit?: number; after?: Snowflake }): Promise<Collection<Snowflake, User>>;
     public remove(user?: UserResolvable): Promise<MessageReaction>;
   }
 
