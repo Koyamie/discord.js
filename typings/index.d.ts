@@ -641,6 +641,7 @@ declare module 'discord.js' {
     public mfaLevel: number;
     public name: string;
     public readonly nameAcronym: string;
+    public nsfw: boolean;
     public ownerID: Snowflake;
     public readonly partnered: boolean;
     public preferredLocale: string;
@@ -1603,7 +1604,7 @@ declare module 'discord.js' {
   export class Util {
     public static basename(path: string, ext?: string): string;
     public static binaryToID(num: string): Snowflake;
-    public static cleanContent(str: string, message: Message): string;
+    public static cleanContent(str: string, channel: Channel): string;
     public static removeMentions(str: string): string;
     public static cloneObject(obj: object): object;
     public static delayFor(ms: number): Promise<void>;
