@@ -41,7 +41,7 @@ class GuildChannelManager extends BaseManager {
 
     const channels = await this.client.api.guilds(this.guild.id).channels.get();
     for (const channel of channels) {
-      const type = Object.keys(ChannelTypes)[channel.type];
+      const type = ChannelTypes[channel.type];
       channel.type = type ? type.toLowerCase() : 'unknown';
       this.add(channel);
     }
