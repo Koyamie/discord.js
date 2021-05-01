@@ -21,6 +21,12 @@ declare enum ChannelTypes {
   STAGE = 13,
 }
 
+declare enum StickerFormatTypes {
+  PNG = 1,
+  APNG = 2,
+  LOTTIE = 3,
+}
+
 declare enum OverwriteTypes {
   role = 0,
   member = 1,
@@ -219,6 +225,8 @@ declare module 'discord.js' {
     public readonly children: Collection<Snowflake, GuildChannel>;
     public type: 'category';
   }
+
+  type CategoryChannelResolvable = Snowflake | CategoryChannel;
 
   export class Channel extends Base {
     constructor(client: Client, data?: object);
@@ -555,7 +563,8 @@ declare module 'discord.js' {
     MessageTypes: MessageType[];
     SystemMessageTypes: SystemMessageType[];
     ActivityTypes: ActivityType[];
-    OverwriteTypes: OverwriteTypes;
+    StickerFormatTypes: typeof StickerFormatTypes;
+    OverwriteTypes: typeof OverwriteTypes;
     ExplicitContentFilterLevels: ExplicitContentFilterLevel[];
     DefaultMessageNotifications: DefaultMessageNotifications[];
     VerificationLevels: VerificationLevel[];
@@ -598,7 +607,7 @@ declare module 'discord.js' {
     public readonly createdTimestamp: number | null;
     public deleted: boolean;
     public id: Snowflake | null;
-    public name: string;
+    public name: string | null;
     public readonly identifier: string;
     public readonly url: string | null;
     public toJSON(): object;
@@ -1013,6 +1022,7 @@ declare module 'discord.js' {
     public readonly pinnable: boolean;
     public pinned: boolean;
     public reactions: ReactionManager;
+    public stickers: Collection<Snowflake, Sticker>;
     public system: boolean;
     public tts: boolean;
     public type: MessageType;
@@ -1368,9 +1378,9 @@ declare module 'discord.js' {
     public eval<T>(fn: (client: Client) => T): Promise<T[]>;
     public fetchClientValue(prop: string): Promise<any>;
     public kill(): void;
-    public respawn(delay?: number, spawnTimeout?: number): Promise<ChildProcess>;
+    public respawn(options?: { delay?: number, timeout?: number }): Promise<ChildProcess>;
     public send(message: any): Promise<Shard>;
-    public spawn(spawnTimeout?: number): Promise<ChildProcess>;
+    public spawn(timeout?: number): Promise<ChildProcess>;
 
     public on(event: 'spawn' | 'death', listener: (child: ChildProcess) => void): this;
     public on(event: 'disconnect' | 'ready' | 'reconnecting', listener: () => void): this;
@@ -1401,7 +1411,7 @@ declare module 'discord.js' {
     public broadcastEval<T>(fn: (client: Client) => T, shard: number): Promise<T>;
     public fetchClientValues(prop: string): Promise<any[]>;
     public fetchClientValues(prop: string, shard: number): Promise<any>;
-    public respawnAll(shardDelay?: number, respawnDelay?: number, spawnTimeout?: number): Promise<void>;
+    public respawnAll(options?: { shardDelay?: number, respawnDelay?: number, timeout?: number }): Promise<void>;
     public send(message: any): Promise<void>;
 
     public static singleton(client: Client, mode: ShardingManagerMode): ShardClientUtil;
@@ -1437,12 +1447,12 @@ declare module 'discord.js' {
     public createShard(id: number): Shard;
     public fetchClientValues(prop: string): Promise<any[]>;
     public fetchClientValues(prop: string, shard: number): Promise<any>;
-    public respawnAll(
+    public respawnAll(options?: {
       shardDelay?: number,
       respawnDelay?: number,
-      spawnTimeout?: number,
-    ): Promise<Collection<number, Shard>>;
-    public spawn(amount?: number | 'auto', delay?: number, spawnTimeout?: number): Promise<Collection<number, Shard>>;
+      timeout?: number,
+    }): Promise<Collection<number, Shard>>;
+    public spawn(options?: { amount?: number | 'auto', delay?: number, timeout?: number }): Promise<Collection<number, Shard>>;
 
     public on(event: 'shardCreate', listener: (shard: Shard) => void): this;
 
@@ -1800,6 +1810,8 @@ declare module 'discord.js' {
     public guildID: Snowflake;
     public name: string;
     public owner: User | object | null;
+    public sourceGuild: Guild | object | null;
+    public sourceChannel: Channel | object | null;
     public token: string | null;
     public type: WebhookTypes;
   }
@@ -1815,6 +1827,7 @@ declare module 'discord.js' {
       options?: WebhookEditMessageOptions,
     ): Promise<RawMessage>;
     public editMessage(message: MessageResolvable, options: WebhookEditMessageOptions): Promise<RawMessage>;
+    public fetchMessage(message: Snowflake, cache?: boolean): Promise<RawMessage>;
     public send(
       content: APIMessageContentResolvable | (WebhookMessageOptions & { split?: false }) | MessageAdditions,
     ): Promise<RawMessage>;
@@ -2162,6 +2175,7 @@ declare module 'discord.js' {
       options?: WebhookEditMessageOptions,
     ): Promise<Message | RawMessage>;
     editMessage(message: MessageResolvable, options: WebhookEditMessageOptions): Promise<Message | RawMessage>;
+    fetchMessage(message: Snowflake, cache?: boolean): Promise<Message | RawMessage>;
     send(
       content: APIMessageContentResolvable | (WebhookMessageOptions & { split?: false }) | MessageAdditions,
     ): Promise<Message | RawMessage>;
@@ -2272,6 +2286,7 @@ declare module 'discord.js' {
     INVITE_ACCEPTED_TO_GUILD_NOT_CONTAINING_BOT: 50036;
     INVALID_API_VERSION: 50041;
     CANNOT_DELETE_COMMUNITY_REQUIRED_CHANNEL: 50074;
+    INVALID_STICKER_SENT: 50081;
     REACTION_BLOCKED: 90001;
     RESOURCE_OVERLOADED: 130000;
   }
@@ -2356,7 +2371,9 @@ declare module 'discord.js' {
 
   interface ChannelPosition {
     channel: ChannelResolvable;
-    position: number;
+    lockPermissions?: boolean;
+    parent?: CategoryChannelResolvable;
+    position?: number;
   }
 
   type ChannelResolvable = Channel | Snowflake;
@@ -2695,6 +2712,7 @@ declare module 'discord.js' {
     icon?: BufferResolvable | Base64Resolvable | null;
     region?: string;
     roles?: PartialRoleData[];
+    systemChannelFlags?: SystemChannelFlagsResolvable;
     systemChannelID?: number;
     verificationLevel?: VerificationLevel | number;
   }
@@ -3253,6 +3271,20 @@ declare module 'discord.js' {
   }
 
   type Status = number;
+
+  export class Sticker extends Base {
+    constructor(client: Client, data: object);
+    public asset: string;
+    public readonly createdTimestamp: number;
+    public readonly createdAt: Date;
+    public description: string;
+    public format: StickerFormatTypes;
+    public id: Snowflake;
+    public name: string;
+    public packID: Snowflake;
+    public tags: string[];
+    public readonly url: string;
+  }
 
   interface StreamOptions {
     type?: StreamType;
