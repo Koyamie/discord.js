@@ -227,6 +227,7 @@ class RequestHandler {
     if (res.status >= 400 && res.status < 500) {
       // Handle ratelimited requests
       if (res.status === 429) {
+        this.manager.client.logger.warn(`[RATELIMIT] ${request.method.toUpperCase()} ${request.route}`, JSON.stringify(request.options.data));
         // A ratelimit was hit - this should never happen
         this.manager.client.emit('debug', `429 hit on route ${request.route}${sublimitTimeout ? ' for sublimit' : ''}`);
         // If caused by a sublimit, wait it out here so other requests on the route can be handled
