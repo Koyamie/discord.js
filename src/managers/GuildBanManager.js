@@ -19,7 +19,7 @@ class GuildBanManager extends BaseManager {
      */
     this.guild = guild;
 
-    this.fetched = false;
+    this.fetchTimestamp = null;
   }
 
   /**
@@ -118,7 +118,7 @@ class GuildBanManager extends BaseManager {
 
   async _fetchMany(cache) {
     const data = await this.client.api.guilds(this.guild.id).bans.get();
-    this.fetched = true;
+    this.fetchTimestamp = Date.now();
     return data.reduce((col, ban) => col.set(ban.user.id, this.add(ban, cache)), new Collection());
   }
 
