@@ -175,12 +175,15 @@ class APIMessage {
     }
 
     let message_reference;
-    if (typeof this.options.replyTo !== 'undefined') {
+    if (typeof this.options.reply === 'object') {
       const message_id = this.isMessage
-        ? this.target.channel.messages.resolveID(this.options.replyTo)
-        : this.target.messages.resolveID(this.options.replyTo);
+        ? this.target.channel.messages.resolveID(this.options.reply.messageReference)
+        : this.target.messages.resolveID(this.options.reply.messageReference);
       if (message_id) {
-        message_reference = { message_id };
+        message_reference = {
+          message_id,
+          fail_if_not_exists: this.options.reply.failIfNotExists ?? true,
+        };
       }
     }
 
@@ -196,6 +199,7 @@ class APIMessage {
         typeof content === 'undefined' && typeof message_reference === 'undefined' ? undefined : allowedMentions,
       flags,
       message_reference,
+      attachments: this.options.attachments,
     };
     return this;
   }

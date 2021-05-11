@@ -696,6 +696,7 @@ declare module 'discord.js' {
     public approximatePresenceCount: number | null;
     public available: boolean;
     public banner: string | null;
+    public bans: GuildBanManager;
     public channels: GuildChannelManager;
     public commands: GuildApplicationCommandManager;
     public readonly createdAt: Date;
@@ -757,8 +758,6 @@ declare module 'discord.js' {
     public equals(guild: Guild): boolean;
     public fetch(): Promise<Guild>;
     public fetchAuditLogs(options?: GuildAuditLogsFetchOptions): Promise<GuildAuditLogs>;
-    public fetchBan(user: UserResolvable): Promise<{ user: User; reason: string }>;
-    public fetchBans(): Promise<Collection<Snowflake, { user: User; reason: string }>>;
     public fetchIntegrations(): Promise<Collection<string, Integration>>;
     public fetchInvites(): Promise<Collection<string, Invite>>;
     public fetchOwner(options?: FetchOwnerOptions): Promise<GuildMember>;
@@ -842,6 +841,15 @@ declare module 'discord.js' {
       | null;
     public targetType: GuildAuditLogsTarget;
     public toJSON(): object;
+  }
+
+  export class GuildBan extends Base {
+    constructor(client: Client, data: object, guild: Guild);
+    public guild: Guild;
+    public user: User;
+    public readonly partial: boolean;
+    public reason?: string | null;
+    public fetch(force?: boolean): Promise<GuildBan>;
   }
 
   export class GuildChannel extends Channel {
@@ -1118,7 +1126,6 @@ declare module 'discord.js' {
     public webhookID: Snowflake | null;
     public flags: Readonly<MessageFlags>;
     public reference: MessageReference | null;
-    public readonly referencedMessage: Message | null;
     public awaitReactions(
       filter: CollectorFilter<[MessageReaction, User]>,
       options?: AwaitReactionsOptions,
@@ -1133,29 +1140,31 @@ declare module 'discord.js' {
     ): Promise<Message>;
     public edit(content: StringResolvable, options: MessageEditOptions | MessageEmbed): Promise<Message>;
     public equals(message: Message, rawData: object): boolean;
+    public fetchReference(): Promise<Message>;
     public fetchWebhook(): Promise<Webhook>;
     public crosspost(): Promise<Message>;
     public fetch(force?: boolean): Promise<Message>;
-    public pin(options?: { reason?: string }): Promise<Message>;
+    public pin(): Promise<Message>;
     public react(emoji: EmojiIdentifierResolvable): Promise<MessageReaction>;
+    public removeAttachments(): Promise<Message>;
     public reply(
-      content: APIMessageContentResolvable | (MessageOptions & { split?: false }) | MessageAdditions,
+      content: APIMessageContentResolvable | (ReplyMessageOptions & { split?: false }) | MessageAdditions,
     ): Promise<Message>;
-    public reply(options: MessageOptions & { split: true | SplitOptions }): Promise<Message[]>;
-    public reply(options: MessageOptions | APIMessage): Promise<Message | Message[]>;
+    public reply(options: ReplyMessageOptions & { split: true | SplitOptions }): Promise<Message[]>;
+    public reply(options: ReplyMessageOptions | APIMessage): Promise<Message | Message[]>;
     public reply(
       content: StringResolvable,
-      options: (MessageOptions & { split?: false }) | MessageAdditions,
+      options: (ReplyMessageOptions & { split?: false }) | MessageAdditions,
     ): Promise<Message>;
     public reply(
       content: StringResolvable,
-      options: MessageOptions & { split: true | SplitOptions },
+      options: ReplyMessageOptions & { split: true | SplitOptions },
     ): Promise<Message[]>;
-    public reply(content: StringResolvable, options: MessageOptions): Promise<Message | Message[]>;
+    public reply(content: StringResolvable, options: ReplyMessageOptions): Promise<Message | Message[]>;
     public suppressEmbeds(suppress?: boolean): Promise<Message>;
     public toJSON(): object;
     public toString(): string;
-    public unpin(options?: { reason?: string }): Promise<Message>;
+    public unpin(): Promise<Message>;
   }
 
   export class MessageAttachment {
@@ -1507,18 +1516,7 @@ declare module 'discord.js' {
   }
 
   export class ShardingManager extends EventEmitter {
-    constructor(
-      file: string,
-      options?: {
-        totalShards?: number | 'auto';
-        shardList?: number[] | 'auto';
-        mode?: ShardingManagerMode;
-        respawn?: boolean;
-        shardArgs?: string[];
-        token?: string;
-        execArgv?: string[];
-      },
-    );
+    constructor(file: string, options?: ShardingManagerOptions);
     private _performOnShards(method: string, args: any[]): Promise<any[]>;
     private _performOnShards(method: string, args: any[], shard: number): Promise<any>;
 
@@ -2157,6 +2155,15 @@ declare module 'discord.js' {
     public unban(user: UserResolvable, reason?: string): Promise<User>;
   }
 
+  export class GuildBanManager extends BaseManager<Snowflake, GuildBan, GuildBanResolvable> {
+    constructor(guild: Guild, iterable?: Iterable<any>);
+    public guild: Guild;
+    public create(user: UserResolvable, options?: BanOptions): Promise<GuildMember | User | Snowflake>;
+    public fetch(options: UserResolvable | FetchBanOptions): Promise<GuildBan>;
+    public fetch(options?: FetchBansOptions): Promise<Collection<Snowflake, GuildBan>>;
+    public remove(user: UserResolvable, reason?: string): Promise<User>;
+  }
+
   export class GuildMemberRoleManager {
     constructor(member: GuildMember);
     public readonly cache: Collection<Snowflake, Role>;
@@ -2184,6 +2191,9 @@ declare module 'discord.js' {
     constructor(channel: TextChannel | DMChannel, iterable?: Iterable<any>);
     public channel: TextBasedChannelFields;
     public cache: Collection<Snowflake, Message>;
+    public crosspost(message: MessageResolvable): Promise<Message>;
+    public delete(message: MessageResolvable): Promise<void>;
+    public edit(message: MessageResolvable, options: MessageEditOptions): Promise<Message>;
     public fetch(message: Snowflake, cache?: boolean, force?: boolean): Promise<Message>;
     public fetch(
       options?: ChannelLogsQueryOptions,
@@ -2191,7 +2201,9 @@ declare module 'discord.js' {
       force?: boolean,
     ): Promise<Collection<Snowflake, Message>>;
     public fetchPinned(cache?: boolean): Promise<Collection<Snowflake, Message>>;
-    public delete(message: MessageResolvable): Promise<void>;
+    public react(message: MessageResolvable, emoji: EmojiIdentifierResolvable): Promise<void>;
+    public pin(message: MessageResolvable): Promise<void>;
+    public unpin(message: MessageResolvable): Promise<void>;
   }
 
   export class PresenceManager extends BaseManager<Snowflake, Presence, PresenceResolvable> {
@@ -2559,8 +2571,8 @@ declare module 'discord.js' {
     emojiDelete: [emoji: GuildEmoji];
     emojiUpdate: [oldEmoji: GuildEmoji, newEmoji: GuildEmoji];
     error: [error: Error];
-    guildBanAdd: [guild: Guild, user: User];
-    guildBanRemove: [guild: Guild, user: User];
+    guildBanAdd: [ban: GuildBan];
+    guildBanRemove: [ban: GuildBan];
     guildCreate: [guild: Guild];
     guildDelete: [guild: Guild];
     guildUnavailable: [guild: Guild];
@@ -2775,6 +2787,16 @@ declare module 'discord.js' {
     CommandInteraction: typeof CommandInteraction;
   }
 
+  interface FetchBanOptions {
+    user: UserResolvable;
+    cache?: boolean;
+    force?: boolean;
+  }
+
+  interface FetchBansOptions {
+    cache: boolean;
+  }
+
   interface FetchMemberOptions {
     user: UserResolvable;
     cache?: boolean;
@@ -2868,6 +2890,8 @@ declare module 'discord.js' {
     INTEGRATION?: string;
     UNKNOWN?: string;
   }
+
+  type GuildBanResolvable = GuildBan | UserResolvable;
 
   type GuildChannelResolvable = Snowflake | GuildChannel;
 
@@ -2998,6 +3022,7 @@ declare module 'discord.js' {
     cdn?: string;
     invite?: string;
     template?: string;
+    headers?: Record<string, string>;
   }
 
   type ImageSize = 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096;
@@ -3099,6 +3124,7 @@ declare module 'discord.js' {
     code?: string | boolean;
     flags?: BitFieldResolvable<MessageFlagsString, number>;
     allowedMentions?: MessageMentionOptions;
+    attachments?: MessageAttachment[];
   }
 
   interface MessageEmbedAuthor {
@@ -3195,7 +3221,7 @@ declare module 'discord.js' {
     files?: (FileOptions | BufferResolvable | Stream | MessageAttachment)[];
     code?: string | boolean;
     split?: boolean | SplitOptions;
-    replyTo?: MessageResolvable;
+    reply?: ReplyOptions;
   }
 
   type MessageReactionResolvable = MessageReaction | Snowflake;
@@ -3444,6 +3470,15 @@ declare module 'discord.js' {
     maxUsers?: number;
   }
 
+  interface ReplyOptions {
+    messageReference: MessageResolvable;
+    failIfNotExists?: boolean;
+  }
+
+  interface ReplyMessageOptions extends Omit<MessageOptions, 'reply'> {
+    failIfNotExists?: boolean;
+  }
+
   interface ResolvedOverwriteOptions {
     allow: Permissions;
     deny: Permissions;
@@ -3472,6 +3507,16 @@ declare module 'discord.js' {
   }
 
   type ShardingManagerMode = 'process' | 'worker';
+
+  interface ShardingManagerOptions {
+    totalShards?: number | 'auto';
+    shardList?: number[] | 'auto';
+    mode?: ShardingManagerMode;
+    respawn?: boolean;
+    shardArgs?: string[];
+    token?: string;
+    execArgv?: string[];
+  }
 
   type Snowflake = string;
 
@@ -3572,7 +3617,7 @@ declare module 'discord.js' {
 
   type WebhookEditMessageOptions = Pick<WebhookMessageOptions, 'content' | 'embeds' | 'files' | 'allowedMentions'>;
 
-  interface WebhookMessageOptions extends Omit<MessageOptions, 'embed' | 'replyTo'> {
+  interface WebhookMessageOptions extends Omit<MessageOptions, 'embed' | 'reply'> {
     username?: string;
     avatarURL?: string;
     embeds?: (MessageEmbed | object)[];
