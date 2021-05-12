@@ -32,6 +32,11 @@ declare enum InteractionTypes {
   APPLICATION_COMMAND = 2,
 }
 
+declare enum InviteTargetType {
+  STREAM = 1,
+  EMBEDDED_APPLICATION = 2,
+}
+
 declare enum OverwriteTypes {
   role = 0,
   member = 1,
@@ -153,7 +158,7 @@ declare module 'discord.js' {
     public icon: string | null;
     public id: Snowflake;
     public name: string | null;
-    public coverImage(options?: ImageURLOptions): string | null;
+    public coverURL(options?: ImageURLOptions): string | null;
     public fetchAssets(): Promise<ApplicationAsset[]>;
     public iconURL(options?: ImageURLOptions): string | null;
     public toJSON(): object;
@@ -177,6 +182,8 @@ declare module 'discord.js' {
     public setPermissions(permissions: ApplicationCommandPermissionData[]): Promise<ApplicationCommandPermissions[]>;
     private static transformOption(option: ApplicationCommandOptionData, received?: boolean): object;
   }
+
+  type ApplicationResolvable = Application | Activity | Snowflake;
 
   export class ApplicationFlags extends BitField<ApplicationFlagsString> {
     public static FLAGS: Record<ApplicationFlagsString, number>;
@@ -876,7 +883,7 @@ declare module 'discord.js' {
     public createOverwrite(
       userOrRole: RoleResolvable | UserResolvable,
       options: PermissionOverwriteOption,
-      reason?: string,
+      overwriteOptions?: GuildChannelOverwriteOptions,
     ): Promise<this>;
     public edit(data: ChannelData, reason?: string): Promise<this>;
     public equals(channel: GuildChannel): boolean;
@@ -898,7 +905,7 @@ declare module 'discord.js' {
     public updateOverwrite(
       userOrRole: RoleResolvable | UserResolvable,
       options: PermissionOverwriteOption,
-      reason?: string,
+      overwriteOptions?: GuildChannelOverwriteOptions,
     ): Promise<this>;
     public isText(): this is TextChannel | NewsChannel;
   }
@@ -1034,6 +1041,13 @@ declare module 'discord.js' {
 
   export class IntegrationApplication extends Application {
     public bot: User | null;
+    public termsOfServiceURL: string | null;
+    public privacyPolicyURL: string | null;
+    public rpcOrigins: string[];
+    public summary: string | null;
+    public hook: boolean | null;
+    public cover: string | null;
+    public verifyKey: string | null;
   }
 
   export class Intents extends BitField<IntentsString> {
@@ -1077,8 +1091,9 @@ declare module 'discord.js' {
     public maxUses: number | null;
     public memberCount: number;
     public presenceCount: number;
+    public targetApplication: IntegrationApplication | null;
     public targetUser: User | null;
-    public targetUserType: TargetUser | null;
+    public targetType: InviteTargetType | null;
     public temporary: boolean | null;
     public readonly url: string;
     public uses: number | null;
@@ -2102,10 +2117,11 @@ declare module 'discord.js' {
     public create(name: string, options?: GuildCreateChannelOptions & { type?: 'text' }): Promise<TextChannel>;
     public create(name: string, options: GuildCreateChannelOptions & { type: 'news' }): Promise<NewsChannel>;
     public create(name: string, options: GuildCreateChannelOptions & { type: 'store' }): Promise<StoreChannel>;
+    public create(name: string, options: GuildCreateChannelOptions & { type: 'stage' }): Promise<StageChannel>;
     public create(
       name: string,
       options: GuildCreateChannelOptions,
-    ): Promise<TextChannel | VoiceChannel | CategoryChannel | NewsChannel | StoreChannel>;
+    ): Promise<TextChannel | VoiceChannel | CategoryChannel | NewsChannel | StoreChannel | StageChannel>;
   }
 
   export class GuildEmojiManager extends BaseGuildEmojiManager {
@@ -2145,10 +2161,12 @@ declare module 'discord.js' {
     constructor(guild: Guild, iterable?: Iterable<any>);
     public guild: Guild;
     public ban(user: UserResolvable, options?: BanOptions): Promise<GuildMember | User | Snowflake>;
+    public edit(user: UserResolvable, data: GuildMemberEditData, reason?: string): Promise<void>;
     public fetch(
       options: UserResolvable | FetchMemberOptions | (FetchMembersOptions & { user: UserResolvable }),
     ): Promise<GuildMember>;
     public fetch(options?: FetchMembersOptions): Promise<Collection<Snowflake, GuildMember>>;
+    public kick(user: UserResolvable, reason?: string): Promise<GuildMember | User | Snowflake>;
     public prune(options: GuildPruneMembersOptions & { dry?: false; count: false }): Promise<null>;
     public prune(options?: GuildPruneMembersOptions): Promise<number>;
     public search(options: GuildSearchMembersOptions): Promise<Collection<Snowflake, GuildMember>>;
@@ -2193,7 +2211,7 @@ declare module 'discord.js' {
     public cache: Collection<Snowflake, Message>;
     public crosspost(message: MessageResolvable): Promise<Message>;
     public delete(message: MessageResolvable): Promise<void>;
-    public edit(message: MessageResolvable, options: MessageEditOptions): Promise<Message>;
+    public edit(message: MessageResolvable, options: APIMessage | MessageEditOptions): Promise<Message>;
     public fetch(message: Snowflake, cache?: boolean, force?: boolean): Promise<Message>;
     public fetch(
       options?: ChannelLogsQueryOptions,
@@ -2797,6 +2815,11 @@ declare module 'discord.js' {
     cache: boolean;
   }
 
+  interface GuildChannelOverwriteOptions {
+    reason?: string;
+    type?: number;
+  }
+
   interface FetchMemberOptions {
     user: UserResolvable;
     cache?: boolean;
@@ -3085,6 +3108,9 @@ declare module 'discord.js' {
     maxUses?: number;
     unique?: boolean;
     reason?: string;
+    targetApplication?: ApplicationResolvable;
+    targetUser?: UserResolvable;
+    targetType?: InviteTargetType;
   }
 
   type InviteResolvable = string;
@@ -3567,8 +3593,6 @@ declare module 'discord.js' {
   type SystemChannelFlagsResolvable = BitFieldResolvable<SystemChannelFlagsString, number>;
 
   type SystemMessageType = Exclude<MessageType, 'DEFAULT' | 'REPLY' | 'APPLICATION_COMMAND'>;
-
-  type TargetUser = number;
 
   interface TypingData {
     user: User | PartialUser;
