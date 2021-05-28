@@ -27,38 +27,18 @@ class GuildChannelManager extends BaseManager {
    * @name GuildChannelManager#cache
    */
 
-  add(data, cache) {
-    return super.add(data, cache, { extras: [this.guild] });
+  add(channel) {
+    const existing = this.cache.get(channel.id);
+    if (existing) return existing;
+    this.cache.set(channel.id, channel);
+    return channel;
   }
-
-  /**
-   * Obtains a channel from Discord, or the channel cache if they're already available.
-   * @param {Snowflake} [id] ID of the channel
-   * @param {boolean} [cache=true] Whether to cache the new channel object(s) if they weren't already
-   * @param {boolean} [force=false] Whether to skip the cache check and request the API
-   * @returns {Promise<?Channel|Collection<Snowflake, Channel>>}
-   * @example
-   * // Fetch all channels from the guild
-   * message.guild.channels.fetch()
-   *   .then(channels => console.log(`There are ${channels.cache.size} channels.`))
-   *   .catch(console.error);
-   * @example
-   * // Fetch a single channel
-   * message.guild.channels.fetch('222078108977594368')
-   *   .then(channel => console.log(`The channel name is: ${channel.name}`))
-   *   .catch(console.error);
-   */
-  async fetch(id, cache = true, force = false) {
-    if (id && !force) {
-      const existing = this.cache.get(id);
-      if (existing) return existing;
-    }
-
-    // We cannot fetch a single channel, as of this commit's date, Discord API throws with 405
+  
+  async fetch() {
     const data = await this.client.api.guilds(this.guild.id).channels.get();
     const channels = new Collection();
-    for (const channel of data) channels.set(channel.id, this.add(channel, cache));
-    return id ? channels.get(id) ?? null : channels;
+    for (const channel of data) channels.set(channel.id, this.client.channels.add(channel))
+    return channels;
   }
 
   /**
