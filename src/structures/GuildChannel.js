@@ -1,5 +1,6 @@
 'use strict';
 
+const TextBasedChannel = require('./interfaces/TextBasedChannel');
 const Channel = require('./Channel');
 const Invite = require('./Invite');
 const PermissionOverwrites = require('./PermissionOverwrites');
@@ -678,5 +679,7 @@ class GuildChannel extends Channel {
       .then(() => this);
   }
 }
+
+TextBasedChannel.applyToClass(GuildChannel);
 
 module.exports = GuildChannel;
