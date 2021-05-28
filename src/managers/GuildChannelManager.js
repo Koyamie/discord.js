@@ -27,11 +27,8 @@ class GuildChannelManager extends BaseManager {
    * @name GuildChannelManager#cache
    */
 
-  add(channel) {
-    const existing = this.cache.get(channel.id);
-    if (existing) return existing;
-    this.cache.set(channel.id, channel);
-    return channel;
+  add(data, cache) {
+    return super.add(data, cache, { extras: [this.guild] });
   }
 
   /**
