@@ -34,11 +34,19 @@ class GuildChannelManager extends BaseManager {
     return channel;
   }
   
-  async fetch() {
+  async fetch(id, cache = true, force = false) {
+    if (id) {
+      const existing = this.cache.get(id);
+      if (existing && !force) return existing;
+
+      const channel = await this.client.api.guilds(this.guild.id).channels.get(id);
+      return this.client.channels.add(channel, this.guild, cache);
+    }
+
     const data = await this.client.api.guilds(this.guild.id).channels.get();
     const channels = new Collection();
-    for (const channel of data) channels.set(channel.id, this.client.channels.add(channel))
-    return channels;
+    for (const channel of data) channels.set(channel.id, this.client.channels.add(channel, this.guild, cache));
+    return id ? channels.get(id) ?? null : channels;
   }
 
   /**
