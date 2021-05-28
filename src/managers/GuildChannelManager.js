@@ -35,12 +35,9 @@ class GuildChannelManager extends BaseManager {
   }
   
   async fetch(id, cache = true, force = false) {
-    if (id) {
+    if (id && !force) {
       const existing = this.cache.get(id);
-      if (existing && !force) return existing;
-
-      const channel = await this.client.api.guilds(this.guild.id).channels.get(id);
-      return this.client.channels.add(channel, this.guild, cache);
+      if (existing) return existing;
     }
 
     const data = await this.client.api.guilds(this.guild.id).channels.get();
