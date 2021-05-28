@@ -4,6 +4,7 @@ const BaseManager = require('./BaseManager');
 const GuildChannel = require('../structures/GuildChannel');
 const PermissionOverwrites = require('../structures/PermissionOverwrites');
 const { ChannelTypes } = require('../util/Constants');
+const Collection = require('../util/Collection');
 
 /**
  * Manages API methods for GuildChannels and stores their cache.
