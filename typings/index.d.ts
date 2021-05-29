@@ -55,6 +55,8 @@ declare enum StickerFormatTypes {
   LOTTIE = 3,
 }
 
+type Awaited<T> = T | Promise<T>;
+
 declare module 'discord.js' {
   import BaseCollection from '@discordjs/collection';
   import { ChildProcess } from 'child_process';
@@ -225,6 +227,21 @@ declare module 'discord.js' {
     public toJSON(...props: { [key: string]: boolean | string }[]): object;
   }
 
+  export class BaseGuild extends Base {
+    public readonly createdAt: Date;
+    public readonly createdTimestamp: number;
+    public features: GuildFeatures[];
+    public icon: string | null;
+    public id: Snowflake;
+    public name: string;
+    public readonly nameAcronym: string;
+    public readonly partnered: boolean;
+    public readonly verified: boolean;
+    public fetch(): Promise<Guild>;
+    public iconURL(options?: ImageURLOptions & { dynamic?: boolean }): string | null;
+    public toString(): string;
+  }
+
   export class BaseGuildEmoji extends Emoji {
     constructor(client: Client, data: object, guild: Guild);
     private _roles: string[];
@@ -325,25 +342,25 @@ declare module 'discord.js' {
     public sweepMessages(lifetime?: number): number;
     public toJSON(): object;
 
-    public on<K extends keyof ClientEvents>(event: K, listener: (...args: ClientEvents[K]) => void): this;
+    public on<K extends keyof ClientEvents>(event: K, listener: (...args: ClientEvents[K]) => Awaited<void>): this;
     public on<S extends string | symbol>(
       event: Exclude<S, keyof ClientEvents>,
-      listener: (...args: any[]) => void,
+      listener: (...args: any[]) => Awaited<void>,
     ): this;
 
-    public once<K extends keyof ClientEvents>(event: K, listener: (...args: ClientEvents[K]) => void): this;
+    public once<K extends keyof ClientEvents>(event: K, listener: (...args: ClientEvents[K]) => Awaited<void>): this;
     public once<S extends string | symbol>(
       event: Exclude<S, keyof ClientEvents>,
-      listener: (...args: any[]) => void,
+      listener: (...args: any[]) => Awaited<void>,
     ): this;
 
     public emit<K extends keyof ClientEvents>(event: K, ...args: ClientEvents[K]): boolean;
     public emit<S extends string | symbol>(event: Exclude<S, keyof ClientEvents>, ...args: any[]): boolean;
 
-    public off<K extends keyof ClientEvents>(event: K, listener: (...args: ClientEvents[K]) => void): this;
+    public off<K extends keyof ClientEvents>(event: K, listener: (...args: ClientEvents[K]) => Awaited<void>): this;
     public off<S extends string | symbol>(
       event: Exclude<S, keyof ClientEvents>,
-      listener: (...args: any[]) => void,
+      listener: (...args: any[]) => Awaited<void>,
     ): this;
 
     public removeAllListeners<K extends keyof ClientEvents>(event?: K): this;
@@ -700,7 +717,7 @@ declare module 'discord.js' {
     public toString(): string;
   }
 
-  export class Guild extends Base {
+  export class Guild extends BaseGuild {
     constructor(client: Client, data: object);
     private _sortedRoles(): Collection<Snowflake, Role>;
     private _sortedChannels(channel: Channel): Collection<Snowflake, GuildChannel>;
@@ -717,17 +734,12 @@ declare module 'discord.js' {
     public bans: GuildBanManager;
     public channels: GuildChannelManager;
     public commands: GuildApplicationCommandManager;
-    public readonly createdAt: Date;
-    public readonly createdTimestamp: number;
     public defaultMessageNotifications: DefaultMessageNotifications | number;
     public deleted: boolean;
     public description: string | null;
     public discoverySplash: string | null;
     public emojis: GuildEmojiManager;
     public explicitContentFilter: ExplicitContentFilterLevel;
-    public features: GuildFeatures[];
-    public icon: string | null;
-    public id: Snowflake;
     public readonly joinedAt: Date;
     public joinedTimestamp: number;
     public large: boolean;
@@ -737,11 +749,8 @@ declare module 'discord.js' {
     public memberCount: number;
     public members: GuildMemberManager;
     public mfaLevel: number;
-    public name: string;
-    public readonly nameAcronym: string;
     public nsfwLevel: NSFWLevel;
     public ownerID: Snowflake;
-    public readonly partnered: boolean;
     public preferredLocale: string;
     public premiumSubscriptionCount: number | null;
     public premiumTier: PremiumTier;
@@ -761,7 +770,6 @@ declare module 'discord.js' {
     public vanityURLCode: string | null;
     public vanityURLUses: number | null;
     public verificationLevel: VerificationLevel;
-    public readonly verified: boolean;
     public readonly voiceStates: VoiceStateManager;
     public readonly widgetChannel: TextChannel | null;
     public widgetChannelID: Snowflake | null;
@@ -774,7 +782,6 @@ declare module 'discord.js' {
     public discoverySplashURL(options?: ImageURLOptions): string | null;
     public edit(data: GuildEditData, reason?: string): Promise<Guild>;
     public equals(guild: Guild): boolean;
-    public fetch(): Promise<Guild>;
     public fetchAuditLogs(options?: GuildAuditLogsFetchOptions): Promise<GuildAuditLogs>;
     public fetchIntegrations(): Promise<Collection<string, Integration>>;
     public fetchInvites(): Promise<Collection<string, Invite>>;
@@ -785,7 +792,6 @@ declare module 'discord.js' {
     public fetchVoiceRegions(): Promise<Collection<string, VoiceRegion>>;
     public fetchWebhooks(): Promise<Collection<Snowflake, Webhook>>;
     public fetchWidget(): Promise<GuildWidget>;
-    public iconURL(options?: ImageURLOptions & { dynamic?: boolean }): string | null;
     public leave(): Promise<Guild>;
     public setAFKChannel(afkChannel: ChannelResolvable | null, reason?: string): Promise<Guild>;
     public setAFKTimeout(afkTimeout: number, reason?: string): Promise<Guild>;
@@ -815,7 +821,6 @@ declare module 'discord.js' {
     public setWidget(widget: GuildWidgetData, reason?: string): Promise<Guild>;
     public splashURL(options?: ImageURLOptions): string | null;
     public toJSON(): object;
-    public toString(): string;
   }
 
   export class GuildAuditLogs {
@@ -1341,6 +1346,11 @@ declare module 'discord.js' {
     public setType(type: Pick<typeof ChannelType, 'text' | 'news'>, reason?: string): Promise<GuildChannel>;
     public fetchWebhooks(): Promise<Collection<Snowflake, Webhook>>;
     public addFollower(channel: GuildChannelResolvable, reason?: string): Promise<NewsChannel>;
+  }
+
+  export class OAuth2Guild extends BaseGuild {
+    public owner: boolean;
+    public permissions: Readonly<Permissions>;
   }
 
   export class PartialGroupDMChannel extends Channel {
@@ -2165,7 +2175,8 @@ declare module 'discord.js' {
   export class GuildManager extends BaseManager<Snowflake, Guild, GuildResolvable> {
     constructor(client: Client, iterable?: Iterable<any>);
     public create(name: string, options?: GuildCreateOptions): Promise<Guild>;
-    public fetch(id: Snowflake, cache?: boolean, force?: boolean): Promise<Guild>;
+    public fetch(options: Snowflake | FetchGuildOptions): Promise<Guild>;
+    public fetch(options?: FetchGuildsOptions): Promise<Collection<Snowflake, OAuth2Guild>>;
   }
 
   export class GuildMemberManager extends BaseManager<Snowflake, GuildMember, GuildMemberResolvable> {
@@ -2827,9 +2838,16 @@ declare module 'discord.js' {
     cache: boolean;
   }
 
-  interface GuildChannelOverwriteOptions {
-    reason?: string;
-    type?: number;
+  interface FetchGuildOptions {
+    guild: GuildResolvable;
+    cache?: boolean;
+    force?: boolean;
+  }
+
+  interface FetchGuildsOptions {
+    before?: Snowflake;
+    after?: Snowflake;
+    limit?: number;
   }
 
   interface FetchMemberOptions {
@@ -2927,6 +2945,11 @@ declare module 'discord.js' {
   }
 
   type GuildBanResolvable = GuildBan | UserResolvable;
+
+  interface GuildChannelOverwriteOptions {
+    reason?: string;
+    type?: number;
+  }
 
   type GuildChannelResolvable = Snowflake | GuildChannel;
 
@@ -3634,7 +3657,8 @@ declare module 'discord.js' {
     | 'TEAM_USER'
     | 'BUGHUNTER_LEVEL_2'
     | 'VERIFIED_BOT'
-    | 'EARLY_VERIFIED_BOT_DEVELOPER';
+    | 'EARLY_VERIFIED_BOT_DEVELOPER'
+    | 'DISCORD_CERTIFIED_MODERATOR';
 
   type UserResolvable = User | Snowflake | Message | GuildMember;
 
