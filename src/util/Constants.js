@@ -4,6 +4,24 @@ const Package = (exports.Package = require('../../package.json'));
 const { Error, RangeError } = require('../errors');
 
 /**
+ * Rate limit data
+ * @typedef {Object} RateLimitData
+ * @property {number} timeout Time until this rate limit ends, in ms
+ * @property {number} limit The maximum amount of requests of this endpoint
+ * @property {string} method The http method of this request
+ * @property {string} path The path of the request relative to the HTTP endpoint
+ * @property {string} route The route of the request relative to the HTTP endpoint
+ * @property {boolean} global Whether this is a global rate limit
+ */
+
+/**
+ * Whether this rate limit should throw an Error
+ * @typedef {Function} RateLimitQueueFilter
+ * @param {RateLimitData} rateLimitData The data of this rate limit
+ * @returns {boolean|Promise<boolean>}
+ */
+
+/**
  * Options for a client.
  * @typedef {Object} ClientOptions
  * @property {number|number[]|string} [shards] ID of the shard to run, or an array of shard IDs. If not specified,
@@ -34,6 +52,10 @@ const { Error, RangeError } = require('../errors');
  * (or 0 for never)
  * @property {number} [restGlobalRateLimit=0] How many requests to allow sending per second (0 for unlimited, 50 for
  * the standard global limit used by Discord)
+ * @property {string[]|RateLimitQueueFilter} [rejectOnRateLimit] Decides how rate limits and pre-emptive throttles
+ * should be handled. If this option is an array containing the prefix of the request route (e.g. /channels to match any
+ * route starting with /channels, such as /channels/222197033908436994/messages) or a function returning true, a
+ * {@link RateLimitError} will be thrown. Otherwise the request will be queued for later
  * @property {number} [retryLimit=1] How many times to retry on 5XX errors (Infinity for indefinite amount of retries)
  * @property {PresenceData} [presence={}] Presence data to use upon login
  * @property {IntentsResolvable} intents Intents to enable for this connection
@@ -106,7 +128,7 @@ const AllowedImageFormats = ['webp', 'png', 'jpg', 'jpeg', 'gif'];
 
 const AllowedImageSizes = Array.from({ length: 9 }, (e, i) => 2 ** (i + 4));
 
-function makeImageUrl(root, { format = 'png', size } = {}) {
+function makeImageUrl(root, { format = 'webp', size } = {}) {
   if (format && !AllowedImageFormats.includes(format)) throw new Error('IMAGE_FORMAT', format);
   if (size && !AllowedImageSizes.includes(size)) throw new RangeError('IMAGE_SIZE', size);
   return `${root}.${format}${size ? `?size=${size}` : ''}`;
@@ -114,11 +136,16 @@ function makeImageUrl(root, { format = 'png', size } = {}) {
 
 /**
  * Options for Image URLs.
- * @typedef {Object} ImageURLOptions
- * @property {string} [format] One of `webp`, `png`, `jpg`, `jpeg`, `gif`. If no format is provided,
- * defaults to `png`.
+ * @typedef {StaticImageURLOptions} ImageURLOptions
  * @property {boolean} [dynamic] If true, the format will dynamically change to `gif` for
- * animated avatars; the default is false.
+ * animated avatars; the default is false
+ */
+
+/**
+ * Options for static Image URLs.
+ * @typedef {Object} StaticImageURLOptions
+ * @property {string} [format] One of `webp`, `png`, `jpg`, `jpeg`, `gif`. If no format is provided,
+ * defaults to `webp`
  * @property {number} [size] One of `16`, `32`, `64`, `128`, `256`, `512`, `1024`, `2048`, `4096`
  */
 
@@ -128,27 +155,27 @@ exports.Endpoints = {
       Emoji: (emojiID, format = 'png') => `${root}/emojis/${emojiID}.${format}`,
       Asset: name => `${root}/assets/${name}`,
       DefaultAvatar: discriminator => `${root}/embed/avatars/${discriminator}.png`,
-      Avatar: (userID, hash, format = 'png', size, dynamic = false) => {
+      Avatar: (userID, hash, format = 'webp', size, dynamic = false) => {
         if (dynamic) format = hash.startsWith('a_') ? 'gif' : format;
         return makeImageUrl(`${root}/avatars/${userID}/${hash}`, { format, size });
       },
-      Banner: (guildID, hash, format = 'png', size) =>
+      Banner: (guildID, hash, format = 'webp', size) =>
         makeImageUrl(`${root}/banners/${guildID}/${hash}`, { format, size }),
-      Icon: (guildID, hash, format = 'png', size, dynamic = false) => {
+      Icon: (guildID, hash, format = 'webp', size, dynamic = false) => {
         if (dynamic) format = hash.startsWith('a_') ? 'gif' : format;
         return makeImageUrl(`${root}/icons/${guildID}/${hash}`, { format, size });
       },
-      AppIcon: (clientID, hash, { format = 'png', size } = {}) =>
+      AppIcon: (clientID, hash, { format = 'webp', size } = {}) =>
         makeImageUrl(`${root}/app-icons/${clientID}/${hash}`, { size, format }),
-      AppAsset: (clientID, hash, { format = 'png', size } = {}) =>
+      AppAsset: (clientID, hash, { format = 'webp', size } = {}) =>
         makeImageUrl(`${root}/app-assets/${clientID}/${hash}`, { size, format }),
-      GDMIcon: (channelID, hash, format = 'png', size) =>
+      GDMIcon: (channelID, hash, format = 'webp', size) =>
         makeImageUrl(`${root}/channel-icons/${channelID}/${hash}`, { size, format }),
-      Splash: (guildID, hash, format = 'png', size) =>
+      Splash: (guildID, hash, format = 'webp', size) =>
         makeImageUrl(`${root}/splashes/${guildID}/${hash}`, { size, format }),
-      DiscoverySplash: (guildID, hash, format = 'png', size) =>
+      DiscoverySplash: (guildID, hash, format = 'webp', size) =>
         makeImageUrl(`${root}/discovery-splashes/${guildID}/${hash}`, { size, format }),
-      TeamIcon: (teamID, hash, { format = 'png', size } = {}) =>
+      TeamIcon: (teamID, hash, { format = 'webp', size } = {}) =>
         makeImageUrl(`${root}/team-icons/${teamID}/${hash}`, { size, format }),
     };
   },
@@ -181,23 +208,6 @@ exports.Status = {
   RESUMING: 8,
 };
 
-/**
- * The current status of a voice connection. Here are the available statuses:
- * * CONNECTED: 0
- * * CONNECTING: 1
- * * AUTHENTICATING: 2
- * * RECONNECTING: 3
- * * DISCONNECTED: 4
- * @typedef {number} VoiceStatus
- */
-exports.VoiceStatus = {
-  CONNECTED: 0,
-  CONNECTING: 1,
-  AUTHENTICATING: 2,
-  RECONNECTING: 3,
-  DISCONNECTED: 4,
-};
-
 exports.OPCodes = {
   DISPATCH: 0,
   HEARTBEAT: 1,
@@ -213,18 +223,6 @@ exports.OPCodes = {
   HEARTBEAT_ACK: 11,
 };
 
-exports.VoiceOPCodes = {
-  IDENTIFY: 0,
-  SELECT_PROTOCOL: 1,
-  READY: 2,
-  HEARTBEAT: 3,
-  SESSION_DESCRIPTION: 4,
-  SPEAKING: 5,
-  HELLO: 8,
-  CLIENT_CONNECT: 12,
-  CLIENT_DISCONNECT: 13,
-};
-
 exports.Events = {
   RATE_LIMIT: 'rateLimit',
   INVALID_REQUEST_WARNING: 'invalidRequestWarning',
@@ -236,12 +234,10 @@ exports.Events = {
   GUILD_DELETE: 'guildDelete',
   GUILD_UPDATE: 'guildUpdate',
   GUILD_UNAVAILABLE: 'guildUnavailable',
-  GUILD_AVAILABLE: 'guildAvailable',
   GUILD_MEMBER_ADD: 'guildMemberAdd',
   GUILD_MEMBER_REMOVE: 'guildMemberRemove',
   GUILD_MEMBER_UPDATE: 'guildMemberUpdate',
   GUILD_MEMBER_AVAILABLE: 'guildMemberAvailable',
-  GUILD_MEMBER_SPEAKING: 'guildMemberSpeaking',
   GUILD_MEMBERS_CHUNK: 'guildMembersChunk',
   GUILD_INTEGRATIONS_UPDATE: 'guildIntegrationsUpdate',
   GUILD_ROLE_CREATE: 'roleCreate',
@@ -270,10 +266,7 @@ exports.Events = {
   PRESENCE_UPDATE: 'presenceUpdate',
   VOICE_SERVER_UPDATE: 'voiceServerUpdate',
   VOICE_STATE_UPDATE: 'voiceStateUpdate',
-  VOICE_BROADCAST_SUBSCRIBE: 'subscribe',
-  VOICE_BROADCAST_UNSUBSCRIBE: 'unsubscribe',
   TYPING_START: 'typingStart',
-  TYPING_STOP: 'typingStop',
   WEBHOOKS_UPDATE: 'webhookUpdate',
   INTERACTION_CREATE: 'interaction',
   ERROR: 'error',
@@ -602,6 +595,8 @@ exports.VerificationLevels = ['NONE', 'LOW', 'MEDIUM', 'HIGH', 'VERY_HIGH'];
  * * MAXIMUM_CHANNELS
  * * MAXIMUM_ATTACHMENTS
  * * MAXIMUM_INVITES
+ * * MAXIMUM_ANIMATED_EMOJIS
+ * * MAXIMUM_SERVER_MEMBERS
  * * GUILD_ALREADY_HAS_TEMPLATE
  * * UNAUTHORIZED
  * * ACCOUNT_VERIFICATION_REQUIRED
@@ -671,6 +666,8 @@ exports.APIErrors = {
   MAXIMUM_CHANNELS: 30013,
   MAXIMUM_ATTACHMENTS: 30015,
   MAXIMUM_INVITES: 30016,
+  MAXIMUM_ANIMATED_EMOJIS: 30018,
+  MAXIMUM_SERVER_MEMBERS: 30019,
   GUILD_ALREADY_HAS_TEMPLATE: 30031,
   UNAUTHORIZED: 40001,
   ACCOUNT_VERIFICATION_REQUIRED: 40002,
@@ -842,6 +839,14 @@ exports.MessageComponentTypes = createEnum([null, 'ACTION_ROW', 'BUTTON']);
  * @typedef {string} MessageButtonStyle
  */
 exports.MessageButtonStyles = createEnum([null, 'PRIMARY', 'SECONDARY', 'SUCCESS', 'DANGER', 'LINK']);
+
+/**
+ * The required MFA level for a guild
+ * * NONE
+ * * ELEVATED
+ * @typedef {string} MFALevel
+ */
+exports.MFALevels = createEnum(['NONE', 'ELEVATED']);
 
 /**
  * NSFW level of a Guild
