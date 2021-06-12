@@ -245,6 +245,10 @@ class RequestHandler {
       }
     }
 
+    if (this.manager.client.dogstats) this.manager.client.dogstats.increment("koya.requesthandler", { status: res.status });
+
+    // this.manager.client.logger.warn(`[REQUEST HANDLER] ${request.method.toUpperCase()} ${request.route}`, JSON.stringify(request.options.data));
+
     // Handle 2xx and 3xx responses
     if (res.ok) {
       // Nothing wrong with the request, proceed with the next one
@@ -255,6 +259,8 @@ class RequestHandler {
     if (res.status >= 400 && res.status < 500) {
       // Handle ratelimited requests
       if (res.status === 429) {
+        this.manager.client.logger.warn(`[RATELIMIT] ${request.method.toUpperCase()} ${request.route}`, JSON.stringify(request.options.data));
+
         const isGlobal = this.globalLimited;
         let limit, timeout;
         if (isGlobal) {
@@ -287,6 +293,10 @@ class RequestHandler {
         }
         return this.execute(request);
       }
+
+      if (res.status === 403) this.manager.client.logger.warn(`[FORBIDDEN] ${request.method.toUpperCase()} ${request.route}`, JSON.stringify(request.options.data));
+
+      if (res.status === 404) this.manager.client.logger.warn(`[NOT FOUND] ${request.method.toUpperCase()} ${request.path}`, JSON.stringify(request.options.data));
 
       // Handle possible malformed requests
       let data;
