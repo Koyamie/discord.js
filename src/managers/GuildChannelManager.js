@@ -5,7 +5,6 @@ const GuildChannel = require('../structures/GuildChannel');
 const PermissionOverwrites = require('../structures/PermissionOverwrites');
 const Collection = require('../util/Collection');
 const { ChannelTypes } = require('../util/Constants');
-const Collection = require('../util/Collection');
 
 /**
  * Manages API methods for GuildChannels and stores their cache.
@@ -33,18 +32,6 @@ class GuildChannelManager extends BaseManager {
     if (existing) return existing;
     this.cache.set(channel.id, channel);
     return channel;
-  }
-  
-  async fetch(id, cache = true, force = false) {
-    if (id && !force) {
-      const existing = this.cache.get(id);
-      if (existing) return existing;
-    }
-
-    const data = await this.client.api.guilds(this.guild.id).channels.get();
-    const channels = new Collection();
-    for (const channel of data) channels.set(channel.id, this.client.channels.add(channel, this.guild, cache));
-    return id ? channels.get(id) ?? null : channels;
   }
 
   /**
