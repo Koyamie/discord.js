@@ -591,6 +591,7 @@ exports.VerificationLevels = createEnum(['NONE', 'LOW', 'MEDIUM', 'HIGH', 'VERY_
  * * UNKNOWN_WEBHOOK
  * * UNKNOWN_BAN
  * * UNKNOWN_GUILD_TEMPLATE
+ * * UNKNOWN_STAGE_INSTANCE
  * * BOT_PROHIBITED_ENDPOINT
  * * BOT_ONLY_ENDPOINT
  * * ANNOUNCEMENT_EDIT_LIMIT_EXCEEDED
@@ -641,6 +642,7 @@ exports.VerificationLevels = createEnum(['NONE', 'LOW', 'MEDIUM', 'HIGH', 'VERY_
  * * INVALID_API_VERSION
  * * CANNOT_DELETE_COMMUNITY_REQUIRED_CHANNEL
  * * REACTION_BLOCKED
+ * * STAGE_ALREADY_OPEN
  * * RESOURCE_OVERLOADED
  * @typedef {string} APIError
  */
@@ -662,6 +664,7 @@ exports.APIErrors = {
   UNKNOWN_WEBHOOK: 10015,
   UNKNOWN_BAN: 10026,
   UNKNOWN_GUILD_TEMPLATE: 10057,
+  UNKNOWN_STAGE_INSTANCE: 10067,
   BOT_PROHIBITED_ENDPOINT: 20001,
   BOT_ONLY_ENDPOINT: 20002,
   ANNOUNCEMENT_EDIT_LIMIT_EXCEEDED: 20022,
@@ -713,6 +716,7 @@ exports.APIErrors = {
   CANNOT_DELETE_COMMUNITY_REQUIRED_CHANNEL: 50074,
   INVALID_STICKER_SENT: 50081,
   REACTION_BLOCKED: 90001,
+  STAGE_ALREADY_OPEN: 150006,
   RESOURCE_OVERLOADED: 130000,
 };
 
@@ -864,6 +868,16 @@ exports.NSFWLevels = createEnum(['DEFAULT', 'EXPLICIT', 'SAFE', 'AGE_RESTRICTED'
  * @typedef {string} PrivacyLevel
  */
 exports.PrivacyLevels = createEnum([null, 'PUBLIC', 'GUILD_ONLY']);
+
+/**
+ * The premium tier (Server Boost level) of a guild:
+ * * NONE
+ * * TIER_1
+ * * TIER_2
+ * * TIER_3
+ * @typedef {string} PremiumTier
+ */
+exports.PremiumTiers = createEnum(['NONE', 'TIER_1', 'TIER_2', 'TIER_3']);
 
 function keyMirror(arr) {
   let tmp = Object.create(null);

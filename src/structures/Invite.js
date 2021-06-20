@@ -2,6 +2,7 @@
 
 const Base = require('./Base');
 const IntegrationApplication = require('./IntegrationApplication');
+const InviteStageInstance = require('./InviteStageInstance');
 const { Error } = require('../errors');
 const { Endpoints } = require('../util/Constants');
 const Permissions = require('../util/Permissions');
@@ -18,11 +19,16 @@ class Invite extends Base {
   }
 
   _patch(data) {
+    const InviteGuild = require('./InviteGuild');
+    const Guild = require('./Guild');
     /**
-     * The guild the invite is for
-     * @type {?Guild}
+     * The guild the invite is for including welcome screen data if present
+     * @type {?(Guild|InviteGuild)}
      */
-    this.guild = data.guild ? this.client.guilds.add(data.guild, false) : null;
+    this.guild = null;
+    if (data.guild) {
+      this.guild = data.guild instanceof Guild ? data.guild : new InviteGuild(this.client, data.guild);
+    }
 
     /**
      * The code for this invite
@@ -112,6 +118,15 @@ class Invite extends Base {
     this.createdTimestamp = 'created_at' in data ? new Date(data.created_at).getTime() : null;
 
     this._expiresTimestamp = 'expires_at' in data ? new Date(data.expires_at).getTime() : null;
+
+    /**
+     * The stage instance data if there is a public {@link StageInstance} in the stage channel this invite is for
+     * @type {?InviteStageInstance}
+     */
+    this.stageInstance =
+      'stage_instance' in data
+        ? new InviteStageInstance(this.client, data.stage_instance, this.channel.id, this.guild.id)
+        : null;
   }
 
   /**
