@@ -16,7 +16,7 @@ class MessageComponentInteraction extends Interaction {
 
     /**
      * The message to which the component was attached
-     * @type {?Message|Object}
+     * @type {?(Message|APIMessageRaw)}
      */
     this.message = data.message ? this.channel?.messages.add(data.message) ?? data.message : null;
 
@@ -37,6 +37,12 @@ class MessageComponentInteraction extends Interaction {
      * @type {boolean}
      */
     this.deferred = false;
+
+    /**
+     * Whether the reply to this interaction is ephemeral
+     * @type {?boolean}
+     */
+    this.ephemeral = null;
 
     /**
      * Whether this interaction has already been replied to
