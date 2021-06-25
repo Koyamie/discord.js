@@ -308,7 +308,7 @@ class APIMessage {
   static create(target, options, extra = {}) {
     return new this(
       target,
-      typeof options !== 'object' || options === null ? { content: options, ...extra } : { ...options, ...extra },
+      typeof options !== 'object' || Array.isArray(options) || options === null ? { content: options, ...extra } : { ...options, ...extra },
     );
   }
 }
