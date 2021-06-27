@@ -407,8 +407,9 @@ class Util {
     allowEmpty = true,
   ) {
     if (Array.isArray(data)) data = data.join('\n');
-    return data;
-    if (typeof data !== 'string') throw new error(errorMessage);
+    if (typeof data !== 'string') {
+      console.warn(`Not a string: ${data}`);
+    }
     if (!allowEmpty && data.length === 0) throw new error(errorMessage);
     return data;
   }
