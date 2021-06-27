@@ -257,8 +257,8 @@ class APIMessage {
     return new this(
       target,
       typeof options !== 'object' || Array.isArray(options) || options === null
-      ? { content: options, ...extra }
-      : { ...options, ...extra },
+        ? { content: options, ...extra }
+        : { ...options, ...extra },
     );
   }
 }

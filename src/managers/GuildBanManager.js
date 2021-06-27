@@ -116,7 +116,7 @@ class GuildBanManager extends BaseManager {
   }
 
   async _fetchMany(cache) {
-    if (this.fetchTimestamp && (this.fetchTimestamp + 9e5 > Date.now())) return this.cache;
+    if (this.fetchTimestamp && this.fetchTimestamp + 9e5 > Date.now()) return this.cache;
     const data = await this.client.api.guilds(this.guild.id).bans.get();
     this.fetchTimestamp = Date.now();
     return data.reduce((col, ban) => col.set(ban.user.id, this.add(ban, cache)), new Collection());
