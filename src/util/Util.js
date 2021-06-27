@@ -406,10 +406,8 @@ class Util {
     errorMessage = `Expected a string, got ${data} instead.`,
     allowEmpty = true,
   ) {
+    if (typeof data !== 'string') console.warn(`Not a string: ${data}`);
     if (Array.isArray(data)) data = data.join('\n');
-    if (typeof data !== 'string') {
-      console.warn(`Not a string: ${data}`);
-    }
     if (!allowEmpty && data.length === 0) throw new error(errorMessage);
     return data;
   }
