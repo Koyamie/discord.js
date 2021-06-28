@@ -7,6 +7,23 @@ declare enum ActivityTypes {
   COMPETING = 5,
 }
 
+declare enum ApplicationCommandOptionTypes {
+  SUB_COMMAND = 1,
+  SUB_COMMAND_GROUP = 2,
+  STRING = 3,
+  INTEGER = 4,
+  BOOLEAN = 5,
+  USER = 6,
+  CHANNEL = 7,
+  ROLE = 8,
+  MENTIONABLE = 9,
+}
+
+declare enum ApplicationCommandPermissionTypes {
+  ROLE = 1,
+  USER = 2,
+}
+
 declare enum ChannelType {
   text = 0,
   dm = 1,
@@ -150,8 +167,6 @@ declare module 'discord.js' {
     APIRole,
     APIUser,
     Snowflake as APISnowflake,
-    ApplicationCommandOptionType as ApplicationCommandOptionTypes,
-    ApplicationCommandPermissionType as ApplicationCommandPermissionTypes,
   } from 'discord-api-types/v8';
   import { EventEmitter } from 'events';
   import { PathLike } from 'fs';
@@ -365,7 +380,7 @@ declare module 'discord.js' {
     public valueOf(): N;
     public [Symbol.iterator](): IterableIterator<S>;
     public static FLAGS: unknown;
-    public static resolve(bit?: BitFieldResolvable<any, number | bigint>): number | bigint;
+    public static resolve(bit?: BitFieldResolvable<S, N>): number | bigint;
   }
 
   export class ButtonInteraction extends MessageComponentInteraction {
@@ -1185,7 +1200,7 @@ declare module 'discord.js' {
   export class InteractionWebhook extends PartialWebhookMixin() {
     constructor(client: Client, id: Snowflake, token: string);
     public token: string;
-    public send(options: string | MessagePayload | InteractionReplyOptions): Promise<Message | RawMessage>;
+    public send(options: string | MessagePayload | InteractionReplyOptions): Promise<Message | APIMessage>;
   }
 
   export class Invite extends Base {
@@ -1372,7 +1387,7 @@ declare module 'discord.js' {
 
   export class MessageComponentInteraction extends Interaction {
     public readonly channel: TextChannel | DMChannel | NewsChannel | PartialDMChannel | null;
-    public readonly component: MessageActionRowComponent | Exclude<RawMessageComponent, RawActionRowComponent> | null;
+    public readonly component: MessageActionRowComponent | Exclude<APIMessageComponent, APIActionRowComponent> | null;
     public componentType: MessageComponentType;
     public customID: string;
     public deferred: boolean;
@@ -2123,9 +2138,9 @@ declare module 'discord.js' {
     public editMessage(
       message: MessageResolvable,
       options: string | MessagePayload | WebhookEditMessageOptions,
-    ): Promise<RawMessage>;
-    public fetchMessage(message: Snowflake, cache?: boolean): Promise<RawMessage>;
-    public send(options: string | MessagePayload | WebhookMessageOptions): Promise<RawMessage>;
+    ): Promise<APIMessage>;
+    public fetchMessage(message: Snowflake, cache?: boolean): Promise<APIMessage>;
+    public send(options: string | MessagePayload | WebhookMessageOptions): Promise<APIMessage>;
   }
 
   export class WebSocketManager extends EventEmitter {
@@ -2624,9 +2639,9 @@ declare module 'discord.js' {
     editMessage(
       message: MessageResolvable | '@original',
       options: string | MessagePayload | WebhookEditMessageOptions,
-    ): Promise<Message | RawMessage>;
-    fetchMessage(message: Snowflake | '@original', cache?: boolean): Promise<Message | RawMessage>;
-    send(options: string | MessagePayload | WebhookMessageOptions): Promise<Message | RawMessage>;
+    ): Promise<Message | APIMessage>;
+    fetchMessage(message: Snowflake | '@original', cache?: boolean): Promise<Message | APIMessage>;
+    send(options: string | MessagePayload | WebhookMessageOptions): Promise<Message | APIMessage>;
   }
 
   interface WebhookFields extends PartialWebhookFields {
@@ -2874,9 +2889,10 @@ declare module 'discord.js' {
   }
 
   type BitFieldResolvable<T extends string, N extends number | bigint> =
-    | RecursiveReadonlyArray<T | N | Readonly<BitField<T, N>>>
+    | RecursiveReadonlyArray<T | N | `${bigint}` | Readonly<BitField<T, N>>>
     | T
     | N
+    | `${bigint}`
     | Readonly<BitField<T, N>>;
 
   type BufferResolvable = Buffer | string;
