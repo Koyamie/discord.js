@@ -1,7 +1,7 @@
 'use strict';
 
 const Base = require('./Base');
-const { ChannelTypes } = require('../util/Constants');
+const { ChannelTypes, ThreadChannelTypes } = require('../util/Constants');
 const SnowflakeUtil = require('../util/SnowflakeUtil');
 
 /**
@@ -29,7 +29,7 @@ class Channel extends Base {
      * * `unknown` - a generic channel of unknown type, could be Channel or GuildChannel
      * @type {string}
      */
-    this.type = type ? type.toLowerCase() : 'unknown';
+    this.type = type?.toLowerCase() ?? 'unknown';
 
     /**
      * Whether the channel has been deleted
@@ -110,6 +110,14 @@ class Channel extends Base {
     return 'messages' in this;
   }
 
+  /**
+   * Indicates whether this channel is a thread channel.
+   * @returns {boolean}
+   */
+  isThread() {
+    return ThreadChannelTypes.includes(this.type);
+  }
+
   static create(client, data, guild) {
     const Structures = require('../util/Structures');
     let channel;
@@ -122,7 +130,8 @@ class Channel extends Base {
         channel = new PartialGroupDMChannel(client, data);
       }
     } else {
-      guild = guild || client.guilds.cache.get(data.guild_id);
+      if (!guild) guild = client.guilds.cache.get(data.guild_id);
+
       if (guild) {
         switch (data.type) {
           case ChannelTypes.TEXT: {
