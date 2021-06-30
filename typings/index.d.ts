@@ -172,7 +172,21 @@ declare module '@discordjs/voice' {
 }
 
 declare module 'discord.js' {
+  import {
+    blockQuote,
+    bold,
+    codeBlock,
+    inlineCode,
+    italic,
+    quote,
+    strikethrough,
+    time,
+    TimestampStyles,
+    TimestampStylesString,
+    underscore,
+  } from '@discordjs/builders';
   import BaseCollection from '@discordjs/collection';
+  import { DiscordGatewayAdapterCreator, DiscordGatewayAdapterLibraryMethods } from '@discordjs/voice';
   import { ChildProcess } from 'child_process';
   import {
     APIActionRowComponent,
@@ -189,8 +203,7 @@ declare module 'discord.js' {
   } from 'discord-api-types/v8';
   import { EventEmitter } from 'events';
   import { PathLike } from 'fs';
-  import { Readable, Stream, Writable } from 'stream';
-  import { DiscordGatewayAdapterCreator, DiscordGatewayAdapterLibraryMethods } from '@discordjs/voice';
+  import { Stream } from 'stream';
   import * as WebSocket from 'ws';
 
   export const version: string;
@@ -563,6 +576,7 @@ declare module 'discord.js' {
     public deleteReply(): Promise<void>;
     public editReply(options: string | MessagePayload | WebhookEditMessageOptions): Promise<Message | APIMessage>;
     public fetchReply(): Promise<Message | APIMessage>;
+    public followUp(options: string | MessagePayload | InteractionReplyOptions): Promise<Message | APIMessage>;
     public reply(
       options: string | MessagePayload | (InteractionReplyOptions & { fetchReply: true }),
     ): Promise<Message | APIMessage>;
@@ -1062,7 +1076,7 @@ declare module 'discord.js' {
     public readonly bannable: boolean;
     public deleted: boolean;
     public readonly displayColor: number;
-    public readonly displayHexColor: string;
+    public readonly displayHexColor: HexColorString;
     public readonly displayName: string;
     public guild: Guild;
     public readonly id: Snowflake;
@@ -1488,7 +1502,7 @@ declare module 'discord.js' {
     public description: string | null;
     public fields: EmbedField[];
     public footer: MessageEmbedFooter | null;
-    public readonly hexColor: string | null;
+    public readonly hexColor: HexColorString | null;
     public image: MessageEmbedImage | null;
     public readonly length: number;
     public provider: MessageEmbedProvider | null;
@@ -1725,7 +1739,7 @@ declare module 'discord.js' {
     public deleted: boolean;
     public readonly editable: boolean;
     public guild: Guild;
-    public readonly hexColor: string;
+    public readonly hexColor: HexColorString;
     public hoist: boolean;
     public id: Snowflake;
     public managed: boolean;
@@ -2092,6 +2106,22 @@ declare module 'discord.js' {
       reason?: string,
     ): Promise<{ id: Snowflake; position: number }[]>;
     public static splitMessage(text: string, options?: SplitOptions): string[];
+  }
+
+  export namespace Formatters {
+    export {
+      blockQuote,
+      bold,
+      codeBlock,
+      inlineCode,
+      italic,
+      quote,
+      strikethrough,
+      time,
+      TimestampStyles,
+      TimestampStylesString,
+      underscore,
+    };
   }
 
   export class VoiceChannel extends BaseGuildVoiceChannel {
@@ -3190,7 +3220,7 @@ declare module 'discord.js' {
     | 'RANDOM'
     | [number, number, number]
     | number
-    | `#${string}`;
+    | HexColorString;
 
   interface CommandInteractionOption {
     name: string;
@@ -3576,6 +3606,8 @@ declare module 'discord.js' {
   }
 
   type GuildTemplateResolvable = string;
+
+  type HexColorString = `#${string}`;
 
   interface HTTPAttachmentData {
     attachment: string | Buffer | Stream;
@@ -4082,7 +4114,7 @@ declare module 'discord.js' {
     > {
     readonly bannable: boolean;
     readonly displayColor: number;
-    readonly displayHexColor: string;
+    readonly displayHexColor: HexColorString;
     readonly displayName: string;
     guild: Guild;
     readonly manageable: boolean;
