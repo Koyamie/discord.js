@@ -563,7 +563,7 @@ declare module 'discord.js' {
 
   export class CommandInteraction extends Interaction {
     public readonly command: ApplicationCommand | ApplicationCommand<{ guild: GuildResolvable }> | null;
-    public readonly channel: TextChannel | DMChannel | NewsChannel | PartialDMChannel | null;
+    public readonly channel: TextChannel | DMChannel | NewsChannel | PartialDMChannel | ThreadChannel | null;
     public channelID: Snowflake;
     public commandID: Snowflake;
     public commandName: string;
@@ -1412,11 +1412,11 @@ declare module 'discord.js' {
   }
 
   export class MessageCollector extends Collector<Snowflake, Message> {
-    constructor(channel: TextChannel | DMChannel, options?: MessageCollectorOptions);
+    constructor(channel: TextChannel | DMChannel | ThreadChannel, options?: MessageCollectorOptions);
     private _handleChannelDeletion(channel: GuildChannel): void;
     private _handleGuildDeletion(guild: Guild): void;
 
-    public channel: Channel;
+    public channel: TextChannel | DMChannel | ThreadChannel;
     public readonly endReason: string | null;
     public options: MessageCollectorOptions;
     public received: number;
@@ -1426,7 +1426,7 @@ declare module 'discord.js' {
   }
 
   export class MessageComponentInteraction extends Interaction {
-    public readonly channel: TextChannel | DMChannel | NewsChannel | PartialDMChannel | null;
+    public readonly channel: TextChannel | DMChannel | NewsChannel | PartialDMChannel | ThreadChannel | null;
     public readonly component: MessageActionRowComponent | Exclude<APIMessageComponent, APIActionRowComponent> | null;
     public componentType: MessageComponentType;
     public customID: string;
@@ -1457,14 +1457,14 @@ declare module 'discord.js' {
 
   export class MessageComponentInteractionCollector extends Collector<Snowflake, MessageComponentInteraction> {
     constructor(
-      source: Message | TextChannel | NewsChannel | DMChannel,
+      source: Message | TextChannel | DMChannel | ThreadChannel,
       options?: MessageComponentInteractionCollectorOptions,
     );
     private _handleMessageDeletion(message: Message): void;
     private _handleChannelDeletion(channel: GuildChannel): void;
     private _handleGuildDeletion(guild: Guild): void;
 
-    public channel: TextChannel | NewsChannel | DMChannel;
+    public channel: TextChannel | DMChannel | ThreadChannel;
     public empty(): void;
     public readonly endReason: string | null;
     public message: Message | null;
@@ -1882,7 +1882,8 @@ declare module 'discord.js' {
   export class StageChannel extends BaseGuildVoiceChannel {
     public topic: string | null;
     public type: 'stage';
-    public readonly instance: StageInstance | null;
+    public readonly stageInstance: StageInstance | null;
+    public createStageInstance(options: StageInstanceCreateOptions): Promise<StageInstance>;
   }
 
   export class StageInstance extends Base {
@@ -2005,12 +2006,12 @@ declare module 'discord.js' {
     public leave(): Promise<ThreadChannel>;
     public permissionsFor(memberOrRole: GuildMember | Role): Readonly<Permissions>;
     public permissionsFor(memberOrRole: GuildMemberResolvable | RoleResolvable): Readonly<Permissions> | null;
-    public setArchived(archived: boolean, reason?: string): Promise<ThreadChannel>;
+    public setArchived(archived?: boolean, reason?: string): Promise<ThreadChannel>;
     public setAutoArchiveDuration(
       autoArchiveDuration: ThreadAutoArchiveDuration,
       reason?: string,
     ): Promise<ThreadChannel>;
-    public setLocked(locked: boolean, reason?: string): Promise<ThreadChannel>;
+    public setLocked(locked?: boolean, reason?: string): Promise<ThreadChannel>;
     public setName(name: string, reason?: string): Promise<ThreadChannel>;
     public setRateLimitPerUser(rateLimitPerUser: number, reason?: string): Promise<ThreadChannel>;
   }
@@ -2406,7 +2407,7 @@ declare module 'discord.js' {
     ): Promise<ApplicationCommandType>;
     public fetch(
       id: Snowflake,
-      options: FetchApplicationCommandOptions & { guild: GuildResolvable },
+      options: FetchApplicationCommandOptions & { guildID: Snowflake },
     ): Promise<ApplicationCommand>;
     public fetch(id: Snowflake, options?: FetchApplicationCommandOptions): Promise<ApplicationCommandType>;
     public fetch(
@@ -2432,27 +2433,24 @@ declare module 'discord.js' {
     public guildID: Snowflake | null;
     public manager: ApplicationCommandManager | GuildApplicationCommandManager | ApplicationCommand;
     public add(
-      options: BaseOptions & { permissions: ApplicationCommandPermissionData[] },
+      options: FetchSingleOptions & { permissions: ApplicationCommandPermissionData[] },
     ): Promise<ApplicationCommandPermissions[]>;
-    public has(options: BaseOptions & { permissionsID: UserResolvable | RoleResolvable }): Promise<boolean>;
+    public has(options: FetchSingleOptions & { permissionsID: UserResolvable | RoleResolvable }): Promise<boolean>;
     public fetch(options: FetchSingleOptions): Promise<ApplicationCommandPermissions[]>;
     public fetch(options: BaseOptions): Promise<Collection<Snowflake, ApplicationCommandPermissions[]>>;
     public remove(
       options:
-        | (BaseOptions & {
+        | (FetchSingleOptions & {
             users: UserResolvable | UserResolvable[];
             roles?: RoleResolvable | RoleResolvable[];
           })
-        | (BaseOptions & {
+        | (FetchSingleOptions & {
             users?: UserResolvable | UserResolvable[];
             roles: RoleResolvable | RoleResolvable[];
           }),
     ): Promise<ApplicationCommandPermissions[]>;
     public set(
-      options: BaseOptions & {
-        command: ApplicationCommandResolvable;
-        permissions: ApplicationCommandPermissionData[];
-      },
+      options: FetchSingleOptions & { permissions: ApplicationCommandPermissionData[] },
     ): Promise<ApplicationCommandPermissions[]>;
     public set(
       options: BaseOptions & {
@@ -2481,16 +2479,7 @@ declare module 'discord.js' {
     public edit(command: ApplicationCommandResolvable, data: ApplicationCommandData): Promise<ApplicationCommand>;
     public fetch(id: Snowflake, options?: BaseFetchOptions): Promise<ApplicationCommand>;
     public fetch(id?: Snowflake, options?: BaseFetchOptions): Promise<Collection<Snowflake, ApplicationCommand>>;
-    public fetchPermissions(): Promise<Collection<Snowflake, ApplicationCommandPermissions[]>>;
-    public fetchPermissions(command: ApplicationCommandResolvable): Promise<ApplicationCommandPermissions[]>;
     public set(commands: ApplicationCommandData[]): Promise<Collection<Snowflake, ApplicationCommand>>;
-    public setPermissions(
-      command: ApplicationCommandResolvable,
-      permissions: ApplicationCommandPermissionData[],
-    ): Promise<ApplicationCommandPermissions[]>;
-    public setPermissions(
-      permissions: GuildApplicationCommandPermissionData[],
-    ): Promise<Collection<Snowflake, ApplicationCommandPermissions[]>>;
   }
 
   export class GuildChannelManager extends BaseManager<
@@ -2606,7 +2595,7 @@ declare module 'discord.js' {
   }
 
   export class MessageManager extends BaseManager<Snowflake, Message, MessageResolvable> {
-    constructor(channel: TextChannel | DMChannel, iterable?: Iterable<any>);
+    constructor(channel: TextChannel | DMChannel | ThreadChannel, iterable?: Iterable<any>);
     public channel: TextBasedChannelFields;
     public cache: Collection<Snowflake, Message>;
     public crosspost(message: MessageResolvable): Promise<Message>;
@@ -2655,7 +2644,7 @@ declare module 'discord.js' {
   export class StageInstanceManager extends BaseManager<Snowflake, StageInstance, StageInstanceResolvable> {
     constructor(guild: Guild, iterable?: Iterable<any>);
     public guild: Guild;
-    public create(options: CreateStageInstanceOptions): Promise<StageInstance>;
+    public create(channel: StageChannel | Snowflake, options: StageInstanceCreateOptions): Promise<StageInstance>;
     public fetch(channel: StageChannel | Snowflake, options?: BaseFetchOptions): Promise<StageInstance>;
     public edit(channel: StageChannel | Snowflake, options: StageInstanceEditOptions): Promise<StageInstance>;
     public delete(channel: StageChannel | Snowflake): Promise<void>;
@@ -3238,8 +3227,7 @@ declare module 'discord.js' {
     reason?: string;
   }
 
-  interface CreateStageInstanceOptions {
-    channel: StageChannel | Snowflake;
+  interface StageInstanceCreateOptions {
     topic: string;
     privacyLevel?: PrivacyLevel | number;
   }
@@ -3887,7 +3875,7 @@ declare module 'discord.js' {
     nonce?: string | number;
     content?: string | null;
     embeds?: (MessageEmbed | MessageEmbedOptions)[];
-    components?: MessageActionRow[] | MessageActionRowOptions[] | MessageActionRowComponentResolvable[][];
+    components?: (MessageActionRow | MessageActionRowOptions | MessageActionRowComponentResolvable[])[];
     allowedMentions?: MessageMentionOptions;
     files?: (FileOptions | BufferResolvable | Stream | MessageAttachment)[];
     reply?: ReplyOptions;
