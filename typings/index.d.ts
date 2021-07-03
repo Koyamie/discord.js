@@ -439,7 +439,7 @@ declare module 'discord.js' {
     public fetch(force?: boolean): Promise<Channel>;
     public isText(): this is TextChannel | DMChannel | NewsChannel | ThreadChannel;
     public isThread(): this is ThreadChannel;
-    public toString(): string;
+    public toString(): ChannelMention;
   }
 
   export class Client extends BaseClient {
@@ -517,7 +517,7 @@ declare module 'discord.js' {
     public edit(data: ClientUserEditData): Promise<this>;
     public setActivity(options?: ActivityOptions): Presence;
     public setActivity(name: string, options?: ActivityOptions): Presence;
-    public setAFK(afk: boolean): Promise<Presence>;
+    public setAFK(afk: boolean, shardID?: number | number[]): Presence;
     public setAvatar(avatar: BufferResolvable | Base64Resolvable): Promise<this>;
     public setPresence(data: PresenceData): Presence;
     public setStatus(status: PresenceStatusData, shardID?: number | number[]): Presence;
@@ -578,9 +578,7 @@ declare module 'discord.js' {
     public editReply(options: string | MessagePayload | WebhookEditMessageOptions): Promise<Message | APIMessage>;
     public fetchReply(): Promise<Message | APIMessage>;
     public followUp(options: string | MessagePayload | InteractionReplyOptions): Promise<Message | APIMessage>;
-    public reply(
-      options: string | MessagePayload | (InteractionReplyOptions & { fetchReply: true }),
-    ): Promise<Message | APIMessage>;
+    public reply(options: InteractionReplyOptions & { fetchReply: true }): Promise<Message | APIMessage>;
     public reply(options: string | MessagePayload | InteractionReplyOptions): Promise<void>;
     private transformOption(option: unknown, resolved: unknown): CommandInteractionOption;
     private _createOptionsCollection(options: unknown, resolved: unknown): Collection<string, CommandInteractionOption>;
@@ -1105,7 +1103,7 @@ declare module 'discord.js' {
     public permissionsIn(channel: GuildChannelResolvable): Readonly<Permissions>;
     public setNickname(nickname: string | null, reason?: string): Promise<GuildMember>;
     public toJSON(): unknown;
-    public toString(): string;
+    public toString(): MemberMention;
     public valueOf(): string;
   }
 
@@ -1443,13 +1441,9 @@ declare module 'discord.js' {
     public editReply(options: string | MessagePayload | WebhookEditMessageOptions): Promise<Message | APIMessage>;
     public fetchReply(): Promise<Message | APIMessage>;
     public followUp(options: string | MessagePayload | InteractionReplyOptions): Promise<Message | APIMessage>;
-    public reply(
-      options: string | MessagePayload | (InteractionReplyOptions & { fetchReply: true }),
-    ): Promise<Message | APIMessage>;
+    public reply(options: InteractionReplyOptions & { fetchReply: true }): Promise<Message | APIMessage>;
     public reply(options: string | MessagePayload | InteractionReplyOptions): Promise<void>;
-    public update(
-      content: string | MessagePayload | (InteractionUpdateOptions & { fetchReply: true }),
-    ): Promise<Message | APIMessage>;
+    public update(content: InteractionUpdateOptions & { fetchReply: true }): Promise<Message | APIMessage>;
     public update(content: string | MessagePayload | InteractionUpdateOptions): Promise<void>;
 
     public static resolveType(type: MessageComponentTypeResolvable): MessageComponentType;
@@ -1592,7 +1586,7 @@ declare module 'discord.js' {
     public options: MessageSelectOption[];
     public placeholder: string | null;
     public type: 'SELECT_MENU';
-    public addOptions(options: MessageSelectOptionData[] | MessageSelectOptionData[][]): this;
+    public addOptions(...options: MessageSelectOptionData[] | MessageSelectOptionData[][]): this;
     public setCustomID(customID: string): this;
     public setDisabled(disabled: boolean): this;
     public setMaxValues(maxValues: number): this;
@@ -1763,7 +1757,7 @@ declare module 'discord.js' {
     public setPermissions(permissions: PermissionResolvable, reason?: string): Promise<Role>;
     public setPosition(position: number, options?: SetRolePositionOptions): Promise<Role>;
     public toJSON(): unknown;
-    public toString(): string;
+    public toString(): RoleMention;
 
     public static comparePositions(role1: Role, role2: Role): number;
   }
@@ -2058,7 +2052,7 @@ declare module 'discord.js' {
     public equals(user: User): boolean;
     public fetch(force?: boolean): Promise<User>;
     public fetchFlags(force?: boolean): Promise<UserFlags>;
-    public toString(): string;
+    public toString(): UserMention;
     public typingDurationIn(channel: ChannelResolvable): number;
     public typingIn(channel: ChannelResolvable): boolean;
     public typingSinceIn(channel: ChannelResolvable): Date;
@@ -2160,7 +2154,7 @@ declare module 'discord.js' {
     public serverMute: boolean | null;
     public sessionID: string | null;
     public streaming: boolean;
-    public selfVideo: boolean;
+    public selfVideo: boolean | null;
     public suppress: boolean;
     public requestToSpeakTimestamp: number | null;
 
@@ -2283,7 +2277,7 @@ declare module 'discord.js' {
     private _cleanupConnection(): void;
     private _emitDestroyed(): void;
 
-    public send(data: unknown): void;
+    public send(data: unknown, important?: boolean): void;
 
     public on(event: 'ready' | 'resumed' | 'invalidSession', listener: () => Awaited<void>): this;
     public on(event: 'close', listener: (event: CloseEvent) => Awaited<void>): this;
@@ -2639,6 +2633,7 @@ declare module 'discord.js' {
     public fetch(id: Snowflake, options?: BaseFetchOptions): Promise<Role | null>;
     public fetch(id?: Snowflake, options?: BaseFetchOptions): Promise<Collection<Snowflake, Role>>;
     public create(options?: CreateRoleOptions): Promise<Role>;
+    public edit(role: RoleResolvable, options: RoleData, reason?: string): Promise<Role>;
   }
 
   export class StageInstanceManager extends BaseManager<Snowflake, StageInstance, StageInstanceResolvable> {
@@ -2814,10 +2809,14 @@ declare module 'discord.js' {
     UNKNOWN_REDISTRIBUTABLE: 10036;
     UNKNOWN_GIFT_CODE: 10038;
     UNKNOWN_GUILD_TEMPLATE: 10057;
+    UNKNOWN_DISCOVERABLE_SERVER_CATEGORY: 10059;
+    UNKNOWN_STICKER: 10060;
     UNKNOWN_INTERACTION: 10062;
     UNKNOWN_APPLICATION_COMMAND: 10063;
     UNKNOWN_APPLICATION_COMMAND_PERMISSIONS: 10066;
     UNKNOWN_STAGE_INSTANCE: 10067;
+    UNKNOWN_GUILD_MEMBER_VERIFICATION_FORM: 10068;
+    UNKNOWN_GUILD_WELCOME_SCREEN: 10069;
     BOT_PROHIBITED_ENDPOINT: 20001;
     BOT_ONLY_ENDPOINT: 20002;
     CANNOT_SEND_EXPLICIT_CONTENT: 20009;
@@ -2841,10 +2840,12 @@ declare module 'discord.js' {
     MAXIMUM_INVITES: 30016;
     MAXIMUM_ANIMATED_EMOJIS: 30018;
     MAXIMUM_SERVER_MEMBERS: 30019;
+    MAXIMUM_NUMBER_OF_SERVER_CATEGORIES: 30030;
     GUILD_ALREADY_HAS_TEMPLATE: 30031;
     MAXIMUM_THREAD_PARICIPANTS: 30033;
     MAXIMUM_NON_GUILD_MEMBERS_BANS: 30035;
     MAXIMUM_BAN_FETCHES: 30037;
+    MAXIMUM_NUMBER_OF_STICKERS_REACHED: 30039;
     UNAUTHORIZED: 40001;
     ACCOUNT_VERIFICATION_REQUIRED: 40002;
     DIRECT_MESSAGES_TOO_FAST: 40003;
@@ -3032,6 +3033,8 @@ declare module 'discord.js' {
     after?: Snowflake;
     around?: Snowflake;
   }
+
+  type ChannelMention = `<#${Snowflake}>`;
 
   interface ChannelPosition {
     channel: ChannelResolvable;
@@ -3714,6 +3717,8 @@ declare module 'discord.js' {
     stack: string;
   }
 
+  type MemberMention = UserMention | `<@!${Snowflake}>`;
+
   type MembershipState = keyof typeof MembershipStates;
 
   type MessageActionRowComponent = MessageButton | MessageSelectMenu;
@@ -3723,7 +3728,7 @@ declare module 'discord.js' {
   type MessageActionRowComponentResolvable = MessageActionRowComponent | MessageActionRowComponentOptions;
 
   interface MessageActionRowOptions extends BaseMessageComponentOptions {
-    components?: MessageActionRowComponentResolvable[];
+    components: MessageActionRowComponentResolvable[];
   }
 
   interface MessageActivity {
@@ -3776,7 +3781,7 @@ declare module 'discord.js' {
     files?: (FileOptions | BufferResolvable | Stream | MessageAttachment)[];
     flags?: BitFieldResolvable<MessageFlagsString, number>;
     allowedMentions?: MessageMentionOptions;
-    components?: MessageActionRow[] | MessageActionRowOptions[] | MessageActionRowComponentResolvable[][];
+    components?: (MessageActionRow | MessageActionRowOptions | MessageActionRowComponentResolvable[])[];
   }
 
   interface MessageEmbedAuthor {
@@ -4213,12 +4218,14 @@ declare module 'discord.js' {
     mentionable?: boolean;
   }
 
+  type RoleMention = '@everyone' | `<@&${Snowflake}>`;
+
   interface RolePosition {
     role: RoleResolvable;
     position: number;
   }
 
-  type RoleResolvable = Role | string;
+  type RoleResolvable = Role | Snowflake;
 
   interface RoleTagData {
     botID?: Snowflake;
@@ -4341,6 +4348,8 @@ declare module 'discord.js' {
     | 'VERIFIED_BOT'
     | 'EARLY_VERIFIED_BOT_DEVELOPER'
     | 'DISCORD_CERTIFIED_MODERATOR';
+
+  type UserMention = `<@${Snowflake}>`;
 
   type UserResolvable = User | Snowflake | Message | GuildMember | ThreadMember;
 
