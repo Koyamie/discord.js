@@ -10,11 +10,7 @@ const isObject = d => typeof d === 'object' && d !== null;
 /**
  * Contains various general-purpose utility methods.
  */
-class Util {
-  constructor() {
-    throw new Error(`The ${this.constructor.name} class may not be instantiated.`);
-  }
-
+class Util extends null {
   /**
    * Flatten an object. Any properties that are collections will get converted to an array of keys.
    * @param {Object} obj The object to flatten.
@@ -79,9 +75,9 @@ class Util {
       while (char.length > 0 && splitText.some(elem => elem.length > maxLength)) {
         const currentChar = char.shift();
         if (currentChar instanceof RegExp) {
-          splitText = splitText.map(chunk => chunk.match(currentChar));
+          splitText = splitText.flatMap(chunk => chunk.match(currentChar));
         } else {
-          splitText = splitText.map(chunk => chunk.split(currentChar));
+          splitText = splitText.flatMap(chunk => chunk.split(currentChar));
         }
       }
     } else {
