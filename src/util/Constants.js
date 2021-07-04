@@ -18,7 +18,7 @@ const AllowedImageFormats = ['webp', 'png', 'jpg', 'jpeg', 'gif'];
 
 const AllowedImageSizes = Array.from({ length: 9 }, (e, i) => 2 ** (i + 4));
 
-function makeImageUrl(root, { format = 'webp', size } = {}) {
+function makeImageUrl(root, { format = 'png', size } = {}) {
   if (format && !AllowedImageFormats.includes(format)) throw new Error('IMAGE_FORMAT', format);
   if (size && !AllowedImageSizes.includes(size)) throw new RangeError('IMAGE_SIZE', size);
   return `${root}.${format}${size ? `?size=${size}` : ''}`;
@@ -35,7 +35,7 @@ function makeImageUrl(root, { format = 'webp', size } = {}) {
  * Options for static Image URLs.
  * @typedef {Object} StaticImageURLOptions
  * @property {string} [format] One of `webp`, `png`, `jpg`, `jpeg`, `gif`. If no format is provided,
- * defaults to `webp`
+ * defaults to `png`
  * @property {number} [size] One of `16`, `32`, `64`, `128`, `256`, `512`, `1024`, `2048`, `4096`
  */
 
@@ -45,27 +45,27 @@ exports.Endpoints = {
       Emoji: (emojiId, format = 'png') => `${root}/emojis/${emojiId}.${format}`,
       Asset: name => `${root}/assets/${name}`,
       DefaultAvatar: discriminator => `${root}/embed/avatars/${discriminator}.png`,
-      Avatar: (userId, hash, format = 'webp', size, dynamic = false) => {
+      Avatar: (userId, hash, format = 'png', size, dynamic = false) => {
         if (dynamic) format = hash.startsWith('a_') ? 'gif' : format;
         return makeImageUrl(`${root}/avatars/${userId}/${hash}`, { format, size });
       },
-      Banner: (guildId, hash, format = 'webp', size) =>
+      Banner: (guildId, hash, format = 'png', size) =>
         makeImageUrl(`${root}/banners/${guildId}/${hash}`, { format, size }),
-      Icon: (guildId, hash, format = 'webp', size, dynamic = false) => {
+      Icon: (guildId, hash, format = 'png', size, dynamic = false) => {
         if (dynamic) format = hash.startsWith('a_') ? 'gif' : format;
         return makeImageUrl(`${root}/icons/${guildId}/${hash}`, { format, size });
       },
-      AppIcon: (clientId, hash, { format = 'webp', size } = {}) =>
+      AppIcon: (clientId, hash, { format = 'png', size } = {}) =>
         makeImageUrl(`${root}/app-icons/${clientId}/${hash}`, { size, format }),
-      AppAsset: (clientId, hash, { format = 'webp', size } = {}) =>
+      AppAsset: (clientId, hash, { format = 'png', size } = {}) =>
         makeImageUrl(`${root}/app-assets/${clientId}/${hash}`, { size, format }),
-      GDMIcon: (channelId, hash, format = 'webp', size) =>
+      GDMIcon: (channelId, hash, format = 'png', size) =>
         makeImageUrl(`${root}/channel-icons/${channelId}/${hash}`, { size, format }),
-      Splash: (guildId, hash, format = 'webp', size) =>
+      Splash: (guildId, hash, format = 'png', size) =>
         makeImageUrl(`${root}/splashes/${guildId}/${hash}`, { size, format }),
-      DiscoverySplash: (guildId, hash, format = 'webp', size) =>
+      DiscoverySplash: (guildId, hash, format = 'png', size) =>
         makeImageUrl(`${root}/discovery-splashes/${guildId}/${hash}`, { size, format }),
-      TeamIcon: (teamId, hash, { format = 'webp', size } = {}) =>
+      TeamIcon: (teamId, hash, { format = 'png', size } = {}) =>
         makeImageUrl(`${root}/team-icons/${teamId}/${hash}`, { size, format }),
     };
   },
