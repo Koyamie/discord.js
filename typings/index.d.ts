@@ -509,7 +509,8 @@ declare module 'discord.js' {
     public setUsername(username: string): Promise<this>;
   }
 
-  export class Options {
+  export class Options extends null {
+    private constructor();
     public static createDefaultOptions(): ClientOptions;
     public static cacheWithLimits(limits?: Record<string, number>): CacheFactory;
     public static cacheEverything(): CacheFactory;
@@ -858,6 +859,7 @@ declare module 'discord.js' {
     public approximatePresenceCount: number | null;
     public available: boolean;
     public bans: GuildBanManager;
+    public invites: GuildInviteManager;
     public channels: GuildChannelManager;
     public commands: GuildApplicationCommandManager;
     public defaultMessageNotifications: DefaultMessageNotificationLevel | number;
@@ -906,7 +908,6 @@ declare module 'discord.js' {
     public equals(guild: Guild): boolean;
     public fetchAuditLogs(options?: GuildAuditLogsFetchOptions): Promise<GuildAuditLogs>;
     public fetchIntegrations(): Promise<Collection<string, Integration>>;
-    public fetchInvites(): Promise<Collection<string, Invite>>;
     public fetchOwner(options?: FetchOwnerOptions): Promise<GuildMember>;
     public fetchPreview(): Promise<GuildPreview>;
     public fetchTemplates(): Promise<Collection<GuildTemplate['code'], GuildTemplate>>;
@@ -1020,7 +1021,7 @@ declare module 'discord.js' {
     public createInvite(options?: CreateInviteOptions): Promise<Invite>;
     public edit(data: ChannelData, reason?: string): Promise<this>;
     public equals(channel: GuildChannel): boolean;
-    public fetchInvites(): Promise<Collection<string, Invite>>;
+    public fetchInvites(cache?: boolean): Promise<Collection<string, Invite>>;
     public lockPermissions(): Promise<this>;
     public permissionsFor(memberOrRole: GuildMember | Role): Readonly<Permissions>;
     public permissionsFor(memberOrRole: GuildMemberResolvable | RoleResolvable): Readonly<Permissions> | null;
@@ -1883,11 +1884,11 @@ declare module 'discord.js' {
     public ownerId: Snowflake | null;
     public members: Collection<Snowflake, TeamMember>;
 
-    public readonly owner: TeamMember;
+    public readonly owner: TeamMember | null;
     public readonly createdAt: Date;
     public readonly createdTimestamp: number;
 
-    public iconURL(options?: StaticImageURLOptions): string;
+    public iconURL(options?: StaticImageURLOptions): string | null;
     public toJSON(): unknown;
     public toString(): string;
   }
@@ -1900,7 +1901,7 @@ declare module 'discord.js' {
     public membershipState: MembershipState;
     public user: User;
 
-    public toString(): string;
+    public toString(): UserMention;
   }
 
   export class TextChannel extends TextBasedChannel(GuildChannel) {
@@ -2530,6 +2531,15 @@ declare module 'discord.js' {
     public fetch(options: UserResolvable | FetchBanOptions): Promise<GuildBan>;
     public fetch(options?: FetchBansOptions): Promise<Collection<Snowflake, GuildBan>>;
     public remove(user: UserResolvable, reason?: string): Promise<User>;
+  }
+
+  export class GuildInviteManager extends DataManager<Snowflake, Invite, InviteResolvable> {
+    constructor(guild: Guild, iterable?: Iterable<any>);
+    public guild: Guild;
+    public create(channel: GuildChannelResolvable, options?: CreateInviteOptions): Promise<Invite>;
+    public fetch(options: InviteResolvable | FetchInviteOptions): Promise<Invite>;
+    public fetch(options?: FetchInvitesOptions): Promise<Collection<string, Invite>>;
+    public delete(invite: InviteResolvable, reason?: string): Promise<Invite>;
   }
 
   export class GuildMemberRoleManager extends DataManager<Snowflake, Role, RoleResolvable> {
@@ -3306,6 +3316,15 @@ declare module 'discord.js' {
     cache: boolean;
   }
 
+  interface FetchInviteOptions extends BaseFetchOptions {
+    code: string;
+  }
+
+  interface FetchInvitesOptions {
+    channelID?: Snowflake;
+    cache?: boolean;
+  }
+
   interface FetchGuildOptions extends BaseFetchOptions {
     guild: GuildResolvable;
   }
@@ -3677,7 +3696,7 @@ declare module 'discord.js' {
     permissions?: PermissionResolvable;
     guild?: GuildResolvable;
     disableGuildSelect?: boolean;
-    additionalScopes?: InviteScope[];
+    scopes: InviteScope[];
   }
 
   interface CreateInviteOptions {
