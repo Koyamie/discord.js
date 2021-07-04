@@ -1,6 +1,6 @@
 'use strict';
 
-const BaseManager = require('./BaseManager');
+const CachedManager = require('./CachedManager');
 const { TypeError } = require('../errors');
 const PermissionOverwrites = require('../structures/PermissionOverwrites');
 const Role = require('../structures/Role');
@@ -9,11 +9,11 @@ const { OverwriteTypes } = require('../util/Constants');
 
 /**
  * Manages API methods for guild channel permission overwrites and stores their cache.
- * @extends {BaseManager}
+ * @extends {CachedManager}
  */
-class PermissionOverwriteManager extends BaseManager {
+class PermissionOverwriteManager extends CachedManager {
   constructor(channel, iterable) {
-    super(channel.client, iterable, PermissionOverwrites);
+    super(channel.client, PermissionOverwrites, iterable);
 
     /**
      * The channel of the permission overwrite this manager belongs to
@@ -136,10 +136,10 @@ class PermissionOverwriteManager extends BaseManager {
    * @returns {GuildChannel}
    */
   async delete(userOrRole, reason) {
-    userOrRole = this.channel.guild.roles.resolveID(userOrRole) ?? this.client.users.resolveID(userOrRole);
-    if (!userOrRole) throw new TypeError('INVALID_TYPE', 'parameter', 'User nor a Role');
+    const userOrRoleID = this.channel.guild.roles.resolveID(userOrRole) ?? this.client.users.resolveID(userOrRole);
+    if (!userOrRoleID) throw new TypeError('INVALID_TYPE', 'parameter', 'User nor a Role');
 
-    await this.client.api.channels(this.channel.id).permissions(userOrRole.id).delete({ reason });
+    await this.client.api.channels(this.channel.id).permissions(userOrRoleID).delete({ reason });
     return this.channel;
   }
 }
