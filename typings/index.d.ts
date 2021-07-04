@@ -312,6 +312,7 @@ declare module 'discord.js' {
     public permissions: ApplicationCommandPermissionsManager<
       PermissionsFetchType,
       PermissionsFetchType,
+      PermissionsFetchType,
       Guild | null,
       Snowflake
     >;
@@ -1887,20 +1888,6 @@ declare module 'discord.js' {
     public type: 'store';
   }
 
-  export class Structures extends null {
-    private constructor();
-    public static get<K extends keyof Extendable>(structure: K): Extendable[K];
-    public static get(structure: string): (...args: any[]) => void;
-    public static extend<K extends keyof Extendable, T extends Extendable[K]>(
-      structure: K,
-      extender: (baseClass: Extendable[K]) => T,
-    ): T;
-    public static extend<T extends (...args: any[]) => void>(
-      structure: string,
-      extender: (baseClass: typeof Function) => T,
-    ): T;
-  }
-
   export class SystemChannelFlags extends BitField<SystemChannelFlagsString> {
     public static FLAGS: Record<SystemChannelFlagsString, number>;
     public static resolve(bit?: BitFieldResolvable<SystemChannelFlagsString, number>): number;
@@ -2375,6 +2362,7 @@ declare module 'discord.js' {
     public permissions: ApplicationCommandPermissionsManager<
       { command?: ApplicationCommandResolvable } & PermissionsOptionsExtras,
       { command: ApplicationCommandResolvable } & PermissionsOptionsExtras,
+      PermissionsOptionsExtras,
       PermissionsGuildType,
       null
     >;
@@ -2415,6 +2403,7 @@ declare module 'discord.js' {
   export class ApplicationCommandPermissionsManager<
     BaseOptions,
     FetchSingleOptions,
+    FullPermissionsOptions,
     GuildType,
     CommandIDType,
   > extends BaseManager {
@@ -2445,7 +2434,7 @@ declare module 'discord.js' {
       options: FetchSingleOptions & { permissions: ApplicationCommandPermissionData[] },
     ): Promise<ApplicationCommandPermissions[]>;
     public set(
-      options: BaseOptions & {
+      options: FullPermissionsOptions & {
         fullPermissions: GuildApplicationCommandPermissionData[];
       },
     ): Promise<Collection<Snowflake, ApplicationCommandPermissions[]>>;
@@ -2668,7 +2657,11 @@ declare module 'discord.js' {
     public delete(channel: StageChannel | Snowflake): Promise<void>;
   }
 
-  export class ThreadManager<AllowedThreadType> extends CachedManager<Snowflake, ThreadChannel, ThreadChannelResolvable> {
+  export class ThreadManager<AllowedThreadType> extends CachedManager<
+    Snowflake,
+    ThreadChannel,
+    ThreadChannelResolvable
+  > {
     constructor(channel: TextChannel | NewsChannel, iterable?: Iterable<any>);
     public channel: TextChannel | NewsChannel;
     public create(options: ThreadCreateOptions<AllowedThreadType>): Promise<ThreadChannel>;
@@ -3318,29 +3311,6 @@ declare module 'discord.js' {
   }
 
   type ExplicitContentFilterLevel = keyof typeof ExplicitContentFilterLevels;
-
-  interface Extendable {
-    GuildEmoji: typeof GuildEmoji;
-    DMChannel: typeof DMChannel;
-    TextChannel: typeof TextChannel;
-    VoiceChannel: typeof VoiceChannel;
-    CategoryChannel: typeof CategoryChannel;
-    NewsChannel: typeof NewsChannel;
-    StoreChannel: typeof StoreChannel;
-    ThreadChannel: typeof ThreadChannel;
-    GuildMember: typeof GuildMember;
-    ThreadMember: typeof ThreadMember;
-    Guild: typeof Guild;
-    Message: typeof Message;
-    MessageReaction: typeof MessageReaction;
-    Presence: typeof Presence;
-    VoiceState: typeof VoiceState;
-    Role: typeof Role;
-    User: typeof User;
-    CommandInteraction: typeof CommandInteraction;
-    ButtonInteraction: typeof ButtonInteraction;
-    SelectMenuInteraction: typeof SelectMenuInteraction;
-  }
 
   interface FetchApplicationCommandOptions extends BaseFetchOptions {
     guildID?: Snowflake;
