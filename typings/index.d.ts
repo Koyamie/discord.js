@@ -105,7 +105,7 @@ export abstract class AnonymousGuild extends BaseGuild {
   public splashURL(options?: StaticImageURLOptions): string | null;
 }
 
-export abstract class Application {
+export abstract class Application extends Base {
   public constructor(client: Client, data: unknown);
   public readonly createdAt: Date;
   public readonly createdTimestamp: number;
@@ -173,9 +173,9 @@ export class BaseClient extends EventEmitter {
   public clearTimeout(timeout: NodeJS.Timeout): void;
   public clearImmediate(timeout: NodeJS.Immediate): void;
   public destroy(): void;
-  public setInterval(fn: (...args: unknown[]) => void, delay: number, ...args: unknown[]): NodeJS.Timeout;
-  public setTimeout(fn: (...args: unknown[]) => void, delay: number, ...args: unknown[]): NodeJS.Timeout;
-  public setImmediate(fn: (...args: unknown[]) => void, ...args: unknown[]): NodeJS.Immediate;
+  public setInterval<T extends any[]>(fn: (...args: T) => Awaited<void>, delay: number, ...args: T): NodeJS.Timeout;
+  public setTimeout<T extends any[]>(fn: (...args: T) => Awaited<void>, delay: number, ...args: T): NodeJS.Timeout;
+  public setImmediate<T extends any[]>(fn: (...args: T) => Awaited<void>, ...args: T): NodeJS.Immediate;
   public toJSON(...props: Record<string, boolean | string>[]): unknown;
 }
 
@@ -220,7 +220,7 @@ export class BaseGuildVoiceChannel extends GuildChannel {
 export class BaseMessageComponent {
   public constructor(data?: BaseMessageComponent | BaseMessageComponentOptions);
   public type: MessageComponentType | null;
-  private static create(data: MessageComponentOptions): MessageComponent;
+  private static create(data: MessageComponentOptions, client?: Client | WebhookClient, skipValidation?: boolean): MessageComponent | undefined;
   private static resolveType(type: MessageComponentTypeResolvable): MessageComponentType;
 }
 
@@ -261,7 +261,7 @@ export class Channel extends Base {
   public deleted: boolean;
   public id: Snowflake;
   public type: keyof typeof ChannelType;
-  public delete(reason?: string): Promise<Channel>;
+  public delete(): Promise<Channel>;
   public fetch(force?: boolean): Promise<Channel>;
   public isText(): this is TextChannel | DMChannel | NewsChannel | ThreadChannel;
   public isThread(): this is ThreadChannel;
@@ -294,7 +294,7 @@ export class Client extends BaseClient {
   public fetchGuildTemplate(template: GuildTemplateResolvable): Promise<GuildTemplate>;
   public fetchVoiceRegions(): Promise<Collection<string, VoiceRegion>>;
   public fetchWebhook(id: Snowflake, token?: string): Promise<Webhook>;
-  public fetchWidget(id: Snowflake): Promise<Widget>;
+  public fetchWidget(guild: GuildResolvable): Promise<Widget>;
   public generateInvite(options?: InviteGenerationOptions): string;
   public login(token?: string): Promise<string>;
   public sweepMessages(lifetime?: number): number;
@@ -303,13 +303,13 @@ export class Client extends BaseClient {
   public on<K extends keyof ClientEvents>(event: K, listener: (...args: ClientEvents[K]) => Awaited<void>): this;
   public on<S extends string | symbol>(
     event: Exclude<S, keyof ClientEvents>,
-    listener: (...args: unknown[]) => Awaited<void>,
+    listener: (...args: any[]) => Awaited<void>,
   ): this;
 
   public once<K extends keyof ClientEvents>(event: K, listener: (...args: ClientEvents[K]) => Awaited<void>): this;
   public once<S extends string | symbol>(
     event: Exclude<S, keyof ClientEvents>,
-    listener: (...args: unknown[]) => Awaited<void>,
+    listener: (...args: any[]) => Awaited<void>,
   ): this;
 
   public emit<K extends keyof ClientEvents>(event: K, ...args: ClientEvents[K]): boolean;
@@ -318,7 +318,7 @@ export class Client extends BaseClient {
   public off<K extends keyof ClientEvents>(event: K, listener: (...args: ClientEvents[K]) => Awaited<void>): this;
   public off<S extends string | symbol>(
     event: Exclude<S, keyof ClientEvents>,
-    listener: (...args: unknown[]) => Awaited<void>,
+    listener: (...args: any[]) => Awaited<void>,
   ): this;
 
   public removeAllListeners<K extends keyof ClientEvents>(event?: K): this;
@@ -387,14 +387,14 @@ export abstract class Collector<K, V, F extends unknown[] = []> extends EventEmi
   public [Symbol.asyncIterator](): AsyncIterableIterator<V>;
   public toJSON(): unknown;
 
-  protected listener: (...args: unknown[]) => void;
+  protected listener: (...args: any[]) => void;
   public abstract collect(...args: unknown[]): K | null | Promise<K | null>;
   public abstract dispose(...args: unknown[]): K | null;
 
-  public on(event: 'collect' | 'dispose', listener: (...args: unknown[]) => Awaited<void>): this;
+  public on(event: 'collect' | 'dispose', listener: (...args: [V, ...F]) => Awaited<void>): this;
   public on(event: 'end', listener: (collected: Collection<K, V>, reason: string) => Awaited<void>): this;
 
-  public once(event: 'collect' | 'dispose', listener: (...args: unknown[]) => Awaited<void>): this;
+  public once(event: 'collect' | 'dispose', listener: (...args: [V, ...F]) => Awaited<void>): this;
   public once(event: 'end', listener: (collected: Collection<K, V>, reason: string) => Awaited<void>): this;
 }
 
@@ -427,7 +427,7 @@ export class DataResolver extends null {
   public static resolveCode(data: string, regx: RegExp): string;
   public static resolveFile(resource: BufferResolvable | Stream): Promise<Buffer | Stream>;
   public static resolveFileAsBuffer(resource: BufferResolvable | Stream): Promise<Buffer>;
-  public static resolveImage(resource: BufferResolvable | Base64Resolvable): Promise<string>;
+  public static resolveImage(resource: BufferResolvable | Base64Resolvable): Promise<string | null>;
   public static resolveInviteCode(data: InviteResolvable): string;
   public static resolveGuildTemplateCode(data: GuildTemplateResolvable): string;
 }
@@ -687,7 +687,7 @@ export class GuildMember extends PartialTextBasedChannel(Base) {
   public readonly permissions: Readonly<Permissions>;
   public readonly premiumSince: Date | null;
   public premiumSinceTimestamp: number | null;
-  public readonly presence: Presence;
+  public readonly presence: Presence | null;
   public readonly roles: GuildMemberRoleManager;
   public user: User;
   public readonly voice: VoiceState;
@@ -804,9 +804,6 @@ export class IntegrationApplication extends Application {
 
 export class Intents extends BitField<IntentsString> {
   public static FLAGS: Record<IntentsString, number>;
-  public static PRIVILEGED: number;
-  public static ALL: number;
-  public static NON_PRIVILEGED: number;
   public static resolve(bit?: BitFieldResolvable<IntentsString, number>): number;
 }
 
@@ -853,11 +850,11 @@ export class InteractionCollector<T extends Interaction> extends Collector<Snowf
   public dispose(interaction: Interaction): Snowflake;
   public on(event: 'collect' | 'dispose', listener: (interaction: T) => Awaited<void>): this;
   public on(event: 'end', listener: (collected: Collection<Snowflake, T>, reason: string) => Awaited<void>): this;
-  public on(event: string, listener: (...args: unknown[]) => Awaited<void>): this;
+  public on(event: string, listener: (...args: any[]) => Awaited<void>): this;
 
   public once(event: 'collect' | 'dispose', listener: (interaction: T) => Awaited<void>): this;
   public once(event: 'end', listener: (collected: Collection<Snowflake, T>, reason: string) => Awaited<void>): this;
-  public once(event: string, listener: (...args: unknown[]) => Awaited<void>): this;
+  public once(event: string, listener: (...args: any[]) => Awaited<void>): this;
 }
 
 export class InteractionWebhook extends PartialWebhookMixin() {
@@ -1276,7 +1273,7 @@ export class Permissions extends BitField<PermissionString, bigint> {
   public static resolve(permission?: PermissionResolvable): bigint;
 }
 
-export class Presence {
+export class Presence extends Base {
   public constructor(client: Client, data?: unknown);
   public activities: Activity[];
   public clientStatus: ClientPresenceStatusData | null;
@@ -1308,14 +1305,14 @@ export class ReactionCollector extends Collector<Snowflake | string, MessageReac
 
   public on(event: 'collect' | 'dispose' | 'remove', listener: (reaction: MessageReaction, user: User) => void): this;
   public on(event: 'end', listener: (collected: Collection<Snowflake, MessageReaction>, reason: string) => void): this;
-  public on(event: string, listener: (...args: unknown[]) => void): this;
+  public on(event: string, listener: (...args: any[]) => void): this;
 
   public once(event: 'collect' | 'dispose' | 'remove', listener: (reaction: MessageReaction, user: User) => void): this;
   public once(
     event: 'end',
     listener: (collected: Collection<Snowflake, MessageReaction>, reason: string) => void,
   ): this;
-  public once(event: string, listener: (...args: unknown[]) => void): this;
+  public once(event: string, listener: (...args: any[]) => void): this;
 }
 
 export class ReactionEmoji extends Emoji {
@@ -1378,7 +1375,7 @@ export class SelectMenuInteraction extends MessageComponentInteraction {
 export class Shard extends EventEmitter {
   public constructor(manager: ShardingManager, id: number);
   private _evals: Map<string, Promise<unknown>>;
-  private _exitListener: (...args: unknown[]) => void;
+  private _exitListener: (...args: any[]) => void;
   private _fetches: Map<string, Promise<unknown>>;
   private _handleExit(respawn?: boolean): void;
   private _handleMessage(message: unknown): void;
@@ -1402,14 +1399,14 @@ export class Shard extends EventEmitter {
   public on(event: 'spawn' | 'death', listener: (child: ChildProcess) => Awaited<void>): this;
   public on(event: 'disconnect' | 'ready' | 'reconnecting', listener: () => Awaited<void>): this;
   public on(event: 'error', listener: (error: Error) => Awaited<void>): this;
-  public on(event: 'message', listener: (message: unknown) => Awaited<void>): this;
-  public on(event: string, listener: (...args: unknown[]) => Awaited<void>): this;
+  public on(event: 'message', listener: (message: any) => Awaited<void>): this;
+  public on(event: string, listener: (...args: any[]) => Awaited<void>): this;
 
   public once(event: 'spawn' | 'death', listener: (child: ChildProcess) => Awaited<void>): this;
   public once(event: 'disconnect' | 'ready' | 'reconnecting', listener: () => Awaited<void>): this;
   public once(event: 'error', listener: (error: Error) => Awaited<void>): this;
-  public once(event: 'message', listener: (message: unknown) => Awaited<void>): this;
-  public once(event: string, listener: (...args: unknown[]) => Awaited<void>): this;
+  public once(event: 'message', listener: (message: any) => Awaited<void>): this;
+  public once(event: string, listener: (...args: any[]) => Awaited<void>): this;
 }
 
 export class ShardClientUtil {
@@ -1651,7 +1648,6 @@ export class User extends PartialTextBasedChannel(Base) {
   public flags: Readonly<UserFlags> | null;
   public id: Snowflake;
   public readonly partial: false;
-  public readonly presence: Presence;
   public system: boolean;
   public readonly tag: string;
   public username: string;
@@ -1819,8 +1815,8 @@ export class WebSocketManager extends EventEmitter {
   public status: Status;
   public readonly ping: number;
 
-  public on(event: WSEventType, listener: (data: unknown, shardId: number) => void): this;
-  public once(event: WSEventType, listener: (data: unknown, shardId: number) => void): this;
+  public on(event: WSEventType, listener: (data: any, shardId: number) => void): this;
+  public once(event: WSEventType, listener: (data: any, shardId: number) => void): this;
 
   private debug(message: string, shard?: WebSocketShard): void;
   private connect(): Promise<void>;
@@ -1878,12 +1874,12 @@ export class WebSocketShard extends EventEmitter {
   public on(event: 'ready' | 'resumed' | 'invalidSession', listener: () => Awaited<void>): this;
   public on(event: 'close', listener: (event: CloseEvent) => Awaited<void>): this;
   public on(event: 'allReady', listener: (unavailableGuilds?: Set<Snowflake>) => Awaited<void>): this;
-  public on(event: string, listener: (...args: unknown[]) => Awaited<void>): this;
+  public on(event: string, listener: (...args: any[]) => Awaited<void>): this;
 
   public once(event: 'ready' | 'resumed' | 'invalidSession', listener: () => Awaited<void>): this;
   public once(event: 'close', listener: (event: CloseEvent) => Awaited<void>): this;
   public once(event: 'allReady', listener: (unavailableGuilds?: Set<Snowflake>) => Awaited<void>): this;
-  public once(event: string, listener: (...args: unknown[]) => Awaited<void>): this;
+  public once(event: string, listener: (...args: any[]) => Awaited<void>): this;
 }
 
 export class Widget extends Base {
@@ -2934,7 +2930,7 @@ export interface ClientEvents {
   messageReactionAdd: [message: MessageReaction, user: User | PartialUser];
   messageReactionRemove: [reaction: MessageReaction, user: User | PartialUser];
   messageUpdate: [oldMessage: Message | PartialMessage, newMessage: Message | PartialMessage];
-  presenceUpdate: [oldPresence: Presence | undefined, newPresence: Presence];
+  presenceUpdate: [oldPresence: Presence | null, newPresence: Presence];
   rateLimit: [rateLimitData: RateLimitData];
   invalidRequestWarning: [invalidRequestWarningData: InvalidRequestWarningData];
   ready: [];
@@ -3556,6 +3552,7 @@ export type InviteScope =
   | 'applications.commands'
   | 'applications.entitlements'
   | 'applications.store.update'
+  | 'bot'
   | 'connections'
   | 'email'
   | 'identity'
@@ -3917,7 +3914,7 @@ export type Partialize<T, O extends string> = {
   [K in keyof Omit<
     T,
     'client' | 'createdAt' | 'createdTimestamp' | 'id' | 'partial' | 'fetch' | 'deleted' | O
-  >]: T[K] extends (...args: unknown[]) => void ? T[K] : T[K] | null;
+  >]: T[K] extends (...args: any[]) => void ? T[K] : T[K] | null;
 };
 
 export interface PartialDMChannel
@@ -4310,7 +4307,7 @@ export type WSEventType =
   | 'STAGE_INSTANCE_UPDATE'
   | 'STAGE_INSTANCE_DELETE';
 
-export type Serialized<T> = T extends symbol | bigint | (() => unknown)
+export type Serialized<T> = T extends symbol | bigint | (() => any)
   ? never
   : T extends number | string | boolean | undefined
   ? T
