@@ -419,7 +419,7 @@ export class CommandInteraction extends Interaction {
   public options: Collection<string, CommandInteractionOption>;
   public replied: boolean;
   public webhook: InteractionWebhook;
-  public defer(options?: InteractionDeferOptions & { fetchReply: true }): Promise<Message | APIMessage>;
+  public defer(options: InteractionDeferOptions & { fetchReply: true }): Promise<Message | APIMessage>;
   public defer(options?: InteractionDeferOptions): Promise<void>;
   public deleteReply(): Promise<void>;
   public editReply(options: string | MessagePayload | WebhookEditMessageOptions): Promise<Message | APIMessage>;
@@ -541,7 +541,6 @@ export class Guild extends AnonymousGuild {
   public fetchPreview(): Promise<GuildPreview>;
   public fetchTemplates(): Promise<Collection<GuildTemplate['code'], GuildTemplate>>;
   public fetchVanityData(): Promise<Vanity>;
-  public fetchVoiceRegions(): Promise<Collection<string, VoiceRegion>>;
   public fetchWebhooks(): Promise<Collection<Snowflake, Webhook>>;
   public fetchWelcomeScreen(): Promise<WelcomeScreen>;
   public fetchWidget(): Promise<GuildWidget>;
@@ -1070,9 +1069,9 @@ export class MessageComponentInteraction extends Interaction {
   public message: Message | APIMessage;
   public replied: boolean;
   public webhook: InteractionWebhook;
-  public defer(options?: InteractionDeferOptions & { fetchReply: true }): Promise<Message | APIMessage>;
+  public defer(options: InteractionDeferOptions & { fetchReply: true }): Promise<Message | APIMessage>;
   public defer(options?: InteractionDeferOptions): Promise<void>;
-  public deferUpdate(options?: InteractionDeferUpdateOptions & { fetchReply: true }): Promise<Message | APIMessage>;
+  public deferUpdate(options: InteractionDeferUpdateOptions & { fetchReply: true }): Promise<Message | APIMessage>;
   public deferUpdate(options?: InteractionDeferUpdateOptions): Promise<void>;
   public deleteReply(): Promise<void>;
   public editReply(options: string | MessagePayload | WebhookEditMessageOptions): Promise<Message | APIMessage>;
@@ -3520,7 +3519,7 @@ export interface MessageEditOptions {
   files?: (FileOptions | BufferResolvable | Stream | MessageAttachment)[];
   flags?: BitFieldResolvable<MessageFlagsString, number>;
   allowedMentions?: MessageMentionOptions;
-  components?: (MessageActionRow | MessageActionRowOptions | MessageActionRowComponentResolvable[])[];
+  components?: (MessageActionRow | MessageActionRowOptions)[];
 }
 
 export interface MessageEmbedAuthor {
@@ -3619,7 +3618,7 @@ export interface MessageOptions {
   nonce?: string | number;
   content?: string | null;
   embeds?: (MessageEmbed | MessageEmbedOptions)[];
-  components?: (MessageActionRow | MessageActionRowOptions | MessageActionRowComponentResolvable[])[];
+  components?: (MessageActionRow | MessageActionRowOptions)[];
   allowedMentions?: MessageMentionOptions;
   files?: (FileOptions | BufferResolvable | Stream | MessageAttachment)[];
   reply?: ReplyOptions;
