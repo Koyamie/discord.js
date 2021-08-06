@@ -236,16 +236,23 @@ class Webhook {
 
   /**
    * Gets a message that was sent by this webhook.
-   * @param {Snowflake|'@original'} message The id of the message to fetch
+   * @param {Snowflake|'@original'} messageId The id of the message to fetch
    * @param {boolean} [cache=true] Whether to cache the message
    * @returns {Promise<Message|APIMessage>} Returns the raw message data if the webhook was instantiated as a
    * {@link WebhookClient} or if the channel is uncached, otherwise a {@link Message} will be returned
    */
-  async fetchMessage(message, cache = true) {
+  async fetchMessage(messageId, cache = true) {
     if (!this.token) throw new Error('WEBHOOK_TOKEN_UNAVAILABLE');
 
-    const data = await this.client.api.webhooks(this.id, this.token).messages(message).get();
-    return this.client.channels?.cache.get(data.channel_id)?.messages._add(data, cache) ?? data;
+    const data = await this.client.api.webhooks(this.id, this.token).messages(messageId).get();
+    let message = this.client.channels?.cache.get(data.channel_id)?.messages._add(data, cache) ?? null;
+    if (!message) {
+      const WebhookClient = require('../client/WebhookClient');
+      if (this.client instanceof WebhookClient) return data;
+      const Message = require('./Message');
+      message = new Message(this.client, data);
+    }
+    return message;
   }
 
   /**
