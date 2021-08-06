@@ -589,7 +589,7 @@ class WebSocketShard extends EventEmitter {
    * Identifies as a new connection on the gateway.
    * @private
    */
-  identifyNew() {
+  async identifyNew() {
     const { client } = this.manager;
     if (!client.token) {
       this.debug('[IDENTIFY] No token available to identify a new session.');
@@ -606,8 +606,10 @@ class WebSocketShard extends EventEmitter {
       shard: [this.id, Number(client.options.shardCount)],
     };
 
+    await client.gatewayQueue.start(this.id);
     this.debug(`[IDENTIFY] Shard ${this.id}/${client.options.shardCount} with intents: ${d.intents}`);
     this.send({ op: Opcodes.IDENTIFY, d }, true);
+    await client.gatewayQueue.stop(this.id);
   }
 
   /**

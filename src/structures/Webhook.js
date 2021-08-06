@@ -1,5 +1,6 @@
 'use strict';
 
+const Message = require('./Message');
 const MessagePayload = require('./MessagePayload');
 const { Error } = require('../errors');
 const { WebhookTypes } = require('../util/Constants');
@@ -245,7 +246,9 @@ class Webhook {
     if (!this.token) throw new Error('WEBHOOK_TOKEN_UNAVAILABLE');
 
     const data = await this.client.api.webhooks(this.id, this.token).messages(message).get();
-    return this.client.channels?.cache.get(data.channel_id)?.messages._add(data, cache) ?? data;
+    return (
+      this.client.channels?.cache.get(data.channel_id)?.messages._add(data, cache) ?? new Message(this.client, data)
+    );
   }
 
   /**
