@@ -609,7 +609,7 @@ class WebSocketShard extends EventEmitter {
     await client.gatewayQueue.start(this.id);
     this.debug(`[IDENTIFY] Shard ${this.id}/${client.options.shardCount} with intents: ${d.intents}`);
     this.send({ op: Opcodes.IDENTIFY, d }, true);
-    await client.gatewayQueue.stop(this.id);
+    client.gatewayQueue.stop(this.id);
   }
 
   /**
