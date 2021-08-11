@@ -18,7 +18,7 @@ const AllowedImageFormats = ['webp', 'png', 'jpg', 'jpeg', 'gif'];
 
 const AllowedImageSizes = Array.from({ length: 9 }, (e, i) => 2 ** (i + 4));
 
-function makeImageUrl(root, { format = 'png', size } = {}) {
+function makeImageUrl(root, { format = 'webp', size } = {}) {
   if (format && !AllowedImageFormats.includes(format)) throw new Error('IMAGE_FORMAT', format);
   if (size && !AllowedImageSizes.includes(size)) throw new RangeError('IMAGE_SIZE', size);
   return `${root}.${format}${size ? `?size=${size}` : ''}`;
@@ -34,7 +34,7 @@ function makeImageUrl(root, { format = 'png', size } = {}) {
 /**
  * Options for static Image URLs.
  * @typedef {Object} StaticImageURLOptions
- * @property {string} [format='png'] One of `webp`, `png`, `jpg`, `jpeg`.
+ * @property {string} [format='webp'] One of `webp`, `png`, `jpg`, `jpeg`.
  * @property {number} [size] One of `16`, `32`, `64`, `128`, `256`, `512`, `1024`, `2048`, `4096`
  */
 
@@ -42,34 +42,32 @@ function makeImageUrl(root, { format = 'png', size } = {}) {
 exports.Endpoints = {
   CDN(root) {
     return {
-      Emoji: (emojiId, format = 'png') => `${root}/emojis/${emojiId}.${format}`,
+      Emoji: (emojiId, format = 'webp') => `${root}/emojis/${emojiId}.${format}`,
       Asset: name => `${root}/assets/${name}`,
       DefaultAvatar: discriminator => `${root}/embed/avatars/${discriminator}.png`,
-      Avatar: (userId, hash, format = 'png', size, dynamic = false) => {
+      Avatar: (userId, hash, format = 'webp', size, dynamic = false) => {
         if (dynamic) format = hash.startsWith('a_') ? 'gif' : format;
         return makeImageUrl(`${root}/avatars/${userId}/${hash}`, { format, size });
       },
-      Banner: (id, hash, format = 'png', size, dynamic = false) => {
-        if (dynamic) format = hash.startsWith('a_') ? 'gif' : format;
-        return makeImageUrl(`${root}/banners/${id}/${hash}`, { format, size });
-      },
-      Icon: (guildId, hash, format = 'png', size, dynamic = false) => {
+      Banner: (guildId, hash, format = 'webp', size) =>
+        makeImageUrl(`${root}/banners/${guildId}/${hash}`, { format, size }),
+      Icon: (guildId, hash, format = 'webp', size, dynamic = false) => {
         if (dynamic) format = hash.startsWith('a_') ? 'gif' : format;
         return makeImageUrl(`${root}/icons/${guildId}/${hash}`, { format, size });
       },
-      AppIcon: (clientId, hash, { format = 'png', size } = {}) =>
-        makeImageUrl(`${root}/app-icons/${clientId}/${hash}`, { size, format }),
-      AppAsset: (clientId, hash, { format = 'png', size } = {}) =>
-        makeImageUrl(`${root}/app-assets/${clientId}/${hash}`, { size, format }),
-      StickerPackBanner: (bannerId, format = 'png', size) =>
+      AppIcon: (appId, hash, { format = 'webp', size } = {}) =>
+        makeImageUrl(`${root}/app-icons/${appId}/${hash}`, { size, format }),
+      AppAsset: (appId, hash, { format = 'webp', size } = {}) =>
+        makeImageUrl(`${root}/app-assets/${appId}/${hash}`, { size, format }),
+      StickerPackBanner: (bannerId, format = 'webp', size) =>
         makeImageUrl(`${root}/app-assets/710982414301790216/store/${bannerId}`, { size, format }),
-      GDMIcon: (channelId, hash, format = 'png', size) =>
+      GDMIcon: (channelId, hash, format = 'webp', size) =>
         makeImageUrl(`${root}/channel-icons/${channelId}/${hash}`, { size, format }),
-      Splash: (guildId, hash, format = 'png', size) =>
+      Splash: (guildId, hash, format = 'webp', size) =>
         makeImageUrl(`${root}/splashes/${guildId}/${hash}`, { size, format }),
-      DiscoverySplash: (guildId, hash, format = 'png', size) =>
+      DiscoverySplash: (guildId, hash, format = 'webp', size) =>
         makeImageUrl(`${root}/discovery-splashes/${guildId}/${hash}`, { size, format }),
-      TeamIcon: (teamId, hash, { format = 'png', size } = {}) =>
+      TeamIcon: (teamId, hash, { format = 'webp', size } = {}) =>
         makeImageUrl(`${root}/team-icons/${teamId}/${hash}`, { size, format }),
       Sticker: (stickerId, stickerFormat) =>
         `${root}/stickers/${stickerId}.${stickerFormat === 'LOTTIE' ? 'json' : 'png'}`,
@@ -842,7 +840,7 @@ exports.APIErrors = {
 exports.DefaultMessageNotificationLevels = createEnum(['ALL_MESSAGES', 'ONLY_MENTIONS']);
 
 /**
- * The value set for a team members's membership state:
+ * The value set for a team member's membership state:
  * * INVITED
  * * ACCEPTED
  * @typedef {string} MembershipState
@@ -890,6 +888,15 @@ exports.OverwriteTypes = createEnum(['role', 'member']);
 
 /* eslint-disable max-len */
 /**
+ * The type of an {@link ApplicationCommand} object:
+ * * CHAT_INPUT
+ * * USER
+ * * MESSAGE
+ * @typedef {string} ApplicationCommandType
+ */
+exports.ApplicationCommandTypes = createEnum([null, 'CHAT_INPUT', 'USER', 'MESSAGE']);
+
+/**
  * The type of an {@link ApplicationCommandOption} object:
  * * SUB_COMMAND
  * * SUB_COMMAND_GROUP
@@ -902,7 +909,7 @@ exports.OverwriteTypes = createEnum(['role', 'member']);
  * * MENTIONABLE
  * * NUMBER
  * @typedef {string} ApplicationCommandOptionType
- * @see {@link https://discord.com/developers/docs/interactions/slash-commands#application-command-object-application-command-option-type}
+ * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-type}
  */
 exports.ApplicationCommandOptionTypes = createEnum([
   null,
@@ -923,7 +930,7 @@ exports.ApplicationCommandOptionTypes = createEnum([
  * * ROLE
  * * USER
  * @typedef {string} ApplicationCommandPermissionType
- * @see {@link https://discord.com/developers/docs/interactions/slash-commands#application-command-permissions-object-application-command-permission-type}
+ * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-permissions-object-application-command-permission-type}
  */
 exports.ApplicationCommandPermissionTypes = createEnum([null, 'ROLE', 'USER']);
 
@@ -933,7 +940,7 @@ exports.ApplicationCommandPermissionTypes = createEnum([null, 'ROLE', 'USER']);
  * * APPLICATION_COMMAND
  * * MESSAGE_COMPONENT
  * @typedef {string} InteractionType
- * @see {@link https://discord.com/developers/docs/interactions/slash-commands#interaction-object-interaction-request-type}
+ * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-interaction-request-type}
  */
 exports.InteractionTypes = createEnum([null, 'PING', 'APPLICATION_COMMAND', 'MESSAGE_COMPONENT']);
 
@@ -945,7 +952,7 @@ exports.InteractionTypes = createEnum([null, 'PING', 'APPLICATION_COMMAND', 'MES
  * * DEFERRED_MESSAGE_UPDATE
  * * UPDATE_MESSAGE
  * @typedef {string} InteractionResponseType
- * @see {@link https://discord.com/developers/docs/interactions/slash-commands#interaction-response-object-interaction-callback-type}
+ * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-interaction-callback-type}
  */
 exports.InteractionResponseTypes = createEnum([
   null,
@@ -1054,7 +1061,7 @@ function createEnum(keys) {
  * The value set for the explicit content filter levels for a guild.
  * @property {InteractionResponseType} InteractionResponseTypes The type of an interaction response.
  * @property {InteractionType} InteractionTypes The type of an {@link Interaction} object.
- * @property {MembershipState} MembershipStates The value set for a team members's membership state.
+ * @property {MembershipState} MembershipStates The value set for a team member's membership state.
  * @property {MessageButtonStyle} MessageButtonStyles The style of a message button.
  * @property {MessageComponentType} MessageComponentTypes The type of a message component.
  * @property {MFALevel} MFALevels The required MFA level for a guild.
