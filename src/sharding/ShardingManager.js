@@ -223,6 +223,7 @@ class ShardingManager extends EventEmitter {
 
     if (this.clusterMode) {
       // Spawn the cluster
+      this.shardList = [this.clusterId];
       const shard = this.createShard(this.clusterId);
       await shard.spawn(timeout);
     } else {
