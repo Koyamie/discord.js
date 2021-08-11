@@ -169,6 +169,8 @@ class WebSocketManager extends EventEmitter {
 
     this.shardQueue.delete(shard);
 
+    setTimeout(this.createShards.bind(this), 500);
+
     if (!shard.eventsAttached) {
       shard.on(ShardEvents.ALL_READY, unavailableGuilds => {
         /**
@@ -252,8 +254,6 @@ class WebSocketManager extends EventEmitter {
     }
     // If we have more shards, add a 5s delay
     if (this.shardQueue.size) {
-      this.debug(`Shard Queue Size: ${this.shardQueue.size}; continuing in 5 seconds...`);
-      await Util.delayFor(5000);
       return this.createShards();
     }
 
