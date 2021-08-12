@@ -337,7 +337,7 @@ class Guild extends AnonymousGuild {
 
     /**
      * The preferred locale of the guild, defaults to `en-US`
-     * @type {?string}
+     * @type {string}
      * @see {@link https://discord.com/developers/docs/dispatch/field-values#predefined-field-values-accepted-locales}
      */
     this.preferredLocale = data.preferred_locale;
@@ -1284,13 +1284,6 @@ class Guild extends AnonymousGuild {
    * and stage channels.
    * @type {Function}
    * @readonly
-   * @example
-   * const { joinVoiceChannel } = require('@discordjs/voice');
-   * const voiceConnection = joinVoiceChannel({
-   *  channelId: channel.id,
-   *  guildId: channel.guild.id,
-   *  adapterCreator: channel.guild.voiceAdapterCreator,
-   * });
    */
   get voiceAdapterCreator() {
     return methods => {
