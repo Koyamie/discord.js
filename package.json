@@ -28,7 +28,7 @@
     "prepublishOnly": "npm run test && gen-esm-wrapper ./src/index.js ./src/index.mjs",
     "prepare": "is-ci || husky install",
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s",
-    "postinstall": "cd ./node_modules/discord.js && npm install && npm run build"
+    "postinstall": "npm install && npm run build"
   },
   "repository": {
     "type": "git",
