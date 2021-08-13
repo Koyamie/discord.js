@@ -29,6 +29,7 @@
     "prepare": "is-ci || husky install",
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s"
   },
+  "postinstall": "cd ./node_modules/discord.js && npm install && npm run build",
   "repository": {
     "type": "git",
     "url": "https://github.com/discordjs/discord.js.git"
