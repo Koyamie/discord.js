@@ -47,6 +47,7 @@ import {
   Snowflake,
 } from 'discord-api-types/v9';
 import { EventEmitter } from 'events';
+import { AgentOptions } from 'https';
 import { Stream } from 'stream';
 import { MessagePort, Worker } from 'worker_threads';
 import * as WebSocket from 'ws';
@@ -397,6 +398,7 @@ type If<T extends boolean, A, B = null> = T extends true ? A : T extends false ?
 export class Client<Ready extends boolean = boolean> extends BaseClient {
   public constructor(options: ClientOptions);
   private actions: unknown;
+  private presence: ClientPresence;
   private _eval(script: string): unknown;
   private _validateOptions(options: ClientOptions): void;
 
@@ -467,16 +469,24 @@ export class ClientApplication extends Application {
   public fetch(): Promise<ClientApplication>;
 }
 
+export class ClientPresence extends Presence {
+  public constructor(client: Client, data: RawPresenceData);
+  private _parse(data: PresenceData): RawPresenceData;
+
+  public set(presence: PresenceData): ClientPresence;
+}
+
 export class ClientUser extends User {
   public mfaEnabled: boolean;
+  public readonly presence: ClientPresence;
   public verified: boolean;
   public edit(data: ClientUserEditData): Promise<this>;
-  public setActivity(options?: ActivityOptions): Presence;
-  public setActivity(name: string, options?: ActivityOptions): Presence;
-  public setAFK(afk: boolean, shardId?: number | number[]): Presence;
+  public setActivity(options?: ActivityOptions): ClientPresence;
+  public setActivity(name: string, options?: ActivityOptions): ClientPresence;
+  public setAFK(afk: boolean, shardId?: number | number[]): ClientPresence;
   public setAvatar(avatar: BufferResolvable | Base64Resolvable): Promise<this>;
-  public setPresence(data: PresenceData): Presence;
-  public setStatus(status: PresenceStatusData, shardId?: number | number[]): Presence;
+  public setPresence(data: PresenceData): ClientPresence;
+  public setStatus(status: PresenceStatusData, shardId?: number | number[]): ClientPresence;
   public setUsername(username: string): Promise<this>;
 }
 
@@ -812,6 +822,7 @@ export class GuildChannel extends Channel {
   public type: Exclude<keyof typeof ChannelTypes, 'DM' | 'GROUP_DM' | 'UNKNOWN'>;
   public readonly viewable: boolean;
   public clone(options?: GuildChannelCloneOptions): Promise<this>;
+  public delete(reason?: string): Promise<this>;
   public edit(data: ChannelData, reason?: string): Promise<this>;
   public equals(channel: GuildChannel): boolean;
   public lockPermissions(): Promise<this>;
@@ -2823,6 +2834,7 @@ export interface APIErrors {
   MAXIMUM_NON_GUILD_MEMBERS_BANS: 30035;
   MAXIMUM_BAN_FETCHES: 30037;
   MAXIMUM_NUMBER_OF_STICKERS_REACHED: 30039;
+  MAXIMUM_PRUNE_REQUESTS: 30040;
   UNAUTHORIZED: 40001;
   ACCOUNT_VERIFICATION_REQUIRED: 40002;
   DIRECT_MESSAGES_TOO_FAST: 40003;
@@ -3892,6 +3904,7 @@ export interface HTTPErrorData {
 }
 
 export interface HTTPOptions {
+  agent?: Omit<AgentOptions, 'keepAlive'>;
   api?: string;
   version?: number;
   host?: string;
@@ -4181,6 +4194,7 @@ export interface MessageOptions {
   files?: (FileOptions | BufferResolvable | Stream | MessageAttachment)[];
   reply?: ReplyOptions;
   stickers?: StickerResolvable[];
+  attachments?: MessageAttachment[];
 }
 
 export type MessageReactionResolvable =
@@ -4625,7 +4639,7 @@ export interface WebhookEditData {
 
 export type WebhookEditMessageOptions = Pick<
   WebhookMessageOptions,
-  'content' | 'embeds' | 'files' | 'allowedMentions' | 'components'
+  'content' | 'embeds' | 'files' | 'allowedMentions' | 'components' | 'attachments'
 >;
 
 export interface WebhookMessageOptions extends Omit<MessageOptions, 'reply'> {
