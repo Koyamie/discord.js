@@ -18,7 +18,7 @@ const AllowedImageFormats = ['webp', 'png', 'jpg', 'jpeg', 'gif'];
 
 const AllowedImageSizes = Array.from({ length: 9 }, (e, i) => 2 ** (i + 4));
 
-function makeImageUrl(root, { format = 'png', size } = {}) {
+function makeImageUrl(root, { format = 'webp', size } = {}) {
   if (format && !AllowedImageFormats.includes(format)) throw new Error('IMAGE_FORMAT', format);
   if (size && !AllowedImageSizes.includes(size)) throw new RangeError('IMAGE_SIZE', size);
   return `${root}.${format}${size ? `?size=${size}` : ''}`;
@@ -34,7 +34,7 @@ function makeImageUrl(root, { format = 'png', size } = {}) {
 /**
  * Options for static Image URLs.
  * @typedef {Object} StaticImageURLOptions
- * @property {string} [format='png'] One of `webp`, `png`, `jpg`, `jpeg`.
+ * @property {string} [format='webp'] One of `webp`, `png`, `jpg`, `jpeg`.
  * @property {number} [size] One of `16`, `32`, `64`, `128`, `256`, `512`, `1024`, `2048`, `4096`
  */
 
@@ -42,10 +42,10 @@ function makeImageUrl(root, { format = 'png', size } = {}) {
 exports.Endpoints = {
   CDN(root) {
     return {
-      Emoji: (emojiId, format = 'png') => `${root}/emojis/${emojiId}.${format}`,
+      Emoji: (emojiId, format = 'webp') => `${root}/emojis/${emojiId}.${format}`,
       Asset: name => `${root}/assets/${name}`,
       DefaultAvatar: discriminator => `${root}/embed/avatars/${discriminator}.png`,
-      Avatar: (userId, hash, format = 'png', size, dynamic = false) => {
+      Avatar: (userId, hash, format = 'webp', size, dynamic = false) => {
         if (dynamic) format = hash.startsWith('a_') ? 'gif' : format;
         return makeImageUrl(`${root}/avatars/${userId}/${hash}`, { format, size });
       },
@@ -53,23 +53,23 @@ exports.Endpoints = {
         if (dynamic) format = hash.startsWith('a_') ? 'gif' : format;
         return makeImageUrl(`${root}/banners/${id}/${hash}`, { format, size });
       },
-      Icon: (guildId, hash, format = 'png', size, dynamic = false) => {
+      Icon: (guildId, hash, format = 'webp', size, dynamic = false) => {
         if (dynamic) format = hash.startsWith('a_') ? 'gif' : format;
         return makeImageUrl(`${root}/icons/${guildId}/${hash}`, { format, size });
       },
-      AppIcon: (appId, hash, { format = 'png', size } = {}) =>
+      AppIcon: (appId, hash, { format = 'webp', size } = {}) =>
         makeImageUrl(`${root}/app-icons/${appId}/${hash}`, { size, format }),
-      AppAsset: (appId, hash, { format = 'png', size } = {}) =>
+      AppAsset: (appId, hash, { format = 'webp', size } = {}) =>
         makeImageUrl(`${root}/app-assets/${appId}/${hash}`, { size, format }),
-      StickerPackBanner: (bannerId, format = 'png', size) =>
+      StickerPackBanner: (bannerId, format = 'webp', size) =>
         makeImageUrl(`${root}/app-assets/710982414301790216/store/${bannerId}`, { size, format }),
-      GDMIcon: (channelId, hash, format = 'png', size) =>
+      GDMIcon: (channelId, hash, format = 'webp', size) =>
         makeImageUrl(`${root}/channel-icons/${channelId}/${hash}`, { size, format }),
-      Splash: (guildId, hash, format = 'png', size) =>
+      Splash: (guildId, hash, format = 'webp', size) =>
         makeImageUrl(`${root}/splashes/${guildId}/${hash}`, { size, format }),
-      DiscoverySplash: (guildId, hash, format = 'png', size) =>
+      DiscoverySplash: (guildId, hash, format = 'webp', size) =>
         makeImageUrl(`${root}/discovery-splashes/${guildId}/${hash}`, { size, format }),
-      TeamIcon: (teamId, hash, { format = 'png', size } = {}) =>
+      TeamIcon: (teamId, hash, { format = 'webp', size } = {}) =>
         makeImageUrl(`${root}/team-icons/${teamId}/${hash}`, { size, format }),
       Sticker: (stickerId, stickerFormat) =>
         `${root}/stickers/${stickerId}.${stickerFormat === 'LOTTIE' ? 'json' : 'png'}`,
