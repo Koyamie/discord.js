@@ -220,6 +220,20 @@ export class ApplicationCommand<PermissionsFetchType = {}> extends Base {
   public type: ApplicationCommandType;
   public delete(): Promise<ApplicationCommand<PermissionsFetchType>>;
   public edit(data: ApplicationCommandData): Promise<ApplicationCommand<PermissionsFetchType>>;
+  public equals(
+    command: ApplicationCommand | ApplicationCommandData | RawApplicationCommandData,
+    enforceOptionorder?: boolean,
+  ): boolean;
+  public static optionsEqual(
+    existing: ApplicationCommandOption[],
+    options: ApplicationCommandOption[] | ApplicationCommandOptionData[] | APIApplicationCommandOption[],
+    enforceOptionorder?: boolean,
+  ): boolean;
+  private static _optionEquals(
+    existing: ApplicationCommandOption,
+    options: ApplicationCommandOption | ApplicationCommandOptionData | APIApplicationCommandOption,
+    enforceOptionorder?: boolean,
+  ): boolean;
   private static transformOption(option: ApplicationCommandOptionData, received?: boolean): unknown;
 }
 
@@ -1135,6 +1149,14 @@ type InteractionCollectorReturnType<T extends MessageComponentType | MessageComp
   ? ConditionalInteractionCollectorType<MappedInteractionCollectorOptions[T]>
   : InteractionCollector<MessageComponentInteraction>;
 
+type InteractionReturnType<T extends MessageComponentType | MessageComponentTypes | undefined> = T extends
+  | MessageComponentType
+  | MessageComponentTypes
+  ? MappedInteractionCollectorOptions[T] extends InteractionCollectorOptions<infer Item>
+    ? Item
+    : never
+  : MessageComponentInteraction;
+
 type MessageCollectorOptionsParams<T> =
   | ({ componentType?: T } & InteractionCollectorOptionsResolvable)
   | InteractionCollectorOptions<MessageComponentInteraction>;
@@ -1192,7 +1214,7 @@ export class Message extends Base {
   public reference: MessageReference | null;
   public awaitMessageComponent<T extends MessageComponentType | MessageComponentTypes | undefined = undefined>(
     options?: AwaitMessageCollectorOptionsParams<T>,
-  ): Promise<InteractionCollectorReturnType<T>>;
+  ): Promise<InteractionReturnType<T>>;
   public awaitReactions(options?: AwaitReactionsOptions): Promise<Collection<Snowflake | string, MessageReaction>>;
   public createReactionCollector(options?: ReactionCollectorOptions): ReactionCollector;
   public createMessageComponentCollector<
@@ -2693,10 +2715,10 @@ export class RoleManager extends CachedManager<Snowflake, Role, RoleResolvable> 
 export class StageInstanceManager extends CachedManager<Snowflake, StageInstance, StageInstanceResolvable> {
   public constructor(guild: Guild, iterable?: Iterable<RawStageInstanceData>);
   public guild: Guild;
-  public create(channel: StageChannel | Snowflake, options: StageInstanceCreateOptions): Promise<StageInstance>;
-  public fetch(channel: StageChannel | Snowflake, options?: BaseFetchOptions): Promise<StageInstance>;
-  public edit(channel: StageChannel | Snowflake, options: StageInstanceEditOptions): Promise<StageInstance>;
-  public delete(channel: StageChannel | Snowflake): Promise<void>;
+  public create(channel: StageChannelResolvable, options: StageInstanceCreateOptions): Promise<StageInstance>;
+  public fetch(channel: StageChannelResolvable, options?: BaseFetchOptions): Promise<StageInstance>;
+  public edit(channel: StageChannelResolvable, options: StageInstanceEditOptions): Promise<StageInstance>;
+  public delete(channel: StageChannelResolvable): Promise<void>;
 }
 
 export class ThreadManager<AllowedThreadType> extends CachedManager<Snowflake, ThreadChannel, ThreadChannelResolvable> {
@@ -4621,6 +4643,8 @@ export type SystemChannelFlagsString =
 export type SystemChannelFlagsResolvable = BitFieldResolvable<SystemChannelFlagsString, number>;
 
 export type SystemMessageType = Exclude<MessageType, 'DEFAULT' | 'REPLY' | 'APPLICATION_COMMAND'>;
+
+export type StageChannelResolvable = StageChannel | Snowflake;
 
 export interface StageInstanceEditOptions {
   topic?: string;
