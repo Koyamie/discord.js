@@ -50,7 +50,7 @@ class ChannelManager extends CachedManager {
       return null;
     }
 
-    if (cache && !allowUnknownGuild) this.cache.set(channel.id, channel);
+    if (cache) this.cache.set(channel.id, channel);
 
     return channel;
   }
