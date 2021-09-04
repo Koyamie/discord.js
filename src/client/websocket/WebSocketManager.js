@@ -130,7 +130,7 @@ class WebSocketManager extends EventEmitter {
       url: gatewayURL,
       shards: recommendedShards,
       session_start_limit: sessionStartLimit,
-    } = await this.client.api.gateway.bot.get().catch(error => {
+    } = await this.client.skip.api.gateway.bot.get().catch(error => {
       throw error.httpStatus === 401 ? invalidToken : error;
     });
 
@@ -173,6 +173,10 @@ class WebSocketManager extends EventEmitter {
     const [shard] = this.shardQueue;
 
     this.shardQueue.delete(shard);
+    
+    if (this.client.clusterMode) {
+      setTimeout(this.createShards.bind(this), 500);
+    }
 
     if (!shard.eventsAttached) {
       shard.on(ShardEvents.ALL_READY, unavailableGuilds => {
@@ -255,10 +259,12 @@ class WebSocketManager extends EventEmitter {
         throw error;
       }
     }
-    // If we have more shards, add a 5s delay
+    // If we have more shards, add a 5s delay if no cluster mode
     if (this.shardQueue.size) {
-      this.debug(`Shard Queue Size: ${this.shardQueue.size}; continuing in 5 seconds...`);
-      await Util.delayFor(5_000);
+      if (!this.client.clusterMode) {
+        this.debug(`Shard Queue Size: ${this.shardQueue.size}; continuing in 5 seconds...`);
+        await Util.delayFor(5_000);
+      }
       return this.createShards();
     }
 
