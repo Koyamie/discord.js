@@ -1160,7 +1160,7 @@ type InteractionExtractor<T extends MessageComponentType | MessageComponentTypes
 type MessageCollectorOptionsParams<T extends MessageComponentType | MessageComponentTypes | undefined> =
   | {
       componentType?: T;
-    } & InteractionCollectorOptions<InteractionExtractor<T>>;
+    } & MessageComponentCollectorOptions<InteractionExtractor<T>>;
 
 type AwaitMessageCollectorOptionsParams<T extends MessageComponentType | MessageComponentTypes | undefined> =
   | { componentType?: T } & Pick<
@@ -1318,6 +1318,7 @@ export class MessageComponentInteraction extends Interaction {
   public readonly component: MessageActionRowComponent | Exclude<APIMessageComponent, APIActionRowComponent> | null;
   public componentType: Exclude<MessageComponentType, 'ACTION_ROW'>;
   public customId: string;
+  public channelId: Snowflake;
   public deferred: boolean;
   public ephemeral: boolean | null;
   public message: Message | APIMessage;
@@ -1420,7 +1421,7 @@ export class MessagePayload {
   public readonly isMessage: boolean;
   public readonly isMessageManager: boolean;
   public readonly isInteraction: boolean;
-  public files: unknown[] | null;
+  public files: HTTPAttachmentData[] | null;
   public options: MessageOptions | WebhookMessageOptions;
   public target: MessageTarget;
 
@@ -1429,7 +1430,9 @@ export class MessagePayload {
     options: string | MessageOptions | WebhookMessageOptions,
     extra?: MessageOptions | WebhookMessageOptions,
   ): MessagePayload;
-  public static resolveFile(fileLike: BufferResolvable | Stream | FileOptions | MessageAttachment): Promise<unknown>;
+  public static resolveFile(
+    fileLike: BufferResolvable | Stream | FileOptions | MessageAttachment,
+  ): Promise<HTTPAttachmentData>;
 
   public makeContent(): string | undefined;
   public resolveData(): this;
@@ -4024,15 +4027,16 @@ export interface InteractionCollectorOptions<T extends Interaction> extends Coll
   message?: Message | APIMessage;
 }
 
-export interface ButtonInteractionCollectorOptions extends InteractionCollectorOptions<ButtonInteraction> {
+export interface ButtonInteractionCollectorOptions extends MessageComponentCollectorOptions<ButtonInteraction> {
   componentType: 'BUTTON' | MessageComponentTypes.BUTTON;
 }
 
-export interface SelectMenuInteractionCollectorOptions extends InteractionCollectorOptions<SelectMenuInteraction> {
+export interface SelectMenuInteractionCollectorOptions extends MessageComponentCollectorOptions<SelectMenuInteraction> {
   componentType: 'SELECT_MENU' | MessageComponentTypes.SELECT_MENU;
 }
 
-export interface MessageInteractionCollectorOptions extends InteractionCollectorOptions<MessageComponentInteraction> {
+export interface MessageInteractionCollectorOptions
+  extends MessageComponentCollectorOptions<MessageComponentInteraction> {
   componentType: 'ACTION_ROW' | MessageComponentTypes.ACTION_ROW;
 }
 
