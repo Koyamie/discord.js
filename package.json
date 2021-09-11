@@ -26,7 +26,8 @@
     "lint:typings": "tslint typings/index.d.ts",
     "prettier": "prettier --write src/**/*.js typings/**/*.ts",
     "prepublishOnly": "npm run test && gen-esm-wrapper ./src/index.js ./src/index.mjs",
-    "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s"
+    "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s",
+    "build": "gen-esm-wrapper ./src/index.js ./src/index.mjs"
   },
   "repository": {
     "type": "git",
