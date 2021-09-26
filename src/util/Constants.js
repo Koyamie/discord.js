@@ -18,7 +18,7 @@ const AllowedImageFormats = ['webp', 'png', 'jpg', 'jpeg', 'gif'];
 
 const AllowedImageSizes = Array.from({ length: 9 }, (e, i) => 2 ** (i + 4));
 
-function makeImageUrl(root, { format = 'webp', size } = {}) {
+function makeImageUrl(root, { format = 'png', size } = {}) {
   if (!['undefined', 'number'].includes(typeof size)) throw new TypeError('INVALID_TYPE', 'size', 'number');
   if (format && !AllowedImageFormats.includes(format)) throw new Error('IMAGE_FORMAT', format);
   if (size && !AllowedImageSizes.includes(size)) throw new RangeError('IMAGE_SIZE', size);
