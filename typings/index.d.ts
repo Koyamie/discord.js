@@ -146,7 +146,7 @@ export class Activity {
   public details: string | null;
   public emoji: Emoji | null;
   public flags: Readonly<ActivityFlags>;
-  public id: Snowflake;
+  public id: string;
   public name: string;
   public party: {
     id: string | null;
@@ -873,6 +873,7 @@ export class GuildEmoji extends BaseGuildEmoji {
 
 export class GuildMember extends PartialTextBasedChannel(Base) {
   public constructor(client: Client, data: RawGuildMemberData, guild: Guild);
+  public avatar: string | null;
   public readonly bannable: boolean;
   public deleted: boolean;
   public readonly displayColor: number;
@@ -894,10 +895,12 @@ export class GuildMember extends PartialTextBasedChannel(Base) {
   public readonly roles: GuildMemberRoleManager;
   public user: User;
   public readonly voice: VoiceState;
+  public avatarURL(options?: ImageURLOptions): string | null;
   public ban(options?: BanOptions): Promise<GuildMember>;
   public fetch(force?: boolean): Promise<GuildMember>;
   public createDM(force?: boolean): Promise<DMChannel>;
   public deleteDM(): Promise<DMChannel>;
+  public displayAvatarURL(options?: ImageURLOptions): string;
   public edit(data: GuildMemberEditData, reason?: string): Promise<GuildMember>;
   public kick(reason?: string): Promise<GuildMember>;
   public permissionsIn(channel: GuildChannelResolvable): Readonly<Permissions>;
@@ -1278,6 +1281,7 @@ export class MessageAttachment {
 
   public attachment: BufferResolvable | Stream;
   public contentType: string | null;
+  public ephemeral: boolean;
   public height: number | null;
   public id: Snowflake;
   public name: string | null;
@@ -2296,6 +2300,14 @@ export const Constants: {
         size: AllowedImageSize,
         dynamic: boolean,
       ) => string;
+      GuildMemberAvatar: (
+        guildId: Snowflake,
+        memberId: Snowflake,
+        hash: string,
+        format?: DynamicImageFormat,
+        size?: AllowedImageSize,
+        dynamic?: boolean,
+      ) => string;
       Icon: (
         guildId: Snowflake,
         hash: string,
@@ -2851,7 +2863,7 @@ export type ActivitiesOptions = Omit<ActivityOptions, 'shardId'>;
 export interface ActivityOptions {
   name?: string;
   url?: string;
-  type?: ActivityType | number;
+  type?: Exclude<ActivityType, 'CUSTOM'> | Exclude<ActivityTypes, ActivityTypes.CUSTOM>;
   shardId?: number | readonly number[];
 }
 
@@ -3111,12 +3123,12 @@ export interface ApplicationCommandSubGroup extends BaseApplicationCommandOption
 
 export interface ApplicationCommandSubCommandData extends BaseApplicationCommandOptionsData {
   type: 'SUB_COMMAND' | ApplicationCommandOptionTypes.SUB_COMMAND;
-  options?: (ApplicationCommandChoicesData | ApplicationCommandNonOptionsData)[];
+  options?: (ApplicationCommandChoicesData | ApplicationCommandNonOptionsData | ApplicationCommandChannelOptionData)[];
 }
 
 export interface ApplicationCommandSubCommand extends BaseApplicationCommandOptionsData {
   type: 'SUB_COMMAND';
-  options?: (ApplicationCommandChoicesOption | ApplicationCommandNonOptions)[];
+  options?: (ApplicationCommandChoicesOption | ApplicationCommandNonOptions | ApplicationCommandChannelOption)[];
 }
 
 export interface ApplicationCommandNonOptionsData extends BaseApplicationCommandOptionsData {
