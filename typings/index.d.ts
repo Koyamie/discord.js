@@ -555,10 +555,24 @@ export abstract class Collector<K, V, F extends unknown[] = []> extends EventEmi
 }
 
 export class CommandInteraction extends BaseCommandInteraction {
-  public options: CommandInteractionOptionResolver;
+  public options: CommandInteractionOptionResolver<CommandInteraction>;
 }
 
-export class CommandInteractionOptionResolver {
+export class AutocompleteInteraction extends Interaction {
+  public readonly command: ApplicationCommand | ApplicationCommand<{ guild: GuildResolvable }> | null;
+  public readonly channel: TextBasedChannels | null;
+  public channelId: Snowflake;
+  public commandId: Snowflake;
+  public commandName: string;
+  public responded: boolean;
+  public options: CommandInteractionOptionResolver<AutocompleteInteraction>;
+  private transformOption(option: APIApplicationCommandOption): CommandInteractionOption;
+  public respond(options: ApplicationCommandOptionChoice[]): Promise<void>;
+}
+
+export class CommandInteractionOptionResolver<
+  Type extends AutocompleteInteraction | ContextMenuInteraction | CommandInteraction,
+> {
   public constructor(client: Client, options: CommandInteractionOption[], resolved: CommandInteractionResolvedData);
   public readonly client: Client;
   public readonly data: readonly CommandInteractionOption[];
@@ -612,10 +626,18 @@ export class CommandInteractionOptionResolver {
   ): NonNullable<CommandInteractionOption['member' | 'role' | 'user']> | null;
   public getMessage(name: string, required: true): NonNullable<CommandInteractionOption['message']>;
   public getMessage(name: string, required?: boolean): NonNullable<CommandInteractionOption['message']> | null;
+  public getFocused(
+    getFull: true,
+  ): InteractionOptionResolverReturn<Type, AutocompleteInteraction, ApplicationCommandOptionChoice>;
+  public getFocused(getFull?: boolean): InteractionOptionResolverReturn<Type, AutocompleteInteraction, string | number>;
 }
 
+export type InteractionOptionResolverReturn<T, AllowedInteraction, ReturnType> = T extends AllowedInteraction
+  ? ReturnType
+  : never;
+
 export class ContextMenuInteraction extends BaseCommandInteraction {
-  public options: CommandInteractionOptionResolver;
+  public options: CommandInteractionOptionResolver<ContextMenuInteraction>;
   public targetId: Snowflake;
   public targetType: Exclude<ApplicationCommandType, 'CHAT_INPUT'>;
   private resolveContextMenuOptions(data: APIApplicationCommandInteractionData): CommandInteractionOption[];
@@ -1039,6 +1061,7 @@ export class Interaction extends Base {
   };
   public isButton(): this is ButtonInteraction;
   public isCommand(): this is CommandInteraction;
+  public isAutocomplete(): this is AutocompleteInteraction;
   public isContextMenu(): this is ContextMenuInteraction;
   public isMessageComponent(): this is MessageComponentInteraction;
   public isSelectMenu(): this is SelectMenuInteraction;
@@ -3069,6 +3092,7 @@ export interface BaseApplicationCommandOptionsData {
   name: string;
   description: string;
   required?: boolean;
+  autocomplete?: boolean;
 }
 
 export interface UserApplicationCommandData extends BaseApplicationCommandData {
@@ -3501,6 +3525,8 @@ export interface CommandInteractionOption {
   name: string;
   type: ApplicationCommandOptionType;
   value?: string | number | boolean;
+  focused?: boolean;
+  autocomplete?: boolean;
   options?: CommandInteractionOption[];
   user?: User;
   member?: GuildMember | APIInteractionDataResolvedGuildMember;

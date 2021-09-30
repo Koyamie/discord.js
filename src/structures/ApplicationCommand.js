@@ -128,6 +128,7 @@ class ApplicationCommand extends Base {
    * @property {ApplicationCommandOptionType|number} type The type of the option
    * @property {string} name The name of the option
    * @property {string} description The description of the option
+   * @property {boolean} [autocomplete] Whether the option is an autocomplete option
    * @property {boolean} [required] Whether the option is required
    * @property {ApplicationCommandOptionChoice[]} [choices] The choices of the option for the user to pick from
    * @property {ApplicationCommandOptionData[]} [options] Additional options if this option is a subcommand (group)
@@ -187,6 +188,7 @@ class ApplicationCommand extends Base {
       command.name !== this.name ||
       ('description' in command && command.description !== this.description) ||
       ('version' in command && command.version !== this.version) ||
+      ('autocomplete' in command && command.autocomplete !== this.autocomplete) ||
       (commandType && commandType !== this.type) ||
       // Future proof for options being nullable
       // TODO: remove ?? 0 on each when nullable
@@ -242,6 +244,7 @@ class ApplicationCommand extends Base {
       option.name !== existing.name ||
       optionType !== existing.type ||
       option.description !== existing.description ||
+      option.autocomplete !== existing.autocomplete ||
       (option.required ?? (['SUB_COMMAND', 'SUB_COMMAND_GROUP'].includes(optionType) ? undefined : false)) !==
         existing.required ||
       option.choices?.length !== existing.choices?.length ||
@@ -291,6 +294,7 @@ class ApplicationCommand extends Base {
    * @property {string} name The name of the option
    * @property {string} description The description of the option
    * @property {boolean} [required] Whether the option is required
+   * @property {boolean} [autocomplete] Whether the option is an autocomplete option
    * @property {ApplicationCommandOptionChoice[]} [choices] The choices of the option for the user to pick from
    * @property {ApplicationCommandOption[]} [options] Additional options if this option is a subcommand (group)
    * @property {ChannelType[]} [channelTypes] When the option type is channel,
@@ -320,6 +324,7 @@ class ApplicationCommand extends Base {
       description: option.description,
       required:
         option.required ?? (stringType === 'SUB_COMMAND' || stringType === 'SUB_COMMAND_GROUP' ? undefined : false),
+      autocomplete: option.autocomplete,
       choices: option.choices,
       options: option.options?.map(o => this.transformOption(o, received)),
       [channelTypesKey]: received
