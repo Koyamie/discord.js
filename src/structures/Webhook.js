@@ -288,7 +288,14 @@ class Webhook {
           thread_id: cacheOrOptions.threadId,
         },
       });
-    return this.client.channels?.cache.get(data.channel_id)?.messages._add(data, cacheOrOptions.cache) ?? data;
+    let message = this.client.channels?.cache.get(data.channel_id)?.messages._add(data, cacheOrOptions.cache) ?? null;
+    if (!message) {
+      const WebhookClient = require('../client/WebhookClient');
+      if (this.client instanceof WebhookClient) return data;
+      const Message = require('./Message');
+      message = new Message(this.client, data);
+    }
+    return message;
   }
 
   /**
