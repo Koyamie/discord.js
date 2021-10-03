@@ -66,6 +66,7 @@ import {
   MembershipStates,
   MessageButtonStyles,
   MessageComponentTypes,
+  MessageTypes,
   MFALevels,
   NSFWLevels,
   OverwriteTypes,
@@ -2135,7 +2136,7 @@ export class Webhook extends WebhookMixin() {
   public name: string;
   public owner: User | APIUser | null;
   public sourceGuild: Guild | APIPartialGuild | null;
-  public sourceChannel: Channel | APIPartialChannel | null;
+  public sourceChannel: NewsChannel | APIPartialChannel | null;
   public token: string | null;
   public type: WebhookType;
 }
@@ -2289,6 +2290,8 @@ export class WelcomeScreen extends Base {
 //#region Constants
 
 type EnumHolder<T> = { [P in keyof T]: T[P] };
+
+type ExcludeEnum<T, K extends keyof T> = Exclude<keyof T | T[keyof T], K | T[K]>;
 
 export const Constants: {
   Package: {
@@ -2661,7 +2664,7 @@ export class GuildBanManager extends CachedManager<Snowflake, GuildBan, GuildBan
   public create(user: UserResolvable, options?: BanOptions): Promise<GuildMember | User | Snowflake>;
   public fetch(options: UserResolvable | FetchBanOptions): Promise<GuildBan>;
   public fetch(options?: FetchBansOptions): Promise<Collection<Snowflake, GuildBan>>;
-  public remove(user: UserResolvable, reason?: string): Promise<User>;
+  public remove(user: UserResolvable, reason?: string): Promise<User | null>;
 }
 
 export class GuildInviteManager extends DataManager<string, Invite, InviteResolvable> {
@@ -2900,7 +2903,7 @@ export type ActivitiesOptions = Omit<ActivityOptions, 'shardId'>;
 export interface ActivityOptions {
   name?: string;
   url?: string;
-  type?: Exclude<ActivityType, 'CUSTOM'> | Exclude<ActivityTypes, ActivityTypes.CUSTOM>;
+  type?: ExcludeEnum<typeof ActivityTypes, 'CUSTOM'>;
   shardId?: number | readonly number[];
 }
 
@@ -3129,7 +3132,7 @@ export type ApplicationCommandData =
 
 export interface ApplicationCommandChannelOptionData extends BaseApplicationCommandOptionsData {
   type: CommandOptionChannelResolvableType;
-  channelTypes?: Exclude<keyof typeof ChannelTypes | ChannelTypes, 'UNKNOWN' | ChannelTypes.UNKNOWN>[];
+  channelTypes?: ExcludeEnum<typeof ChannelTypes, 'UNKNOWN'>[];
   channel_types?: Exclude<ChannelTypes, ChannelTypes.UNKNOWN>[];
 }
 
@@ -3313,8 +3316,8 @@ export type CacheWithLimitsOptions = {
 export interface CategoryCreateChannelOptions {
   permissionOverwrites?: OverwriteResolvable[] | Collection<Snowflake, OverwriteResolvable>;
   topic?: string;
-  type?: Exclude<
-    keyof typeof ChannelTypes | ChannelTypes,
+  type?: ExcludeEnum<
+    typeof ChannelTypes,
     | 'DM'
     | 'GROUP_DM'
     | 'UNKNOWN'
@@ -3322,13 +3325,6 @@ export interface CategoryCreateChannelOptions {
     | 'GUILD_NEWS_THREAD'
     | 'GUILD_PRIVATE_THREAD'
     | 'GUILD_CATEGORY'
-    | ChannelTypes.DM
-    | ChannelTypes.GROUP_DM
-    | ChannelTypes.UNKNOWN
-    | ChannelTypes.GUILD_PUBLIC_THREAD
-    | ChannelTypes.GUILD_NEWS_THREAD
-    | ChannelTypes.GUILD_PRIVATE_THREAD
-    | ChannelTypes.GUILD_CATEGORY
   >;
   nsfw?: boolean;
   bitrate?: number;
@@ -3449,7 +3445,7 @@ export interface ClientEvents {
   typingStart: [typing: Typing];
   userUpdate: [oldUser: User | PartialUser, newUser: User];
   voiceStateUpdate: [oldState: VoiceState, newState: VoiceState];
-  webhookUpdate: [channel: TextChannel];
+  webhookUpdate: [channel: TextChannel | NewsChannel];
   /** @deprecated Use interactionCreate instead */
   interaction: [interaction: Interaction];
   interactionCreate: [interaction: Interaction];
@@ -3968,20 +3964,9 @@ export type GuildChannelResolvable = Snowflake | GuildChannel | ThreadChannel;
 
 export interface GuildChannelCreateOptions extends Omit<CategoryCreateChannelOptions, 'type'> {
   parent?: CategoryChannelResolvable;
-  type?: Exclude<
-    keyof typeof ChannelTypes | ChannelTypes,
-    | 'DM'
-    | 'GROUP_DM'
-    | 'UNKNOWN'
-    | 'GUILD_PUBLIC_THREAD'
-    | 'GUILD_NEWS_THREAD'
-    | 'GUILD_PRIVATE_THREAD'
-    | ChannelTypes.DM
-    | ChannelTypes.GROUP_DM
-    | ChannelTypes.UNKNOWN
-    | ChannelTypes.GUILD_PUBLIC_THREAD
-    | ChannelTypes.GUILD_NEWS_THREAD
-    | ChannelTypes.GUILD_PRIVATE_THREAD
+  type?: ExcludeEnum<
+    typeof ChannelTypes,
+    'DM' | 'GROUP_DM' | 'UNKNOWN' | 'GUILD_PUBLIC_THREAD' | 'GUILD_NEWS_THREAD' | 'GUILD_PRIVATE_THREAD'
   >;
 }
 
@@ -4308,7 +4293,7 @@ export interface LinkButtonOptions extends BaseButtonOptions {
 }
 
 export interface InteractionButtonOptions extends BaseButtonOptions {
-  style: Exclude<MessageButtonStyleResolvable, 'LINK' | MessageButtonStyles.LINK>;
+  style: ExcludeEnum<typeof MessageButtonStyles, 'LINK'>;
   customId: string;
 }
 
@@ -4506,30 +4491,7 @@ export type MessageTarget =
   | Message
   | MessageManager;
 
-export type MessageType =
-  | 'DEFAULT'
-  | 'RECIPIENT_ADD'
-  | 'RECIPIENT_REMOVE'
-  | 'CALL'
-  | 'CHANNEL_NAME_CHANGE'
-  | 'CHANNEL_ICON_CHANGE'
-  | 'CHANNEL_PINNED_MESSAGE'
-  | 'GUILD_MEMBER_JOIN'
-  | 'USER_PREMIUM_GUILD_SUBSCRIPTION'
-  | 'USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_1'
-  | 'USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_2'
-  | 'USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_3'
-  | 'CHANNEL_FOLLOW_ADD'
-  | 'GUILD_DISCOVERY_DISQUALIFIED'
-  | 'GUILD_DISCOVERY_REQUALIFIED'
-  | 'GUILD_DISCOVERY_GRACE_PERIOD_INITIAL_WARNING'
-  | 'GUILD_DISCOVERY_GRACE_PERIOD_FINAL_WARNING'
-  | 'THREAD_CREATED'
-  | 'REPLY'
-  | 'APPLICATION_COMMAND'
-  | 'THREAD_STARTER_MESSAGE'
-  | 'GUILD_INVITE_REMINDER'
-  | 'CONTEXT_MENU_COMMAND';
+export type MessageType = keyof typeof MessageTypes;
 
 export type MFALevel = keyof typeof MFALevels;
 
@@ -4631,8 +4593,8 @@ export type PresenceResolvable = Presence | UserResolvable | Snowflake;
 export interface PartialChannelData {
   id?: Snowflake | number;
   parentId?: Snowflake | number;
-  type?: Exclude<
-    keyof typeof ChannelTypes | ChannelTypes,
+  type?: ExcludeEnum<
+    typeof ChannelTypes,
     | 'DM'
     | 'GROUP_DM'
     | 'GUILD_NEWS'
@@ -4642,15 +4604,6 @@ export interface PartialChannelData {
     | 'GUILD_PUBLIC_THREAD'
     | 'GUILD_PRIVATE_THREAD'
     | 'GUILD_STAGE_VOICE'
-    | ChannelTypes.DM
-    | ChannelTypes.GROUP_DM
-    | ChannelTypes.GUILD_NEWS
-    | ChannelTypes.GUILD_STORE
-    | ChannelTypes.UNKNOWN
-    | ChannelTypes.GUILD_NEWS_THREAD
-    | ChannelTypes.GUILD_PUBLIC_THREAD
-    | ChannelTypes.GUILD_PRIVATE_THREAD
-    | ChannelTypes.GUILD_STAGE_VOICE
   >;
   name: string;
   topic?: string;
