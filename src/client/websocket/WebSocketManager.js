@@ -1,8 +1,8 @@
 'use strict';
 
-const EventEmitter = require('node:events');
 const { Collection } = require('@discordjs/collection');
 const { RPCErrorCodes } = require('discord-api-types/v9');
+const EventEmitter = require('node:events');
 const WebSocketShard = require('./WebSocketShard');
 const PacketHandlers = require('./handlers');
 const { Error } = require('../../errors');
@@ -173,7 +173,7 @@ class WebSocketManager extends EventEmitter {
     const [shard] = this.shardQueue;
 
     this.shardQueue.delete(shard);
-    
+
     if (this.client.clusterMode) {
       setTimeout(this.createShards.bind(this), 500);
     }
