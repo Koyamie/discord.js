@@ -267,13 +267,13 @@ class Webhook {
 
   /**
    * Gets a message that was sent by this webhook.
-   * @param {Snowflake|'@original'} message The id of the message to fetch
+   * @param {Snowflake|'@original'} messageId The id of the message to fetch
    * @param {WebhookFetchMessageOptions|boolean} [cacheOrOptions={}] The options to provide to fetch the message.
    * A **deprecated** boolean may be passed instead to specify whether to cache the message.
    * @returns {Promise<Message|APIMessage>} Returns the raw message data if the webhook was instantiated as a
    * {@link WebhookClient} or if the channel is uncached, otherwise a {@link Message} will be returned
    */
-  async fetchMessage(message, cacheOrOptions = { cache: true }) {
+  async fetchMessage(messageId, cacheOrOptions = { cache: true }) {
     if (typeof cacheOrOptions === 'boolean') {
       cacheOrOptions = { cache: cacheOrOptions };
     }
@@ -282,7 +282,7 @@ class Webhook {
 
     const data = await this.client.api
       .webhooks(this.id, this.token)
-      .messages(message)
+      .messages(messageId)
       .get({
         query: {
           thread_id: cacheOrOptions.threadId,
