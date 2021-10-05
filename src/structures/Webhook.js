@@ -195,7 +195,15 @@ class Webhook {
       query: { thread_id: messagePayload.options.threadId, wait: true },
       auth: false,
     });
-    return this.client.channels?.cache.get(d.channel_id)?.messages._add(d, false) ?? d;
+
+    let message = this.client.channels?.cache.get(d.channel_id)?.messages._add(d, false) ?? null;
+    if (!message) {
+      const WebhookClient = require('../client/WebhookClient');
+      if (this.client instanceof WebhookClient) return d;
+      const Message = require('./Message');
+      message = new Message(this.client, d);
+    }
+    return message;
   }
 
   /**
