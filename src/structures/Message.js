@@ -737,7 +737,10 @@ class Message extends Base {
    *   .catch(console.error);
    */
   async delete() {
-    if (!this.channel) throw new Error('CHANNEL_NOT_CACHED');
+    if (!this.channel) {
+      if (!this.channelId) throw new Error('CHANNEL_NOT_CACHED');
+      return this.client.api.channels(this.channelId).messages(this.id).delete();
+    }
     await this.channel.messages.delete(this.id);
     return this;
   }
