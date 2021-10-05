@@ -1,6 +1,6 @@
 {
   "name": "discord.js",
-  "version": "13.3.0-koya",
+  "version": "13.3.0-dev",
   "description": "A powerful library for interacting with the Discord API",
   "main": "./src/index.js",
   "module": "./src/index.mjs",
@@ -26,7 +26,7 @@
     "lint:typings": "tslint typings/index.d.ts",
     "prettier": "prettier --write src/**/*.js typings/**/*.ts",
     "prepublishOnly": "npm run test && gen-esm-wrapper ./src/index.js ./src/index.mjs",
-    "build": "gen-esm-wrapper ./src/index.js ./src/index.mjs",
+    "prepare": "is-ci || husky install",
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s"
   },
   "repository": {
