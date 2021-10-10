@@ -588,6 +588,7 @@ class Util extends null {
    * @returns {string}
    */
   static cleanContent(str, channel) {
+    if (!channel) return str;
     str = str
       .replace(/<@!?[0-9]+>/g, input => {
         const id = input.replace(/<|!|>|@/g, '');
