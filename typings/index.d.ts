@@ -276,14 +276,6 @@ export type GuildCacheMessage<Cached extends GuildCacheState> = CacheTypeReducer
   Message | APIMessage
 >;
 
-export interface BaseGuildCommandInteraction<Cached extends GuildCacheState = GuildCacheState>
-  extends GuildInteraction<Cached> {
-  deferReply(options: InteractionDeferReplyOptions & { fetchReply: true }): Promise<GuildCacheMessage<Cached>>;
-  editReply(options: string | MessagePayload | WebhookEditMessageOptions): Promise<GuildCacheMessage<Cached>>;
-  fetchReply(): Promise<GuildCacheMessage<Cached>>;
-  reply(options: InteractionReplyOptions & { fetchReply: true }): Promise<GuildCacheMessage<Cached>>;
-}
-
 export abstract class BaseCommandInteraction extends Interaction {
   public readonly command: ApplicationCommand | ApplicationCommand<{ guild: GuildResolvable }> | null;
   public readonly channel: TextBasedChannels | null;
@@ -294,9 +286,9 @@ export abstract class BaseCommandInteraction extends Interaction {
   public ephemeral: boolean | null;
   public replied: boolean;
   public webhook: InteractionWebhook;
-  public inGuild(): this is BaseGuildCommandInteraction<'present'> & this;
-  public inCachedGuild(): this is BaseGuildCommandInteraction<'cached'> & this;
-  public inRawGuild(): this is BaseGuildCommandInteraction<'raw'> & this;
+  public inGuild(): this is InteractionResponses<'present'> & this;
+  public inCachedGuild(): this is InteractionResponses<'cached'> & this;
+  public inRawGuild(): this is InteractionResponses<'raw'> & this;
   public deferReply(options: InteractionDeferReplyOptions & { fetchReply: true }): Promise<Message | APIMessage>;
   public deferReply(options?: InteractionDeferReplyOptions): Promise<void>;
   public deleteReply(): Promise<void>;
@@ -311,6 +303,21 @@ export abstract class BaseCommandInteraction extends Interaction {
   ): CommandInteractionOption;
   private transformResolved(resolved: APIApplicationCommandInteractionData['resolved']): CommandInteractionResolvedData;
 }
+
+export interface InteractionResponsesResolvable {
+  inGuild(): this is InteractionResponses<'present'> & this;
+  inCachedGuild(): this is InteractionResponses<'cached'> & this;
+  inRawGuild(): this is InteractionResponses<'raw'> & this;
+}
+
+export type CacheHelper<
+  T extends Interaction,
+  Cached extends GuildCacheState,
+> = T extends InteractionResponsesResolvable ? InteractionResponses<Cached> & T : GuildInteraction<Cached> & T;
+
+export type GuildCached<T extends Interaction> = CacheHelper<T, 'cached'>;
+export type GuildRaw<T extends Interaction> = CacheHelper<T, 'raw'>;
+export type GuildPresent<T extends Interaction> = CacheHelper<T, 'present'>;
 
 export abstract class BaseGuild extends Base {
   protected constructor(client: Client, data: RawBaseGuildData);
@@ -455,7 +462,7 @@ export abstract class Channel extends Base {
   public toString(): ChannelMention;
 }
 
-type If<T extends boolean, A, B = null> = T extends true ? A : T extends false ? B : A | B;
+export type If<T extends boolean, A, B = null> = T extends true ? A : T extends false ? B : A | B;
 
 export class Client<Ready extends boolean = boolean> extends BaseClient {
   public constructor(options: ClientOptions);
@@ -599,11 +606,9 @@ export abstract class Collector<K, V, F extends unknown[] = []> extends EventEmi
   public once(event: 'end', listener: (collected: Collection<K, V>, reason: string) => Awaitable<void>): this;
 }
 
-export type GuildCommandInteraction<Cached extends GuildCacheState = GuildCacheState> =
-  BaseGuildCommandInteraction<Cached> & CommandInteraction;
-
-export class CommandInteraction extends BaseCommandInteraction implements GuildCachedInteraction<CommandInteraction> {
+export class CommandInteraction extends BaseCommandInteraction {
   public options: CommandInteractionOptionResolver;
+  public toString(): string;
 }
 
 export class CommandInteractionOptionResolver {
@@ -661,20 +666,7 @@ export class CommandInteractionOptionResolver {
   public getMessage(name: string, required: true): NonNullable<CommandInteractionOption['message']>;
   public getMessage(name: string, required?: boolean): NonNullable<CommandInteractionOption['message']> | null;
 }
-
-export type GuildContextMenuInteraction<Cached extends GuildCacheState = GuildCacheState> =
-  BaseGuildCommandInteraction<Cached> & ContextMenuInteraction;
-
-export interface GuildCachedInteraction<T> {
-  inGuild(): this is BaseGuildCommandInteraction<'present'> & T;
-  inCachedGuild(): this is BaseGuildCommandInteraction<'cached'> & T;
-  inRawGuild(): this is BaseGuildCommandInteraction<'raw'> & T;
-}
-
-export class ContextMenuInteraction
-  extends BaseCommandInteraction
-  implements GuildCachedInteraction<ContextMenuInteraction>
-{
+export class ContextMenuInteraction extends BaseCommandInteraction {
   public options: CommandInteractionOptionResolver;
   public targetId: Snowflake;
   public targetType: Exclude<ApplicationCommandType, 'CHAT_INPUT'>;
@@ -787,7 +779,7 @@ export class Guild extends AnonymousGuild {
   public equals(guild: Guild): boolean;
   public fetchAuditLogs(options?: GuildAuditLogsFetchOptions): Promise<GuildAuditLogs>;
   public fetchIntegrations(): Promise<Collection<Snowflake | string, Integration>>;
-  public fetchOwner(options?: FetchOwnerOptions): Promise<GuildMember>;
+  public fetchOwner(options?: BaseFetchOptions): Promise<GuildMember>;
   public fetchPreview(): Promise<GuildPreview>;
   public fetchTemplates(): Promise<Collection<GuildTemplate['code'], GuildTemplate>>;
   public fetchVanityData(): Promise<Vanity>;
@@ -1053,7 +1045,7 @@ export class Integration extends Base {
   public readonly roles: Collection<Snowflake, Role>;
   public syncedAt: number | undefined;
   public syncing: boolean | undefined;
-  public type: string;
+  public type: IntegrationType;
   public user: User | null;
   public subscriberCount: number | null;
   public revoked: boolean | null;
@@ -1079,7 +1071,7 @@ export class Intents extends BitField<IntentsString> {
 
 export type GuildCacheState = 'cached' | 'raw' | 'present';
 
-type CacheTypeReducer<
+export type CacheTypeReducer<
   State extends GuildCacheState,
   CachedType,
   RawType = CachedType,
@@ -1119,11 +1111,24 @@ export class Interaction extends Base {
   public inGuild(): this is GuildInteraction<'present'> & this;
   public inCachedGuild(): this is GuildInteraction<'cached'> & this;
   public inRawGuild(): this is GuildInteraction<'raw'> & this;
+  public isApplicationCommand(): this is BaseCommandInteraction;
   public isButton(): this is ButtonInteraction;
   public isCommand(): this is CommandInteraction;
   public isContextMenu(): this is ContextMenuInteraction;
   public isMessageComponent(): this is MessageComponentInteraction;
   public isSelectMenu(): this is SelectMenuInteraction;
+}
+
+export interface InteractionResponses<Cached extends GuildCacheState = GuildCacheState>
+  extends GuildInteraction<Cached> {
+  deferReply(options?: InteractionDeferReplyOptions): Promise<void>;
+  deferReply(options: InteractionDeferReplyOptions & { fetchReply: true }): Promise<GuildCacheMessage<Cached>>;
+  editReply(options: string | MessagePayload | WebhookEditMessageOptions): Promise<GuildCacheMessage<Cached>>;
+  deleteReply(): Promise<void>;
+  fetchReply(): Promise<GuildCacheMessage<Cached>>;
+  reply(options: InteractionReplyOptions & { fetchReply: true }): Promise<GuildCacheMessage<Cached>>;
+  reply(options: string | MessagePayload | InteractionReplyOptions): Promise<void>;
+  followUp(options: string | MessagePayload | InteractionReplyOptions): Promise<GuildCacheMessage<Cached>>;
 }
 
 export class InteractionCollector<T extends Interaction> extends Collector<Snowflake, T> {
@@ -1217,7 +1222,7 @@ export class LimitedCollection<K, V> extends Collection<K, V> {
 
 // This is a general conditional type utility that allows for specific union members to be extracted given
 // a tagged union.
-type TaggedUnion<T, K extends keyof T, V extends T[K]> = T extends Record<K, V>
+export type TaggedUnion<T, K extends keyof T, V extends T[K]> = T extends Record<K, V>
   ? T
   : T extends Record<K, infer U>
   ? V extends U
@@ -1226,28 +1231,27 @@ type TaggedUnion<T, K extends keyof T, V extends T[K]> = T extends Record<K, V>
   : never;
 
 // This creates a map of MessageComponentTypes to their respective `InteractionCollectorOptionsResolvable` variant.
-type CollectorOptionsTypeResolver<U extends InteractionCollectorOptionsResolvable> = {
+export type CollectorOptionsTypeResolver<U extends InteractionCollectorOptionsResolvable> = {
   readonly [T in U['componentType']]: TaggedUnion<InteractionCollectorOptionsResolvable, 'componentType', T>;
 };
 
 // This basically says "Given a `InteractionCollectorOptionsResolvable` variant", I'll give the corresponding
 // `InteractionCollector<T>` variant back.
-type ConditionalInteractionCollectorType<T extends InteractionCollectorOptionsResolvable | undefined> =
+export type ConditionalInteractionCollectorType<T extends InteractionCollectorOptionsResolvable | undefined> =
   T extends InteractionCollectorOptions<infer Item>
     ? InteractionCollector<Item>
     : InteractionCollector<MessageComponentInteraction>;
 
 // This maps each componentType key to each variant.
-type MappedInteractionCollectorOptions = CollectorOptionsTypeResolver<InteractionCollectorOptionsResolvable>;
+export type MappedInteractionCollectorOptions = CollectorOptionsTypeResolver<InteractionCollectorOptionsResolvable>;
 
 // Converts mapped types to complimentary collector types.
-type InteractionCollectorReturnType<T extends MessageComponentType | MessageComponentTypes | undefined> = T extends
-  | MessageComponentType
-  | MessageComponentTypes
-  ? ConditionalInteractionCollectorType<MappedInteractionCollectorOptions[T]>
-  : InteractionCollector<MessageComponentInteraction>;
+export type InteractionCollectorReturnType<T extends MessageComponentType | MessageComponentTypes | undefined> =
+  T extends MessageComponentType | MessageComponentTypes
+    ? ConditionalInteractionCollectorType<MappedInteractionCollectorOptions[T]>
+    : InteractionCollector<MessageComponentInteraction>;
 
-type InteractionExtractor<T extends MessageComponentType | MessageComponentTypes | undefined> = T extends
+export type InteractionExtractor<T extends MessageComponentType | MessageComponentTypes | undefined> = T extends
   | MessageComponentType
   | MessageComponentTypes
   ? MappedInteractionCollectorOptions[T] extends InteractionCollectorOptions<infer Item>
@@ -1255,12 +1259,12 @@ type InteractionExtractor<T extends MessageComponentType | MessageComponentTypes
     : never
   : MessageComponentInteraction;
 
-type MessageCollectorOptionsParams<T extends MessageComponentType | MessageComponentTypes | undefined> =
+export type MessageCollectorOptionsParams<T extends MessageComponentType | MessageComponentTypes | undefined> =
   | {
       componentType?: T;
     } & MessageComponentCollectorOptions<InteractionExtractor<T>>;
 
-type AwaitMessageCollectorOptionsParams<T extends MessageComponentType | MessageComponentTypes | undefined> =
+export type AwaitMessageCollectorOptionsParams<T extends MessageComponentType | MessageComponentTypes | undefined> =
   | { componentType?: T } & Pick<
       InteractionCollectorOptions<InteractionExtractor<T>>,
       keyof AwaitMessageComponentOptions<any>
@@ -1420,6 +1424,9 @@ export class MessageComponentInteraction extends Interaction {
   public message: Message | APIMessage;
   public replied: boolean;
   public webhook: InteractionWebhook;
+  public inGuild(): this is InteractionResponses<'present'> & this;
+  public inCachedGuild(): this is InteractionResponses<'cached'> & this;
+  public inRawGuild(): this is InteractionResponses<'raw'> & this;
   public deferReply(options: InteractionDeferReplyOptions & { fetchReply: true }): Promise<Message | APIMessage>;
   public deferReply(options?: InteractionDeferReplyOptions): Promise<void>;
   public deferUpdate(options: InteractionDeferUpdateOptions & { fetchReply: true }): Promise<Message | APIMessage>;
@@ -1991,7 +1998,7 @@ export class ThreadChannel extends TextBasedChannel(Channel) {
   public leave(): Promise<ThreadChannel>;
   public permissionsFor(memberOrRole: GuildMember | Role): Readonly<Permissions>;
   public permissionsFor(memberOrRole: GuildMemberResolvable | RoleResolvable): Readonly<Permissions> | null;
-  public fetchOwner(options?: FetchOwnerOptions): Promise<ThreadMember | null>;
+  public fetchOwner(options?: BaseFetchOptions): Promise<ThreadMember | null>;
   public fetchStarterMessage(options?: BaseFetchOptions): Promise<Message>;
   public setArchived(archived?: boolean, reason?: string): Promise<ThreadChannel>;
   public setAutoArchiveDuration(
@@ -2347,9 +2354,9 @@ export class WelcomeScreen extends Base {
 
 //#region Constants
 
-type EnumHolder<T> = { [P in keyof T]: T[P] };
+export type EnumHolder<T> = { [P in keyof T]: T[P] };
 
-type ExcludeEnum<T, K extends keyof T> = Exclude<keyof T | T[keyof T], K | T[K]>;
+export type ExcludeEnum<T, K extends keyof T> = Exclude<keyof T | T[keyof T], K | T[K]>;
 
 export const Constants: {
   Package: {
@@ -3218,22 +3225,22 @@ export interface ApplicationCommandChoicesOption extends BaseApplicationCommandO
   choices?: ApplicationCommandOptionChoice[];
 }
 
-export interface ApplicationCommandSubGroupData extends BaseApplicationCommandOptionsData {
+export interface ApplicationCommandSubGroupData extends Omit<BaseApplicationCommandOptionsData, 'required'> {
   type: 'SUB_COMMAND_GROUP' | ApplicationCommandOptionTypes.SUB_COMMAND_GROUP;
   options?: ApplicationCommandSubCommandData[];
 }
 
-export interface ApplicationCommandSubGroup extends BaseApplicationCommandOptionsData {
+export interface ApplicationCommandSubGroup extends Omit<BaseApplicationCommandOptionsData, 'required'> {
   type: 'SUB_COMMAND_GROUP';
   options?: ApplicationCommandSubCommand[];
 }
 
-export interface ApplicationCommandSubCommandData extends BaseApplicationCommandOptionsData {
+export interface ApplicationCommandSubCommandData extends Omit<BaseApplicationCommandOptionsData, 'required'> {
   type: 'SUB_COMMAND' | ApplicationCommandOptionTypes.SUB_COMMAND;
   options?: (ApplicationCommandChoicesData | ApplicationCommandNonOptionsData | ApplicationCommandChannelOptionData)[];
 }
 
-export interface ApplicationCommandSubCommand extends BaseApplicationCommandOptionsData {
+export interface ApplicationCommandSubCommand extends Omit<BaseApplicationCommandOptionsData, 'required'> {
   type: 'SUB_COMMAND';
   options?: (ApplicationCommandChoicesOption | ApplicationCommandNonOptions | ApplicationCommandChannelOption)[];
 }
@@ -3924,8 +3931,6 @@ export interface FetchMembersOptions {
   force?: boolean;
 }
 
-export type FetchOwnerOptions = Omit<FetchMemberOptions, 'user'>;
-
 export interface FetchReactionUsersOptions {
   limit?: number;
   after?: Snowflake;
@@ -4209,6 +4214,8 @@ export interface IntegrationAccount {
   name: string;
 }
 
+export type IntegrationType = 'twitch' | 'youtube' | 'discord';
+
 export interface InteractionCollectorOptions<T extends Interaction> extends CollectorOptions<[T]> {
   channel?: TextBasedChannels;
   componentType?: MessageComponentType | MessageComponentTypes;
@@ -4282,7 +4289,7 @@ export interface InviteGenerationOptions {
   scopes: InviteScope[];
 }
 
-type GuildInvitableChannelResolvable =
+export type GuildInvitableChannelResolvable =
   | TextChannel
   | VoiceChannel
   | NewsChannel
