@@ -34,7 +34,7 @@ function makeImageUrl(root, { format = 'png', size } = {}) {
 /**
  * Options for static Image URLs.
  * @typedef {Object} StaticImageURLOptions
- * @property {string} [format='webp'] One of `webp`, `png`, `jpg`, `jpeg`.
+ * @property {string} [format='png'] One of `webp`, `png`, `jpg`, `jpeg`.
  * @property {number} [size] One of `16`, `32`, `64`, `128`, `256`, `300`, `512`, `600`, `1024`, `2048`, `4096`
  */
 
@@ -42,14 +42,14 @@ function makeImageUrl(root, { format = 'png', size } = {}) {
 exports.Endpoints = {
   CDN(root) {
     return {
-      Emoji: (emojiId, format = 'webp') => `${root}/emojis/${emojiId}.${format}`,
+      Emoji: (emojiId, format = 'png') => `${root}/emojis/${emojiId}.${format}`,
       Asset: name => `${root}/assets/${name}`,
       DefaultAvatar: discriminator => `${root}/embed/avatars/${discriminator}.png`,
       Avatar: (userId, hash, format, size, dynamic = false) => {
         if (dynamic && hash.startsWith('a_')) format = 'gif';
         return makeImageUrl(`${root}/avatars/${userId}/${hash}`, { format, size });
       },
-      GuildMemberAvatar: (guildId, memberId, hash, format = 'webp', size, dynamic = false) => {
+      GuildMemberAvatar: (guildId, memberId, hash, format = 'png', size, dynamic = false) => {
         if (dynamic && hash.startsWith('a_')) format = 'gif';
         return makeImageUrl(`${root}/guilds/${guildId}/users/${memberId}/avatars/${hash}`, { format, size });
       },
@@ -73,7 +73,7 @@ exports.Endpoints = {
       TeamIcon: (teamId, hash, options) => makeImageUrl(`${root}/team-icons/${teamId}/${hash}`, options),
       Sticker: (stickerId, stickerFormat) =>
         `${root}/stickers/${stickerId}.${stickerFormat === 'LOTTIE' ? 'json' : 'png'}`,
-      RoleIcon: (roleId, hash, format = 'webp', size) =>
+      RoleIcon: (roleId, hash, format = 'png', size) =>
         makeImageUrl(`${root}/role-icons/${roleId}/${hash}`, { size, format }),
     };
   },
