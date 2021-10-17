@@ -18,7 +18,7 @@ const AllowedImageFormats = ['webp', 'png', 'jpg', 'jpeg', 'gif'];
 
 const AllowedImageSizes = [16, 32, 56, 64, 96, 128, 256, 300, 512, 600, 1024, 2048, 4096];
 
-function makeImageUrl(root, { format = 'webp', size } = {}) {
+function makeImageUrl(root, { format = 'png', size } = {}) {
   if (!['undefined', 'number'].includes(typeof size)) throw new TypeError('INVALID_TYPE', 'size', 'number');
   if (format && !AllowedImageFormats.includes(format)) throw new Error('IMAGE_FORMAT', format);
   if (size && !AllowedImageSizes.includes(size)) throw new RangeError('IMAGE_SIZE', size);
@@ -34,7 +34,7 @@ function makeImageUrl(root, { format = 'webp', size } = {}) {
 /**
  * Options for static Image URLs.
  * @typedef {Object} StaticImageURLOptions
- * @property {string} [format='webp'] One of `webp`, `png`, `jpg`, `jpeg`.
+ * @property {string} [format='png'] One of `webp`, `png`, `jpg`, `jpeg`.
  * @property {number} [size] One of `16`, `32`, `56`, `64`, `96`, `128`, `256`, `300`, `512`, `600`, `1024`, `2048`,
  * `4096`
  */
@@ -43,14 +43,14 @@ function makeImageUrl(root, { format = 'webp', size } = {}) {
 exports.Endpoints = {
   CDN(root) {
     return {
-      Emoji: (emojiId, format = 'webp') => `${root}/emojis/${emojiId}.${format}`,
+      Emoji: (emojiId, format = 'png') => `${root}/emojis/${emojiId}.${format}`,
       Asset: name => `${root}/assets/${name}`,
       DefaultAvatar: discriminator => `${root}/embed/avatars/${discriminator}.png`,
       Avatar: (userId, hash, format, size, dynamic = false) => {
         if (dynamic && hash.startsWith('a_')) format = 'gif';
         return makeImageUrl(`${root}/avatars/${userId}/${hash}`, { format, size });
       },
-      GuildMemberAvatar: (guildId, memberId, hash, format = 'webp', size, dynamic = false) => {
+      GuildMemberAvatar: (guildId, memberId, hash, format = 'png', size, dynamic = false) => {
         if (dynamic && hash.startsWith('a_')) format = 'gif';
         return makeImageUrl(`${root}/guilds/${guildId}/users/${memberId}/avatars/${hash}`, { format, size });
       },
@@ -74,7 +74,7 @@ exports.Endpoints = {
       TeamIcon: (teamId, hash, options) => makeImageUrl(`${root}/team-icons/${teamId}/${hash}`, options),
       Sticker: (stickerId, stickerFormat) =>
         `${root}/stickers/${stickerId}.${stickerFormat === 'LOTTIE' ? 'json' : 'png'}`,
-      RoleIcon: (roleId, hash, format = 'webp', size) =>
+      RoleIcon: (roleId, hash, format = 'png', size) =>
         makeImageUrl(`${root}/role-icons/${roleId}/${hash}`, { size, format }),
     };
   },
@@ -971,7 +971,13 @@ exports.ApplicationCommandPermissionTypes = createEnum([null, 'ROLE', 'USER']);
  * @typedef {string} InteractionType
  * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-interaction-type}
  */
-exports.InteractionTypes = createEnum([null, 'PING', 'APPLICATION_COMMAND', 'MESSAGE_COMPONENT']);
+exports.InteractionTypes = createEnum([
+  null,
+  'PING',
+  'APPLICATION_COMMAND',
+  'MESSAGE_COMPONENT',
+  'APPLICATION_COMMAND_AUTOCOMPLETE',
+]);
 
 /**
  * The type of an interaction response:
@@ -992,6 +998,7 @@ exports.InteractionResponseTypes = createEnum([
   'DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE',
   'DEFERRED_MESSAGE_UPDATE',
   'UPDATE_MESSAGE',
+  'APPLICATION_COMMAND_AUTOCOMPLETE_RESULT',
 ]);
 /* eslint-enable max-len */
 
