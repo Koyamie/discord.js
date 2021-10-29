@@ -2429,7 +2429,6 @@ export const Constants: {
     name: string;
     version: string;
     description: string;
-    author: string;
     license: string;
     main: string;
     types: string;
@@ -2440,7 +2439,6 @@ export const Constants: {
     scripts: Record<string, string>;
     engines: Record<string, string>;
     dependencies: Record<string, string>;
-    peerDependencies: Record<string, string>;
     devDependencies: Record<string, string>;
     [key: string]: unknown;
   };
@@ -2948,6 +2946,8 @@ export class ThreadMemberManager extends CachedManager<Snowflake, ThreadMember, 
   private constructor(thread: ThreadChannel, iterable?: Iterable<RawThreadMemberData>);
   public thread: ThreadChannel;
   public add(member: UserResolvable | '@me', reason?: string): Promise<Snowflake>;
+  public fetch(member?: UserResolvable, options?: BaseFetchOptions): Promise<ThreadMember>;
+  /** @deprecated Use `fetch(member, options)` instead. */
   public fetch(cache?: boolean): Promise<Collection<Snowflake, ThreadMember>>;
   public remove(id: Snowflake | '@me', reason?: string): Promise<Snowflake>;
 }
