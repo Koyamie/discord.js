@@ -4,6 +4,7 @@ const { Collection } = require('@discordjs/collection');
 const Interaction = require('./Interaction');
 const InteractionWebhook = require('./InteractionWebhook');
 const InteractionResponses = require('./interfaces/InteractionResponses');
+const GuildMember = require('../structures/GuildMember');
 const { ApplicationCommandOptionTypes } = require('../util/Constants');
 
 /**
@@ -162,7 +163,10 @@ class BaseCommandInteraction extends Interaction {
       if (user) result.user = this.client.users._add(user);
 
       const member = resolved.members?.[option.value];
-      if (member) result.member = this.guild?.members._add({ user, ...member }) ?? member;
+      if (member) {
+        result.member =
+          this.guild?.members._add({ user, ...member }) ?? new GuildMember(this.client, member, { id: this.guildId });
+      }
 
       const channel = resolved.channels?.[option.value];
       if (channel) result.channel = this.client.channels._add(channel, this.guild) ?? channel;
