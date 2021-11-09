@@ -165,7 +165,8 @@ class BaseCommandInteraction extends Interaction {
       const member = resolved.members?.[option.value];
       if (member) {
         result.member =
-          this.guild?.members._add({ user, ...member }) ?? new GuildMember(this.client, member, { id: this.guildId });
+          this.guild?.members._add({ user, ...member }) ??
+          new GuildMember(this.client, { user, ...member }, { id: this.guildId });
       }
 
       const channel = resolved.channels?.[option.value];
