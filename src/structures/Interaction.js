@@ -1,6 +1,7 @@
 'use strict';
 
 const Base = require('./Base');
+const GuildMember = require('../structures/GuildMember');
 const { InteractionTypes, MessageComponentTypes } = require('../util/Constants');
 const Permissions = require('../util/Permissions');
 const SnowflakeUtil = require('../util/SnowflakeUtil');
@@ -61,7 +62,9 @@ class Interaction extends Base {
      * If this interaction was sent in a guild, the member which sent it
      * @type {?(GuildMember|APIGuildMember)}
      */
-    this.member = data.member ? this.guild?.members._add(data.member) ?? data.member : null;
+    this.member = data.member
+      ? this.guild?.members._add(data.member) ?? new GuildMember(this.client, data.member, { id: this.guildId })
+      : null;
 
     /**
      * The version
