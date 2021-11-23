@@ -6,6 +6,8 @@ const { WebhookTypes } = require('../util/Constants');
 const DataResolver = require('../util/DataResolver');
 const SnowflakeUtil = require('../util/SnowflakeUtil');
 
+let deprecationEmittedForFetchMessage = false;
+
 /**
  * Represents a webhook.
  */
@@ -257,6 +259,7 @@ class Webhook {
     const data = await this.client.api.webhooks(this.id, channel ? undefined : this.token).patch({
       data: { name, avatar, channel_id: channel },
       reason,
+      auth: !this.token || Boolean(channel),
     });
 
     this.name = data.name;
@@ -277,12 +280,21 @@ class Webhook {
    * Gets a message that was sent by this webhook.
    * @param {Snowflake|'@original'} messageId The id of the message to fetch
    * @param {WebhookFetchMessageOptions|boolean} [cacheOrOptions={}] The options to provide to fetch the message.
-   * A **deprecated** boolean may be passed instead to specify whether to cache the message.
+   * <warn>A **deprecated** boolean may be passed instead to specify whether to cache the message.</warn>
    * @returns {Promise<Message|APIMessage>} Returns the raw message data if the webhook was instantiated as a
    * {@link WebhookClient} or if the channel is uncached, otherwise a {@link Message} will be returned
    */
   async fetchMessage(messageId, cacheOrOptions = { cache: true }) {
     if (typeof cacheOrOptions === 'boolean') {
+      if (!deprecationEmittedForFetchMessage) {
+        process.emitWarning(
+          'Passing a boolean to cache the message in Webhook#fetchMessage is deprecated. Pass an object instead.',
+          'DeprecationWarning',
+        );
+
+        deprecationEmittedForFetchMessage = true;
+      }
+
       cacheOrOptions = { cache: cacheOrOptions };
     }
 
@@ -295,6 +307,7 @@ class Webhook {
         query: {
           thread_id: cacheOrOptions.threadId,
         },
+        auth: false,
       });
     let message = this.client.channels?.cache.get(data.channel_id)?.messages._add(data, cacheOrOptions.cache) ?? null;
     if (!message) {
@@ -332,6 +345,7 @@ class Webhook {
         query: {
           thread_id: messagePayload.options.threadId,
         },
+        auth: false,
       });
 
     const messageManager = this.client.channels?.cache.get(d.channel_id)?.messages;
@@ -351,7 +365,7 @@ class Webhook {
    * @returns {Promise<void>}
    */
   async delete(reason) {
-    await this.client.api.webhooks(this.id, this.token).delete({ reason });
+    await this.client.api.webhooks(this.id, this.token).delete({ reason, auth: !this.token });
   }
 
   /**
@@ -370,6 +384,7 @@ class Webhook {
         query: {
           thread_id: threadId,
         },
+        auth: false,
       });
   }
 
