@@ -83,6 +83,8 @@ import {
   GuildAuditLogsEntry,
   GuildAuditLogs,
   StageInstance,
+  Sticker,
+  Emoji,
 } from '.';
 import type { ApplicationCommandOptionTypes } from './enums';
 import { expectAssignable, expectDeprecated, expectNotAssignable, expectNotType, expectType } from 'tsd';
@@ -531,6 +533,8 @@ client.on('messageCreate', async message => {
     const buttonCollector = message.createMessageComponentCollector({ componentType: 'BUTTON' });
     expectType<InteractionCollector<ButtonInteraction<'cached'>>>(buttonCollector);
     expectType<GuildTextBasedChannel>(message.channel);
+    expectType<Guild>(message.guild);
+    expectType<GuildMember | null>(message.member);
   }
 
   expectType<TextBasedChannels>(message.channel);
@@ -747,6 +751,10 @@ declare const dmChannel: DMChannel;
 declare const threadChannel: ThreadChannel;
 declare const newsChannel: NewsChannel;
 declare const textChannel: TextChannel;
+declare const storeChannel: StoreChannel;
+declare const categoryChannel: CategoryChannel;
+declare const voiceChannel: VoiceChannel;
+declare const guild: Guild;
 declare const user: User;
 declare const guildMember: GuildMember;
 
@@ -762,6 +770,10 @@ expectType<Message | null>(dmChannel.lastMessage);
 expectType<Message | null>(threadChannel.lastMessage);
 expectType<Message | null>(newsChannel.lastMessage);
 expectType<Message | null>(textChannel.lastMessage);
+
+expectDeprecated(storeChannel.clone());
+expectDeprecated(categoryChannel.createChannel('Store', { type: 'GUILD_STORE' }));
+expectDeprecated(guild.channels.create('Store', { type: 'GUILD_STORE' }));
 
 notPropertyOf(user, 'lastMessage');
 notPropertyOf(user, 'lastMessageId');
@@ -888,6 +900,25 @@ client.on('messageReactionAdd', async reaction => {
   if (reaction.message.partial) return expectType<string | null>(reaction.message.content);
   expectType<string>(reaction.message.content);
 });
+
+// Test .deleted deprecations
+declare const emoji: Emoji;
+declare const message: Message;
+declare const role: Role;
+declare const stageInstance: StageInstance;
+declare const sticker: Sticker;
+expectDeprecated((dmChannel.deleted = true));
+expectDeprecated((textChannel.deleted = true));
+expectDeprecated((voiceChannel.deleted = true));
+expectDeprecated((newsChannel.deleted = true));
+expectDeprecated((threadChannel.deleted = true));
+expectDeprecated((emoji.deleted = true));
+expectDeprecated((guildMember.deleted = true));
+expectDeprecated((guild.deleted = true));
+expectDeprecated((message.deleted = true));
+expectDeprecated((role.deleted = true));
+expectDeprecated((stageInstance.deleted = true));
+expectDeprecated((sticker.deleted = true));
 
 // Test interactions
 declare const interaction: Interaction;
@@ -1068,7 +1099,6 @@ collector.on('end', (collection, reason) => {
 expectType<Promise<number | null>>(shard.eval(c => c.readyTimestamp));
 
 // Test audit logs
-declare const guild: Guild;
 expectType<Promise<GuildAuditLogs<'MEMBER_KICK'>>>(guild.fetchAuditLogs({ type: 'MEMBER_KICK' }));
 expectAssignable<Promise<GuildAuditLogs<AuditLogEvent.MemberKick>>>(
   guild.fetchAuditLogs({ type: GuildAuditLogs.Actions.MEMBER_KICK }),

@@ -226,6 +226,10 @@ export class ApplicationCommand<PermissionsFetchType = {}> extends Base {
   public version: Snowflake;
   public delete(): Promise<ApplicationCommand<PermissionsFetchType>>;
   public edit(data: ApplicationCommandData): Promise<ApplicationCommand<PermissionsFetchType>>;
+  public setName(name: string): Promise<ApplicationCommand<PermissionsFetchType>>;
+  public setDescription(description: string): Promise<ApplicationCommand<PermissionsFetchType>>;
+  public setDefaultPermission(defaultPermission?: boolean): Promise<ApplicationCommand<PermissionsFetchType>>;
+  public setOptions(options: ApplicationCommandOptionData[]): Promise<ApplicationCommand<PermissionsFetchType>>;
   public equals(
     command: ApplicationCommand | ApplicationCommandData | RawApplicationCommandData,
     enforceOptionorder?: boolean,
@@ -465,6 +469,7 @@ export class CategoryChannel extends GuildChannel {
     name: string,
     options: CategoryCreateChannelOptions & { type: 'GUILD_NEWS' },
   ): Promise<NewsChannel>;
+  /** @deprecated See [Self-serve Game Selling Deprecation](https://support-dev.discord.com/hc/en-us/articles/4414590563479) for more information */
   public createChannel(
     name: string,
     options: CategoryCreateChannelOptions & { type: 'GUILD_STORE' },
@@ -485,7 +490,9 @@ export abstract class Channel extends Base {
   public constructor(client: Client, data?: RawChannelData, immediatePatch?: boolean);
   public readonly createdAt: Date;
   public readonly createdTimestamp: number;
-  public deleted: boolean;
+  public get deleted(): boolean;
+  /** @deprecated Will be removed in v14 */
+  public set deleted(value: boolean);
   public id: Snowflake;
   public readonly partial: false;
   public type: keyof typeof ChannelTypes;
@@ -820,7 +827,9 @@ export class Emoji extends Base {
   public animated: boolean | null;
   public readonly createdAt: Date | null;
   public readonly createdTimestamp: number | null;
-  public deleted: boolean;
+  public get deleted(): boolean;
+  /** @deprecated Will be removed in v14 */
+  public set deleted(value: boolean);
   public id: Snowflake | null;
   public name: string | null;
   public readonly identifier: string;
@@ -845,7 +854,9 @@ export class Guild extends AnonymousGuild {
   public channels: GuildChannelManager;
   public commands: GuildApplicationCommandManager;
   public defaultMessageNotifications: DefaultMessageNotificationLevel | number;
-  public deleted: boolean;
+  public get deleted(): boolean;
+  /** @deprecated Will be removed in v14 */
+  public set deleted(value: boolean);
   public discoverySplash: string | null;
   public emojis: GuildEmojiManager;
   public explicitContentFilter: ExplicitContentFilterLevel;
@@ -1049,7 +1060,9 @@ export class GuildMember extends PartialTextBasedChannel(Base) {
   private constructor(client: Client, data: RawGuildMemberData, guild: Guild);
   public avatar: string | null;
   public readonly bannable: boolean;
-  public deleted: boolean;
+  public get deleted(): boolean;
+  /** @deprecated Will be removed in v14 */
+  public set deleted(value: boolean);
   public readonly displayColor: number;
   public readonly displayHexColor: HexColorString;
   public readonly displayName: string;
@@ -1387,14 +1400,16 @@ export class Message<Cached extends boolean = boolean> extends Base {
   public createdTimestamp: number;
   public readonly crosspostable: boolean;
   public readonly deletable: boolean;
-  public deleted: boolean;
+  public get deleted(): boolean;
+  /** @deprecated Will be removed in v14 */
+  public set deleted(value: boolean);
   public readonly editable: boolean;
   public readonly editedAt: Date | null;
   public editedTimestamp: number | null;
   public embeds: MessageEmbed[];
   public groupActivityApplication: ClientApplication | null;
-  public guildId: Snowflake | null;
-  public readonly guild: Guild | null;
+  public guildId: If<Cached, Snowflake>;
+  public readonly guild: If<Cached, Guild>;
   public readonly hasThread: boolean;
   public id: Snowflake;
   public interaction: MessageInteraction | null;
@@ -1816,7 +1831,9 @@ export class Role extends Base {
   public color: number;
   public readonly createdAt: Date;
   public readonly createdTimestamp: number;
-  public deleted: boolean;
+  public get deleted(): boolean;
+  /** @deprecated Will be removed in v14 */
+  public set deleted(value: boolean);
   public readonly editable: boolean;
   public guild: Guild;
   public readonly hexColor: HexColorString;
@@ -1994,7 +2011,9 @@ export class StageChannel extends BaseGuildVoiceChannel {
 export class StageInstance extends Base {
   private constructor(client: Client, data: RawStageInstanceData, channel: StageChannel);
   public id: Snowflake;
-  public deleted: boolean;
+  public get deleted(): boolean;
+  /** @deprecated Will be removed in v14 */
+  public set deleted(value: boolean);
   public guildId: Snowflake;
   public channelId: Snowflake;
   public topic: string;
@@ -2011,6 +2030,9 @@ export class StageInstance extends Base {
 
 export class Sticker extends Base {
   private constructor(client: Client, data: RawStickerData);
+  public get deleted(): boolean;
+  /** @deprecated Will be removed in v14 */
+  public set deleted(value: boolean);
   public readonly createdTimestamp: number;
   public readonly createdAt: Date;
   public available: boolean | null;
@@ -2050,10 +2072,13 @@ export class StickerPack extends Base {
   public bannerURL(options?: StaticImageURLOptions): string;
 }
 
+/** @deprecated See [Self-serve Game Selling Deprecation](https://support-dev.discord.com/hc/en-us/articles/4414590563479) for more information */
 export class StoreChannel extends GuildChannel {
   private constructor(guild: Guild, data?: RawGuildChannelData, client?: Client);
   public createInvite(options?: CreateInviteOptions): Promise<Invite>;
   public fetchInvites(cache?: boolean): Promise<Collection<string, Invite>>;
+  /** @deprecated See [Self-serve Game Selling Deprecation](https://support-dev.discord.com/hc/en-us/articles/4414590563479) for more information */
+  public clone(options?: GuildChannelCloneOptions): Promise<this>;
   public nsfw: boolean;
   public type: 'GUILD_STORE';
 }
@@ -2803,6 +2828,7 @@ export class GuildChannelManager extends CachedManager<
   ): Promise<CategoryChannel>;
   public create(name: string, options?: GuildChannelCreateOptions & { type?: 'GUILD_TEXT' }): Promise<TextChannel>;
   public create(name: string, options: GuildChannelCreateOptions & { type: 'GUILD_NEWS' }): Promise<NewsChannel>;
+  /** @deprecated See [Self-serve Game Selling Deprecation](https://support-dev.discord.com/hc/en-us/articles/4414590563479) for more information */
   public create(name: string, options: GuildChannelCreateOptions & { type: 'GUILD_STORE' }): Promise<StoreChannel>;
   public create(
     name: string,
@@ -3215,6 +3241,7 @@ export interface APIErrors {
   ACCOUNT_OWNER_ONLY: 20018;
   ANNOUNCEMENT_EDIT_LIMIT_EXCEEDED: 20022;
   CHANNEL_HIT_WRITE_RATELIMIT: 20028;
+  SERVER_HIT_WRITE_RATELIMIT: 20029;
   CONTENT_NOT_ALLOWED: 20031;
   GUILD_PREMIUM_LEVEL_TOO_LOW: 20035;
   MAXIMUM_GUILDS: 30001;
