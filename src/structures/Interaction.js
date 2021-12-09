@@ -1,7 +1,7 @@
 'use strict';
 
 const Base = require('./Base');
-const GuildMember = require('../structures/GuildMember');
+const { GuildMember } = require('../structures/GuildMember');
 const { InteractionTypes, MessageComponentTypes, ApplicationCommandTypes } = require('../util/Constants');
 const Permissions = require('../util/Permissions');
 const SnowflakeUtil = require('../util/SnowflakeUtil');
