@@ -202,7 +202,7 @@ class Webhook {
     if (!message) {
       const WebhookClient = require('../client/WebhookClient');
       if (this.client instanceof WebhookClient) return d;
-      const Message = require('./Message');
+      const { Message } = require('./Message');
       message = new Message(this.client, d);
     }
     return message;
@@ -313,7 +313,7 @@ class Webhook {
     if (!message) {
       const WebhookClient = require('../client/WebhookClient');
       if (this.client instanceof WebhookClient) return data;
-      const Message = require('./Message');
+      const { Message } = require('./Message');
       message = new Message(this.client, data);
     }
     return message;
