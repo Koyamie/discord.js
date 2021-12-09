@@ -4,7 +4,7 @@ const { Collection } = require('@discordjs/collection');
 const Interaction = require('./Interaction');
 const InteractionWebhook = require('./InteractionWebhook');
 const InteractionResponses = require('./interfaces/InteractionResponses');
-const GuildMember = require('../structures/GuildMember');
+const { GuildMember } = require('../structures/GuildMember');
 const { ApplicationCommandOptionTypes } = require('../util/Constants');
 
 /**
