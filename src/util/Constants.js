@@ -188,6 +188,7 @@ exports.Events = {
   ERROR: 'error',
   WARN: 'warn',
   DEBUG: 'debug',
+  CACHE_SWEEP: 'cacheSweep',
   SHARD_DISCONNECT: 'shardDisconnect',
   SHARD_ERROR: 'shardError',
   SHARD_RECONNECTING: 'shardReconnecting',
@@ -429,6 +430,41 @@ exports.MessageTypes = [
   'THREAD_STARTER_MESSAGE',
   'GUILD_INVITE_REMINDER',
   'CONTEXT_MENU_COMMAND',
+];
+
+/**
+ * The name of an item to be swept in Sweepers
+ * * `applicationCommands` - both global and guild commands
+ * * `bans`
+ * * `emojis`
+ * * `invites` - accepts the `lifetime` property, using it will sweep based on expires timestamp
+ * * `guildMembers`
+ * * `messages` - accepts the `lifetime` property, using it will sweep based on edited or created timestamp
+ * * `presences`
+ * * `reactions`
+ * * `stageInstances`
+ * * `stickers`
+ * * `threadMembers`
+ * * `threads` - accepts the `lifetime` property, using it will sweep archived threads based on archived timestamp
+ * * `users`
+ * * `voiceStates`
+ * @typedef {string} SweeperKey
+ */
+exports.SweeperKeys = [
+  'applicationCommands',
+  'bans',
+  'emojis',
+  'invites',
+  'guildMembers',
+  'messages',
+  'presences',
+  'reactions',
+  'stageInstances',
+  'stickers',
+  'threadMembers',
+  'threads',
+  'users',
+  'voiceStates',
 ];
 
 /**
@@ -722,6 +758,7 @@ exports.VerificationLevels = createEnum(['NONE', 'LOW', 'MEDIUM', 'HIGH', 'VERY_
  * * GUILD_NOT_AVAILABLE_IN_LOCATION
  * * GUILD_MONETIZATION_REQUIRED
  * * INSUFFICIENT_BOOSTS
+ * * INVALID_JSON
  * * TWO_FACTOR_REQUIRED
  * * NO_USERS_WITH_DISCORDTAG_EXIST
  * * REACTION_BLOCKED
@@ -865,6 +902,7 @@ exports.APIErrors = {
   GUILD_NOT_AVAILABLE_IN_LOCATION: 50095,
   GUILD_MONETIZATION_REQUIRED: 50097,
   INSUFFICIENT_BOOSTS: 50101,
+  INVALID_JSON: 50109,
   TWO_FACTOR_REQUIRED: 60003,
   NO_USERS_WITH_DISCORDTAG_EXIST: 80004,
   REACTION_BLOCKED: 90001,

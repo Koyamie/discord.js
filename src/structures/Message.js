@@ -25,6 +25,7 @@ const Util = require('../util/Util');
  * @internal
  */
 const deletedMessages = new WeakSet();
+let deprecationEmittedForDeleted = false;
 
 /**
  * Represents a message on Discord.
@@ -352,12 +353,29 @@ class Message extends Base {
   /**
    * Whether or not the structure has been deleted
    * @type {boolean}
+   * @deprecated This will be removed in the next major version, see https://github.com/discordjs/discord.js/issues/7091
    */
   get deleted() {
+    if (!deprecationEmittedForDeleted) {
+      deprecationEmittedForDeleted = true;
+      process.emitWarning(
+        'Message#deleted is deprecated, see https://github.com/discordjs/discord.js/issues/7091.',
+        'DeprecationWarning',
+      );
+    }
+
     return deletedMessages.has(this);
   }
 
   set deleted(value) {
+    if (!deprecationEmittedForDeleted) {
+      deprecationEmittedForDeleted = true;
+      process.emitWarning(
+        'Message#deleted is deprecated, see https://github.com/discordjs/discord.js/issues/7091.',
+        'DeprecationWarning',
+      );
+    }
+
     if (value) deletedMessages.add(this);
     else deletedMessages.delete(this);
   }
@@ -566,7 +584,7 @@ class Message extends Base {
    */
   get editable() {
     const precheck = Boolean(
-      this.author.id === this.client.user.id && !this.deleted && (!this.guild || this.channel?.viewable),
+      this.author.id === this.client.user.id && !deletedMessages.has(this) && (!this.guild || this.channel?.viewable),
     );
     // Regardless of permissions thread messages cannot be edited if
     // the thread is locked.
@@ -582,7 +600,7 @@ class Message extends Base {
    * @readonly
    */
   get deletable() {
-    if (this.deleted) {
+    if (deletedMessages.has(this)) {
       return false;
     }
     if (!this.guild) {
@@ -607,7 +625,7 @@ class Message extends Base {
     const { channel } = this;
     return Boolean(
       !this.system &&
-        !this.deleted &&
+        !deletedMessages.has(this) &&
         (!this.guild ||
           (channel?.viewable &&
             channel?.permissionsFor(this.client.user)?.has(Permissions.FLAGS.MANAGE_MESSAGES, false))),
@@ -643,7 +661,7 @@ class Message extends Base {
         this.type === 'DEFAULT' &&
         channel.viewable &&
         channel.permissionsFor(this.client.user)?.has(bitfield, false) &&
-        !this.deleted,
+        !deletedMessages.has(this),
     );
   }
 
