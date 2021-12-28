@@ -1,5 +1,7 @@
 'use strict';
 
+const process = require('node:process');
+const { setInterval } = require('node:timers');
 const { Collection } = require('@discordjs/collection');
 const BaseClient = require('./BaseClient');
 const ActionsManager = require('./actions/ActionsManager');
@@ -571,6 +573,9 @@ class Client extends BaseClient {
     }
     if (!Array.isArray(options.partials)) {
       throw new TypeError('CLIENT_INVALID_OPTION', 'partials', 'an Array');
+    }
+    if (typeof options.waitGuildTimeout !== 'number' || isNaN(options.waitGuildTimeout)) {
+      throw new TypeError('CLIENT_INVALID_OPTION', 'waitGuildTimeout', 'a number');
     }
     if (typeof options.restWsBridgeTimeout !== 'number' || isNaN(options.restWsBridgeTimeout)) {
       throw new TypeError('CLIENT_INVALID_OPTION', 'restWsBridgeTimeout', 'a number');

@@ -1851,7 +1851,7 @@ export class Permissions extends BitField<PermissionString, bigint> {
   public has(permission: PermissionResolvable, checkAdmin?: boolean): boolean;
   public missing(bits: BitFieldResolvable<PermissionString, bigint>, checkAdmin?: boolean): PermissionString[];
   public serialize(checkAdmin?: boolean): Record<PermissionString, boolean>;
-  public toArray(checkAdmin?: boolean): PermissionString[];
+  public toArray(): PermissionString[];
 
   public static ALL: bigint;
   public static DEFAULT: bigint;
@@ -2416,6 +2416,7 @@ export class Util extends null {
   public static cleanContent(str: string, channel: TextBasedChannel): string;
   /** @deprecated Use {@link MessageOptions.allowedMentions} to control mentions in a message instead. */
   public static removeMentions(str: string): string;
+  private static _removeMentions(str: string): string;
   public static cloneObject(obj: unknown): unknown;
   public static discordSort<K, V extends { rawPosition: number; id: Snowflake }>(
     collection: Collection<K, V>,
@@ -4004,6 +4005,7 @@ export interface ClientOptions {
   userAgentSuffix?: string[];
   presence?: PresenceData;
   intents: BitFieldResolvable<IntentsString, number>;
+  waitGuildTimeout?: number;
   sweepers?: SweeperOptions;
   ws?: WebSocketOptions;
   http?: HTTPOptions;
