@@ -29,7 +29,6 @@ const Options = require('../util/Options');
 const Permissions = require('../util/Permissions');
 const Sweepers = require('../util/Sweepers');
 const AmqpManager = require('./websocket/AmqpManager');
-const CacheManager = require('./CacheManager');
 
 /**
  * The main hub for interacting with the Discord API, and the starting point for any bot.
@@ -102,8 +101,6 @@ class Client extends BaseClient {
      * @type {AmqpManager}
      */
     this.amqp = new AmqpManager(this);
-
-    this.cachemanager  = new CacheManager(this);
 
     /**
      * The action manager of the client
