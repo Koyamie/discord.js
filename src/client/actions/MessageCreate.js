@@ -7,9 +7,14 @@ const { Events } = require('../../util/Constants');
 let deprecationEmitted = false;
 
 class MessageCreateAction extends Action {
-  handle(data) {
+  async handle(data) {
     const client = this.client;
-    const channel = this.getChannel(data);
+    let channel = await this.client.raincache.channel.get(data.channel_id);
+    if (channel) {
+      channel = this.client.channels._add(channel, null, { cache: false, allowUnknownGuild: true });
+    } else {
+      channel = this.getChannel(data);
+    }
     if (channel) {
       if (!channel.isText()) return {};
 
