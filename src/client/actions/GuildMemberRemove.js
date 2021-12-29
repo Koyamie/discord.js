@@ -5,7 +5,7 @@ const { deletedGuildMembers } = require('../../structures/GuildMember');
 const { Events, Status } = require('../../util/Constants');
 
 class GuildMemberRemoveAction extends Action {
-  handle(data, shard) {
+  handle(data) {
     const client = this.client;
     const guild = client.guilds.cache.get(data.guild_id);
     let member = null;
@@ -20,7 +20,7 @@ class GuildMemberRemoveAction extends Action {
          * @event Client#guildMemberRemove
          * @param {GuildMember} member The member that has left/been kicked from the guild
          */
-        if (shard.status === Status.READY) client.emit(Events.GUILD_MEMBER_REMOVE, member);
+        client.emit(Events.GUILD_MEMBER_REMOVE, member);
       }
       guild.voiceStates.cache.delete(data.user.id);
     }

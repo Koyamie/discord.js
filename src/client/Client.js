@@ -28,6 +28,7 @@ const Intents = require('../util/Intents');
 const Options = require('../util/Options');
 const Permissions = require('../util/Permissions');
 const Sweepers = require('../util/Sweepers');
+const AmqpManager = require('./websocket/AmqpManager');
 
 /**
  * The main hub for interacting with the Discord API, and the starting point for any bot.
@@ -94,6 +95,12 @@ class Client extends BaseClient {
      * @type {WebSocketManager}
      */
     this.ws = new WebSocketManager(this);
+
+    /**
+     * The Amqp manager of the client
+     * @type {AmqpManager}
+     */
+    this.amqp = new AmqpManager(this);
 
     /**
      * The action manager of the client
@@ -251,7 +258,7 @@ class Client extends BaseClient {
     this.emit(Events.DEBUG, 'Preparing to connect to the gateway...');
 
     try {
-      await this.ws.connect();
+      await this.amqp.connect();
       return this.token;
     } catch (error) {
       this.destroy();
