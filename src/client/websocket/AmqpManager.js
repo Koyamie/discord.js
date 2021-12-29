@@ -5,8 +5,6 @@ const PacketHandlers = require('./handlers');
 
 class AmqpManager {
   constructor(client) {
-    super();
-
     Object.defineProperty(this, 'client', { value: client });
 
     this.connector = null;
