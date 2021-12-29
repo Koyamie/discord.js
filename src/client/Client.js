@@ -6,6 +6,7 @@ const { Collection } = require('@discordjs/collection');
 const BaseClient = require('./BaseClient');
 const ActionsManager = require('./actions/ActionsManager');
 const ClientVoiceManager = require('./voice/ClientVoiceManager');
+const AmqpManager = require('./websocket/AmqpManager');
 const WebSocketManager = require('./websocket/WebSocketManager');
 const { Error, TypeError, RangeError } = require('../errors');
 const BaseGuildEmojiManager = require('../managers/BaseGuildEmojiManager');
@@ -28,7 +29,6 @@ const Intents = require('../util/Intents');
 const Options = require('../util/Options');
 const Permissions = require('../util/Permissions');
 const Sweepers = require('../util/Sweepers');
-const AmqpManager = require('./websocket/AmqpManager');
 
 /**
  * The main hub for interacting with the Discord API, and the starting point for any bot.
@@ -259,7 +259,6 @@ class Client extends BaseClient {
 
     try {
       await this.amqp.connect();
-      // await this.ws.connect();
       return this.token;
     } catch (error) {
       this.destroy();

@@ -9,25 +9,7 @@ let deprecationEmitted = false;
 class MessageCreateAction extends Action {
   async handle(data) {
     const client = this.client;
-    if (data.guild_id) {
-      if (!client.guilds.cache.has(data.guild_id)) {
-        let guild = await client.raincache.guild.get(data.guild_id);
-        if (guild) {
-          guild = client.guilds._add(guild);
-          const roles = await client.raincache.role.filter((r) => r, guild.id);
-          for (const role of roles) guild.roles._add(role);
-          const channels = await client.raincache.channel.filter((c) => c.guild_id === guild.id);
-          for (const channel of channels) client.channels._add(channel);
-        }
-      }
-    }
-    let channel = this.getChannel(data);
-    if (!channel) {
-      channel = await client.raincache.channel.get(data.channel_id);
-      if (channel) {
-        channel = client.channels._add(channel);
-      }
-    }
+    const channel = this.getChannel(data);
     if (channel) {
       if (!channel.isText()) return {};
 

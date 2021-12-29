@@ -2,7 +2,7 @@
 
 const Action = require('./Action');
 const { deletedGuildMembers } = require('../../structures/GuildMember');
-const { Events, Status } = require('../../util/Constants');
+const { Events } = require('../../util/Constants');
 
 class GuildMemberRemoveAction extends Action {
   handle(data) {

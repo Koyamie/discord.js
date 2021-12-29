@@ -36,9 +36,9 @@ class AmqpManager {
       let guild = await this.client.raincache.guild.get(id);
       if (guild) {
         guild = this.client.guilds._add(guild);
-        const roles = await this.client.raincache.role.filter((r) => r, guild.id);
+        const roles = await this.client.raincache.role.filter(r => r, guild.id);
         for (const role of roles) guild.roles._add(role);
-        const channels = await this.client.raincache.channel.filter((c) => c.guild_id === guild.id);
+        const channels = await this.client.raincache.channel.filter(c => c.guild_id === guild.id);
         for (const channel of channels) this.client.channels._add(channel);
       }
     }
