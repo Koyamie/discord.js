@@ -11,15 +11,22 @@ class MessageCreateAction extends Action {
     const client = this.client;
     if (data.guild_id) {
       if (!client.guilds.cache.has(data.guild_id)) {
-        const guild = await client.raincache.guild.get(data.guild_id);
-        if (guild) client.guilds._add(guild);
+        const data = await client.raincache.guild.get(data.guild_id);
+        if (data) {
+          const guild = client.guilds._add(data);
+          const guildRoles = await client.raincache.role.filter((r) => r, guild.id);
+          for (const role of guildRoles) guild.roles._add(role);
+          const guildChannels = await client.raincache.channel.filter((c) => c.guild_id === guild.id);
+          for (const channel of guildChannels) guild.channels._add(channel);
+        }
       }
     }
-    let channel = await client.raincache.channel.get(data.channel_id);
-    if (channel) {
-      channel = client.channels._add(channel, null, { cache: false });
-    } else {
-      channel = this.getChannel(data);
+    let channel = this.getChannel(data);
+    if (!channel) {
+      const data = await client.raincache.channel.get(data.channel_id);
+      if (data) {
+        channel = client.channels._add(data);
+      }
     }
     if (channel) {
       if (!channel.isText()) return {};
