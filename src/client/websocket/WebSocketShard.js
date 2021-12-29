@@ -441,7 +441,7 @@ class WebSocketShard extends EventEmitter {
         this.sendHeartbeat('HeartbeatRequest', true);
         break;
       default:
-        this.manager.handlePacket(packet, this);
+        this.manager.handlePacket(packet, this.id);
         if (this.status === Status.WAITING_FOR_GUILDS && packet.t === WSEvents.GUILD_CREATE) {
           this.expectedGuilds.delete(packet.d.id);
           this.checkReady();
