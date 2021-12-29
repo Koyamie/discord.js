@@ -9,9 +9,17 @@ let deprecationEmitted = false;
 class MessageCreateAction extends Action {
   async handle(data) {
     const client = this.client;
-    let channel = await this.client.raincache.channel.get(data.channel_id);
+    if (data.guild_id) {
+      if (!client.guilds.cache.has(data.guild_id)) {
+        const guild = await client.raincache.guild.get(data.guild_id);
+        if (guild) {
+          guild = client.guilds._add(guild);
+        }
+      }
+    }
+    let channel = await client.raincache.channel.get(data.channel_id);
     if (channel) {
-      channel = this.client.channels._add(channel, null, { cache: false, allowUnknownGuild: true });
+      channel = client.channels._add(channel, null, { cache: false });
     } else {
       channel = this.getChannel(data);
     }
