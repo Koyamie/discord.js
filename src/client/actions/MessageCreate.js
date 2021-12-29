@@ -12,9 +12,7 @@ class MessageCreateAction extends Action {
     if (data.guild_id) {
       if (!client.guilds.cache.has(data.guild_id)) {
         const guild = await client.raincache.guild.get(data.guild_id);
-        if (guild) {
-          guild = client.guilds._add(guild);
-        }
+        if (guild) client.guilds._add(guild);
       }
     }
     let channel = await client.raincache.channel.get(data.channel_id);
