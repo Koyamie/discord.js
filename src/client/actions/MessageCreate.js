@@ -17,7 +17,7 @@ class MessageCreateAction extends Action {
           const roles = await client.raincache.role.filter((r) => r, guild.id);
           for (const role of roles) guild.roles._add(role);
           const channels = await client.raincache.channel.filter((c) => c.guild_id === guild.id);
-          for (const channel of channels) guild.channels._add(channel);
+          for (const channel of channels) client.channels._add(channel);
         }
       }
     }
