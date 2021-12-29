@@ -23,9 +23,9 @@ class MessageCreateAction extends Action {
     }
     let channel = this.getChannel(data);
     if (!channel) {
-      const data = await client.raincache.channel.get(data.channel_id);
-      if (data) {
-        channel = client.channels._add(data);
+      channel = await client.raincache.channel.get(data.channel_id);
+      if (channel) {
+        channel = client.channels._add(channel);
       }
     }
     if (channel) {
