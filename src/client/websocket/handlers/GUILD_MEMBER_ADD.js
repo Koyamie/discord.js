@@ -11,7 +11,7 @@ module.exports = (client, { d: data }) => {
      * Emitted whenever a user joins a guild.
      * @event Client#guildMemberAdd
      * @param {GuildMember} member The member that has joined a guild
-    */
+     */
     client.emit(Events.GUILD_MEMBER_ADD, member);
   }
 };
