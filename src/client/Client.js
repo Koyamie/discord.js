@@ -312,7 +312,7 @@ class Client extends BaseClient {
   }
 
   async fetchApplication() {
-    const app = await this.client.api.oauth2.applications('@me').get();
+    const app = await this.api.oauth2.applications('@me').get();
     this.application = new ClientApplication(this, app);
     return this.application;
   }
