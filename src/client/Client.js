@@ -311,6 +311,10 @@ class Client extends BaseClient {
     return new Invite(this, data);
   }
 
+  /**
+   * Obtains this client application from Discord.
+   * @returns {Promise<ClientApplication>}
+   */
   async fetchApplication() {
     const app = await this.api.oauth2.applications('@me').get();
     this.application = new ClientApplication(this, app);
