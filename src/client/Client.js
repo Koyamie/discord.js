@@ -7,6 +7,7 @@ const BaseClient = require('./BaseClient');
 const ActionsManager = require('./actions/ActionsManager');
 const ClientVoiceManager = require('./voice/ClientVoiceManager');
 const WebSocketManager = require('./websocket/WebSocketManager');
+const ClientApplication = require('../../../structures/ClientApplication');
 const { Error, TypeError, RangeError } = require('../errors');
 const BaseGuildEmojiManager = require('../managers/BaseGuildEmojiManager');
 const ChannelManager = require('../managers/ChannelManager');
@@ -308,6 +309,12 @@ class Client extends BaseClient {
       query: { with_counts: true, with_expiration: true, guild_scheduled_event_id: options?.guildScheduledEventId },
     });
     return new Invite(this, data);
+  }
+
+  async fetchApplication() {
+    const app = await this.client.api.oauth2.applications('@me').get();
+    this.application = new ClientApplication(this, app);
+    return this.application;
   }
 
   /**
