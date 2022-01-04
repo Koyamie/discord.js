@@ -1,12 +1,14 @@
 'use strict';
 
+const http = require('node:http');
 const https = require('node:https');
 const { setTimeout } = require('node:timers');
 const FormData = require('form-data');
 const fetch = require('node-fetch');
 const { UserAgent } = require('../util/Constants');
 
-let agent = null;
+let httpsAgent = null;
+let httpAgent = null;
 
 class APIRequest {
   constructor(rest, method, path, options) {
@@ -31,13 +33,20 @@ class APIRequest {
   }
 
   make() {
-    agent ??= new https.Agent({ ...this.client.options.http.agent, keepAlive: true });
-
     const API =
       this.options.versioned === false
         ? this.client.options.http.api
         : `${this.client.options.http.api}/v${this.client.options.http.version}`;
     const url = API + this.path;
+
+    let agent;
+    if (url.startsWith('https')) {
+      httpsAgent ??= new https.Agent({ ...this.client.options.http.agent, keepAlive: true });
+      agent = httpsAgent;
+    } else {
+      httpAgent ??= new http.Agent({ ...this.client.options.http.agent, keepAlive: true });
+      agent = httpAgent;
+    }
 
     let headers = {
       ...this.client.options.http.headers,
