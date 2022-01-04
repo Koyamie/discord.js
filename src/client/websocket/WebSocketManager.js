@@ -176,7 +176,7 @@ class WebSocketManager extends EventEmitter {
     this.shardQueue.delete(shard);
 
     if (this.client.clusterMode) {
-      setTimeout(this.createShards.bind(this), 500);
+      sleep(this.createShards.bind(this), 500);
     }
 
     if (!shard.eventsAttached) {
