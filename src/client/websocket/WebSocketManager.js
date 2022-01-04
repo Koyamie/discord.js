@@ -138,14 +138,14 @@ class WebSocketManager extends EventEmitter {
     const { total, remaining } = sessionStartLimit;
 
     this.debug(`Fetched Gateway Information
-    URL: ${gatewayURL}
+    URL: ${this.client.options.ws.url ?? gatewayURL}
     Recommended Shards: ${recommendedShards}`);
 
     this.debug(`Session Limit Information
     Total: ${total}
     Remaining: ${remaining}`);
 
-    this.gateway = `${gatewayURL}/`;
+    this.gateway = `${this.client.options.ws.url ?? gatewayURL}/`;
 
     let { shards } = this.client.options;
 
