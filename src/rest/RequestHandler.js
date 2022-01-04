@@ -312,37 +312,6 @@ class RequestHandler {
           `[RATELIMIT] ${request.method.toUpperCase()} ${request.route}`,
           JSON.stringify(request.options.data),
         );
-        const isGlobal = this.globalLimited;
-        let limit, timeout;
-        if (isGlobal) {
-          // Set the variables based on the global rate limit
-          limit = this.manager.globalLimit;
-          timeout = this.manager.globalReset + this.manager.client.options.restTimeOffset - Date.now();
-        } else {
-          // Set the variables based on the route-specific rate limit
-          limit = this.limit;
-          timeout = this.reset + this.manager.client.options.restTimeOffset - Date.now();
-        }
-
-        this.manager.client.emit(
-          DEBUG,
-          `Hit a 429 while executing a request.
-    Global  : ${isGlobal}
-    Method  : ${request.method}
-    Path    : ${request.path}
-    Route   : ${request.route}
-    Limit   : ${limit}
-    Timeout : ${timeout}ms
-    Sublimit: ${sublimitTimeout ? `${sublimitTimeout}ms` : 'None'}`,
-        );
-
-        await this.onRateLimit(request, limit, timeout, isGlobal);
-
-        // If caused by a sublimit, wait it out here so other requests on the route can be handled
-        if (sublimitTimeout) {
-          await sleep(sublimitTimeout);
-        }
-        return this.execute(request);
       }
 
       if (res.status === 403) {
