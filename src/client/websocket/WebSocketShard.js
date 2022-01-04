@@ -82,22 +82,6 @@ class WebSocketShard extends EventEmitter {
     this.lastHeartbeatAcked = true;
 
     /**
-     * Contains the rate limit queue and metadata
-     * @name WebSocketShard#ratelimit
-     * @type {Object}
-     * @private
-     */
-    Object.defineProperty(this, 'ratelimit', {
-      value: {
-        queue: [],
-        total: 120,
-        remaining: 120,
-        time: 60e3,
-        timer: null,
-      },
-    });
-
-    /**
      * The WebSocket connection for the current shard
      * @name WebSocketShard#connection
      * @type {?WebSocket}
@@ -653,9 +637,8 @@ class WebSocketShard extends EventEmitter {
    * @param {Object} data The full packet to send
    * @param {boolean} [important=false] If this packet should be added first in queue
    */
-  send(data, important = false) {
-    this.ratelimit.queue[important ? 'unshift' : 'push'](data);
-    this.processQueue();
+  send(data) {
+    this._send(data);
   }
 
   /**
@@ -674,28 +657,6 @@ class WebSocketShard extends EventEmitter {
     this.connection.send(WebSocket.pack(data), err => {
       if (err) this.manager.client.emit(Events.SHARD_ERROR, err, this.id);
     });
-  }
-
-  /**
-   * Processes the current WebSocket queue.
-   * @returns {void}
-   * @private
-   */
-  processQueue() {
-    if (this.ratelimit.remaining === 0) return;
-    if (this.ratelimit.queue.length === 0) return;
-    if (this.ratelimit.remaining === this.ratelimit.total) {
-      this.ratelimit.timer = setTimeout(() => {
-        this.ratelimit.remaining = this.ratelimit.total;
-        this.processQueue();
-      }, this.ratelimit.time).unref();
-    }
-    while (this.ratelimit.remaining > 0) {
-      const item = this.ratelimit.queue.shift();
-      if (!item) return;
-      this._send(item);
-      this.ratelimit.remaining--;
-    }
   }
 
   /**
@@ -752,14 +713,6 @@ class WebSocketShard extends EventEmitter {
     if (reset) {
       this.sequence = -1;
       this.sessionId = null;
-    }
-
-    // Step 6: reset the rate limit data
-    this.ratelimit.remaining = this.ratelimit.total;
-    this.ratelimit.queue.length = 0;
-    if (this.ratelimit.timer) {
-      clearTimeout(this.ratelimit.timer);
-      this.ratelimit.timer = null;
     }
   }
 
