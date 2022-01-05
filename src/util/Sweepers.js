@@ -149,6 +149,22 @@ class Sweepers {
   }
 
   /**
+   * Sweeps all players and removes the ones which are indicated by the filter.
+   * @param {Function} filter The function used to determine which players will be removed from the caches.
+   * @returns {number} Amount of players that were removed from the caches
+   */
+  sweepPlayers(filter) {
+    if (typeof filter !== 'function') {
+      throw new TypeError('INVALID_TYPE', 'filter', 'function');
+    }
+
+    const players = this.client.players.cache.sweep(filter);
+
+    this.client.emit(Events.CACHE_SWEEP, `Swept ${players} players.`);
+    return players;
+  }
+
+  /**
    * Sweeps all presences and removes the ones which are indicated by the filter.
    * @param {Function} filter The function used to determine which presences will be removed from the caches.
    * @returns {number} Amount of presences that were removed from the caches
