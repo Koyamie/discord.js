@@ -20,6 +20,10 @@ class GuildBanManager extends CachedManager {
      */
     this.guild = guild;
 
+    /**
+     * The timestamp that manager was last fetched at
+     * @type {number}
+     */
     this.fetchTimestamp = null;
   }
 
@@ -111,7 +115,7 @@ class GuildBanManager extends CachedManager {
   }
 
   async _fetchMany({ cache = true, force = false } = {}) {
-    if (!force && this.fetchTimestamp && this.fetchTimestamp + 9e5 > Date.now()) return this.cache;
+    if (!force && this.fetchTimestamp && this.fetchTimestamp + 900_000 > Date.now()) return this.cache;
     const data = await this.client.api.guilds(this.guild.id).bans.get();
     this.fetchTimestamp = Date.now();
     return data.reduce((col, ban) => col.set(ban.user.id, this._add(ban, cache)), new Collection());
