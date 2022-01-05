@@ -475,6 +475,7 @@ exports.SweeperKeys = [
   'invites',
   'guildMembers',
   'messages',
+  'players',
   'presences',
   'reactions',
   'stageInstances',

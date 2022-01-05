@@ -51,6 +51,9 @@ class Sweepers {
           case 'messages':
             clonedOptions.filter = this.constructor.outdatedMessageSweepFilter(clonedOptions.lifetime);
             break;
+          case 'players':
+            clonedOptions.filter = this.constructor.outdatedPlayerSweepFilter(clonedOptions.lifetime);
+            break;
           case 'threads':
             clonedOptions.filter = this.constructor.archivedThreadSweepFilter(clonedOptions.lifetime);
         }
@@ -364,6 +367,18 @@ class Sweepers {
   }
 
   /**
+   * Creates a sweep filter that sweeps outdated players
+   * @param {number} [lifetime=3600] How long ago a player has to have been updated to be valid for sweeping
+   * @returns {GlobalSweepFilter}
+   */
+  static outdatedPlayerSweepFilter(lifetime = 3600) {
+    return this.filterByLifetime({
+      lifetime,
+      getComparisonTimestamp: m => m.updatedTimestamp,
+    });
+  }
+
+  /**
    * Configuration options for emitting the cache sweep client event
    * @typedef {Object} SweepEventOptions
    * @property {boolean} [emit=true] Whether to emit the client event in this method
@@ -415,7 +430,7 @@ class Sweepers {
       throw new TypeError('INVALID_TYPE', `sweepers.${key}.interval`, 'number');
     }
     // Invites, Messages, and Threads can be provided a lifetime parameter, which we use to generate the filter
-    if (['invites', 'messages', 'threads'].includes(key) && !('filter' in props)) {
+    if (['invites', 'messages', 'players', 'threads'].includes(key) && !('filter' in props)) {
       if (typeof props.lifetime !== 'number') {
         throw new TypeError('INVALID_TYPE', `sweepers.${key}.lifetime`, 'number');
       }
