@@ -390,7 +390,7 @@ class Sweepers {
   static outdatedPlayerSweepFilter(lifetime = 3600) {
     return this.filterByLifetime({
       lifetime,
-      getComparisonTimestamp: m => m.updatedTimestamp,
+      getComparisonTimestamp: p => p.updatedTimestamp,
     });
   }
 
