@@ -946,8 +946,6 @@ export class Guild extends AnonymousGuild {
   public setAFKChannel(afkChannel: VoiceChannelResolvable | null, reason?: string): Promise<Guild>;
   public setAFKTimeout(afkTimeout: number, reason?: string): Promise<Guild>;
   public setBanner(banner: BufferResolvable | Base64Resolvable | null, reason?: string): Promise<Guild>;
-  /** @deprecated Use {@link GuildChannelManager.setPositions} instead */
-  public setChannelPositions(channelPositions: readonly ChannelPosition[]): Promise<Guild>;
   public setDefaultMessageNotifications(
     defaultMessageNotifications: DefaultMessageNotificationLevel | number,
     reason?: string,
@@ -965,8 +963,6 @@ export class Guild extends AnonymousGuild {
   public setOwner(owner: GuildMemberResolvable, reason?: string): Promise<Guild>;
   public setPreferredLocale(preferredLocale: string, reason?: string): Promise<Guild>;
   public setPublicUpdatesChannel(publicUpdatesChannel: TextChannelResolvable | null, reason?: string): Promise<Guild>;
-  /** @deprecated Use {@link RoleManager.setPositions} instead */
-  public setRolePositions(rolePositions: readonly RolePosition[]): Promise<Guild>;
   public setRulesChannel(rulesChannel: TextChannelResolvable | null, reason?: string): Promise<Guild>;
   public setSplash(splash: BufferResolvable | Base64Resolvable | null, reason?: string): Promise<Guild>;
   public setSystemChannel(systemChannel: TextChannelResolvable | null, reason?: string): Promise<Guild>;
@@ -5616,19 +5612,19 @@ export type ThreadMemberFlagsString = '';
 export type ThreadMemberResolvable = ThreadMember | UserResolvable;
 
 export type UserFlagsString =
-  | 'DISCORD_EMPLOYEE'
-  | 'PARTNERED_SERVER_OWNER'
-  | 'HYPESQUAD_EVENTS'
-  | 'BUGHUNTER_LEVEL_1'
-  | 'HOUSE_BRAVERY'
-  | 'HOUSE_BRILLIANCE'
-  | 'HOUSE_BALANCE'
-  | 'EARLY_SUPPORTER'
-  | 'TEAM_USER'
-  | 'BUGHUNTER_LEVEL_2'
+  | 'STAFF'
+  | 'PARTNER'
+  | 'HYPESQUAD'
+  | 'BUG_HUNTER_LEVEL_1'
+  | 'HYPESQUAD_ONLINE_HOUSE_1'
+  | 'HYPESQUAD_ONLINE_HOUSE_2'
+  | 'HYPESQUAD_ONLINE_HOUSE_3'
+  | 'PREMIUM_EARLY_SUPPORTER'
+  | 'TEAM_PSEUDO_USER'
+  | 'BUG_HUNTER_LEVEL_2'
   | 'VERIFIED_BOT'
-  | 'EARLY_VERIFIED_BOT_DEVELOPER'
-  | 'DISCORD_CERTIFIED_MODERATOR'
+  | 'VERIFIED_DEVELOPER'
+  | 'CERTIFIED_MODERATOR'
   | 'BOT_HTTP_INTERACTIONS';
 
 export type UserMention = `<@${Snowflake}>`;
