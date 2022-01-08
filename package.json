@@ -1,5 +1,5 @@
 {
-	"name": "discord.js",
+	"name": "@discordjs/discord.js",
 	"version": "0.0.0",
 	"description": "A powerful library for interacting with the Discord API",
 	"private": true,
