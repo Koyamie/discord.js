@@ -88,7 +88,7 @@ class MessageEmbed {
      * @type {?number}
      */
     // Date.parse() cannot be used here because data.timestamp might be a number
-    this.timestamp = 'timestamp' in data ? new Date(data.timestamp).getTime() : null;
+    this.timestamp = 'timestamp' in data && data.timestamp !== null ? new Date(data.timestamp).getTime() : null;
 
     /**
      * Represents a field of a MessageEmbed
