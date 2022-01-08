@@ -518,8 +518,6 @@ export abstract class Channel extends Base {
   public constructor(client: Client, data?: RawChannelData, immediatePatch?: boolean);
   public readonly createdAt: Date;
   public readonly createdTimestamp: number;
-  /** @deprecated This will be removed in the next major version, see https://github.com/discordjs/discord.js/issues/7091 */
-  public deleted: boolean;
   public id: Snowflake;
   public readonly partial: false;
   public type: keyof typeof ChannelTypes;
@@ -545,8 +543,8 @@ export class Client<Ready extends boolean = boolean> extends BaseClient {
   public readonly emojis: BaseGuildEmojiManager;
   public guilds: GuildManager;
   public options: ClientOptions;
-  public readyAt: If<Ready, Date>;
-  public readonly readyTimestamp: If<Ready, number>;
+  public readonly readyAt: If<Ready, Date>;
+  public readyTimestamp: If<Ready, number>;
   public sweepers: Sweepers;
   public shard: ShardClientUtil | null;
   public token: If<Ready, string, string | null>;
@@ -855,8 +853,6 @@ export class Emoji extends Base {
   public animated: boolean | null;
   public readonly createdAt: Date | null;
   public readonly createdTimestamp: number | null;
-  /** @deprecated This will be removed in the next major version, see https://github.com/discordjs/discord.js/issues/7091 */
-  public deleted: boolean;
   public id: Snowflake | null;
   public name: string | null;
   public readonly identifier: string;
@@ -881,8 +877,6 @@ export class Guild extends AnonymousGuild {
   public channels: GuildChannelManager;
   public commands: GuildApplicationCommandManager;
   public defaultMessageNotifications: DefaultMessageNotificationLevel | number;
-  /** @deprecated This will be removed in the next major version, see https://github.com/discordjs/discord.js/issues/7091 */
-  public deleted: boolean;
   public discoverySplash: string | null;
   public emojis: GuildEmojiManager;
   public explicitContentFilter: ExplicitContentFilterLevel;
@@ -1083,8 +1077,6 @@ export class GuildMember extends PartialTextBasedChannel(Base) {
   private constructor(client: Client, data: RawGuildMemberData, guild: Guild);
   public avatar: string | null;
   public readonly bannable: boolean;
-  /** @deprecated This will be removed in the next major version, see https://github.com/discordjs/discord.js/issues/7091 */
-  public deleted: boolean;
   public readonly displayColor: number;
   public readonly displayHexColor: HexColorString;
   public readonly displayName: string;
@@ -1200,8 +1192,8 @@ export class GuildScheduledEvent<S extends GuildScheduledEventStatus = GuildSche
 
 export class GuildTemplate extends Base {
   private constructor(client: Client, data: RawGuildTemplateData);
-  public readonly createdTimestamp: number;
-  public readonly updatedTimestamp: number;
+  public createdTimestamp: number;
+  public updatedTimestamp: number;
   public readonly url: string;
   public code: string;
   public name: string;
@@ -1209,8 +1201,8 @@ export class GuildTemplate extends Base {
   public usageCount: number;
   public creator: User;
   public creatorId: Snowflake;
-  public createdAt: Date;
-  public updatedAt: Date;
+  public readonly createdAt: Date;
+  public readonly updatedAt: Date;
   public guild: Guild | null;
   public guildId: Snowflake;
   public serializedGuild: APITemplateSerializedSourceGuild;
@@ -1249,16 +1241,17 @@ export class Integration extends Base {
   public account: IntegrationAccount;
   public application: IntegrationApplication | null;
   public enabled: boolean;
-  public expireBehavior: number | undefined;
-  public expireGracePeriod: number | undefined;
+  public expireBehavior: IntegrationExpireBehaviors | null;
+  public expireGracePeriod: number | null;
   public guild: Guild;
   public id: Snowflake | string;
   public name: string;
-  public role: Role | undefined;
+  public role: Role | null;
   public enableEmoticons: boolean | null;
   public readonly roles: Collection<Snowflake, Role>;
-  public syncedAt: number | undefined;
-  public syncing: boolean | undefined;
+  public readonly syncedAt: Date | null;
+  public syncedTimestamp: number | null;
+  public syncing: boolean | null;
   public type: IntegrationType;
   public user: User | null;
   public subscriberCount: number | null;
@@ -1485,8 +1478,6 @@ export class Message<Cached extends boolean = boolean> extends Base {
   public createdTimestamp: number;
   public readonly crosspostable: boolean;
   public readonly deletable: boolean;
-  /** @deprecated This will be removed in the next major version, see https://github.com/discordjs/discord.js/issues/7091 */
-  public deleted: boolean;
   public readonly editable: boolean;
   public readonly editedAt: Date | null;
   public editedTimestamp: number | null;
@@ -1919,8 +1910,6 @@ export class Role extends Base {
   public color: number;
   public readonly createdAt: Date;
   public readonly createdTimestamp: number;
-  /** @deprecated This will be removed in the next major version, see https://github.com/discordjs/discord.js/issues/7091 */
-  public deleted: boolean;
   public readonly editable: boolean;
   public guild: Guild;
   public readonly hexColor: HexColorString;
@@ -2103,8 +2092,6 @@ export class StageChannel extends BaseGuildVoiceChannel {
 export class StageInstance extends Base {
   private constructor(client: Client, data: RawStageInstanceData, channel: StageChannel);
   public id: Snowflake;
-  /** @deprecated This will be removed in the next major version, see https://github.com/discordjs/discord.js/issues/7091 */
-  public deleted: boolean;
   public guildId: Snowflake;
   public channelId: Snowflake;
   public topic: string;
@@ -2121,8 +2108,6 @@ export class StageInstance extends Base {
 
 export class Sticker extends Base {
   private constructor(client: Client, data: RawStickerData);
-  /** @deprecated This will be removed in the next major version, see https://github.com/discordjs/discord.js/issues/7091 */
-  public deleted: boolean;
   public readonly createdTimestamp: number;
   public readonly createdAt: Date;
   public available: boolean | null;
@@ -3229,8 +3214,7 @@ export class ThreadMemberManager extends CachedManager<Snowflake, ThreadMember, 
   private constructor(thread: ThreadChannel, iterable?: Iterable<RawThreadMemberData>);
   public thread: ThreadChannel;
   public add(member: UserResolvable | '@me', reason?: string): Promise<Snowflake>;
-  public fetch(member?: UserResolvable, options?: BaseFetchOptions): Promise<ThreadMember>;
-  /** @deprecated Use `fetch(member, options)` instead. */
+  public fetch(options?: ThreadMemberFetchOptions): Promise<ThreadMember>;
   public fetch(cache?: boolean): Promise<Collection<Snowflake, ThreadMember>>;
   public remove(id: Snowflake | '@me', reason?: string): Promise<Snowflake>;
 }
@@ -3746,6 +3730,10 @@ export type Base64String = string;
 export interface BaseFetchOptions {
   cache?: boolean;
   force?: boolean;
+}
+
+export interface ThreadMemberFetchOptions extends BaseFetchOptions {
+  member?: UserResolvable;
 }
 
 export interface BaseMessageComponentOptions {
