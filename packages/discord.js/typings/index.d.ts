@@ -3899,8 +3899,6 @@ export interface ClientEvents extends BaseClientEvents {
   guildUpdate: [oldGuild: Guild, newGuild: Guild];
   inviteCreate: [invite: Invite];
   inviteDelete: [invite: Invite];
-  /** @deprecated Use messageCreate instead */
-  message: [message: Message];
   messageCreate: [message: Message];
   messageDelete: [message: Message | PartialMessage];
   messageReactionRemoveAll: [
@@ -3931,8 +3929,6 @@ export interface ClientEvents extends BaseClientEvents {
   userUpdate: [oldUser: User | PartialUser, newUser: User];
   voiceStateUpdate: [oldState: VoiceState, newState: VoiceState];
   webhookUpdate: [channel: TextChannel | NewsChannel];
-  /** @deprecated Use interactionCreate instead */
-  interaction: [interaction: Interaction];
   interactionCreate: [interaction: Interaction];
   shardDisconnect: [closeEvent: CloseEvent, shardId: number];
   shardError: [error: Error, shardId: number];
