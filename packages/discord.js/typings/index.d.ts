@@ -1319,16 +1319,13 @@ export class Interaction<Cached extends CacheType = CacheType> extends Base {
   public inGuild(): this is Interaction<'raw' | 'cached'>;
   public inCachedGuild(): this is Interaction<'cached'>;
   public inRawGuild(): this is Interaction<'raw'>;
-  public isApplicationCommand(): this is CommandInteraction<Cached>;
   public isButton(): this is ButtonInteraction<Cached>;
   public isCommand(): this is CommandInteraction<Cached>;
   public isChatInputCommand(): this is ChatInputCommandInteraction<Cached>;
   public isContextMenuCommand(): this is ContextMenuCommandInteraction<Cached>;
   public isMessageContextMenuCommand(): this is MessageContextMenuCommandInteraction<Cached>;
   public isAutocomplete(): this is AutocompleteInteraction<Cached>;
-  public isContextMenu(): this is ContextMenuCommandInteraction<Cached>;
-  public isUserContextMenu(): this is UserContextMenuCommandInteraction<Cached>;
-  public isMessageContextMenu(): this is MessageContextMenuCommandInteraction<Cached>;
+  public isUserContextMenuCommand(): this is UserContextMenuCommandInteraction<Cached>;
   public isMessageComponent(): this is MessageComponentInteraction<Cached>;
   public isSelectMenu(): this is SelectMenuInteraction<Cached>;
 }
@@ -2073,13 +2070,11 @@ export interface FetchRecommendedShardsOptions {
   multipleOf?: number;
 }
 
-export class SnowflakeUtil extends null {
-  private constructor();
-  public static deconstruct(snowflake: Snowflake): DeconstructedSnowflake;
-  public static generate(timestamp?: number | Date): Snowflake;
-  public static timestampFrom(snowflake: Snowflake): number;
-  public static readonly EPOCH: number;
-}
+export {
+  DiscordSnowflake as SnowflakeUtil,
+  SnowflakeGenerateOptions,
+  DeconstructedSnowflake,
+} from '@sapphire/snowflake';
 
 export class StageChannel extends BaseGuildVoiceChannel {
   public topic: string | null;
@@ -2464,7 +2459,6 @@ export class VoiceRegion {
   public id: string;
   public name: string;
   public optimal: boolean;
-  public vip: boolean;
   public toJSON(): unknown;
 }
 
@@ -4234,15 +4228,6 @@ export interface CrosspostedChannel {
 
 export type DateResolvable = Date | number | string;
 
-export interface DeconstructedSnowflake {
-  timestamp: number;
-  readonly date: Date;
-  workerId: number;
-  processId: number;
-  increment: number;
-  binary: string;
-}
-
 export type DefaultMessageNotificationLevel = keyof typeof DefaultMessageNotificationLevels;
 
 export type DynamicImageFormat = AllowedImageFormat | 'gif';
@@ -5227,9 +5212,7 @@ export type PermissionString =
   | 'USE_APPLICATION_COMMANDS'
   | 'REQUEST_TO_SPEAK'
   | 'MANAGE_THREADS'
-  | 'USE_PUBLIC_THREADS'
   | 'CREATE_PUBLIC_THREADS'
-  | 'USE_PRIVATE_THREADS'
   | 'CREATE_PRIVATE_THREADS'
   | 'USE_EXTERNAL_STICKERS'
   | 'SEND_MESSAGES_IN_THREADS'
