@@ -1316,6 +1316,8 @@ export class Interaction<Cached extends CacheType = CacheType> extends Base {
   public user: User;
   public version: number;
   public memberPermissions: CacheTypeReducer<Cached, Readonly<Permissions>>;
+  public locale: string;
+  public guildLocale: CacheTypeReducer<Cached, string, string, string>;
   public inGuild(): this is Interaction<'raw' | 'cached'>;
   public inCachedGuild(): this is Interaction<'cached'>;
   public inRawGuild(): this is Interaction<'raw'>;
@@ -1973,6 +1975,8 @@ export class Shard extends EventEmitter {
   private _fetches: Map<string, Promise<unknown>>;
   private _handleExit(respawn?: boolean, timeout?: number): void;
   private _handleMessage(message: unknown): void;
+  private incrementMaxListeners(emitter: EventEmitter | ChildProcess): void;
+  private decrementMaxListeners(emitter: EventEmitter | ChildProcess): void;
 
   public args: string[];
   public execArgv: string[];
@@ -2006,6 +2010,8 @@ export class ShardClientUtil {
   private constructor(client: Client, mode: ShardingManagerMode);
   private _handleMessage(message: unknown): void;
   private _respond(type: string, message: unknown): void;
+  private incrementMaxListeners(emitter: EventEmitter | ChildProcess): void;
+  private decrementMaxListeners(emitter: EventEmitter | ChildProcess): void;
 
   public client: Client;
   public readonly count: number;
