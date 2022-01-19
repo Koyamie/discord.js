@@ -18,7 +18,7 @@ class Interaction extends Base {
      * The interaction's type
      * @type {InteractionType}
      */
-    this.type = InteractionType[data.type];
+    this.type = data.type;
 
     /**
      * The interaction's id
@@ -157,7 +157,7 @@ class Interaction extends Base {
    * @returns {boolean}
    */
   isCommand() {
-    return InteractionType[this.type] === InteractionType.ApplicationCommand;
+    return this.type === InteractionType.ApplicationCommand;
   }
 
   /**
@@ -165,7 +165,7 @@ class Interaction extends Base {
    * @returns {boolean}
    */
   isChatInputCommand() {
-    return InteractionType[this.type] === InteractionType.ApplicationCommand && typeof this.targetId === 'undefined';
+    return this.isCommand() && typeof this.targetId === 'undefined';
   }
 
   /**
@@ -173,7 +173,7 @@ class Interaction extends Base {
    * @returns {boolean}
    */
   isContextMenuCommand() {
-    return InteractionType[this.type] === InteractionType.ApplicationCommand && typeof this.targetId !== 'undefined';
+    return this.isCommand() && typeof this.targetId !== 'undefined';
   }
 
   /**
@@ -181,7 +181,7 @@ class Interaction extends Base {
    * @returns {boolean}
    */
   isUserContextMenuCommand() {
-    return this.isContextMenuCommand() && ApplicationCommandType[this.targetType] === ApplicationCommandType.User;
+    return this.isContextMenuCommand() && this.targetType === ApplicationCommandType.User;
   }
 
   /**
@@ -189,7 +189,7 @@ class Interaction extends Base {
    * @returns {boolean}
    */
   isMessageContextMenuCommand() {
-    return this.isContextMenuCommand() && ApplicationCommandType[this.targetType] === ApplicationCommandType.Message;
+    return this.isContextMenuCommand() && this.targetType === ApplicationCommandType.Message;
   }
 
   /**
@@ -197,7 +197,7 @@ class Interaction extends Base {
    * @returns {boolean}
    */
   isAutocomplete() {
-    return InteractionType[this.type] === InteractionType.ApplicationCommandAutocomplete;
+    return this.type === InteractionType.ApplicationCommandAutocomplete;
   }
 
   /**
@@ -205,7 +205,7 @@ class Interaction extends Base {
    * @returns {boolean}
    */
   isMessageComponent() {
-    return InteractionType[this.type] === InteractionType.MessageComponent;
+    return this.type === InteractionType.MessageComponent;
   }
 
   /**
@@ -213,10 +213,7 @@ class Interaction extends Base {
    * @returns {boolean}
    */
   isButton() {
-    return (
-      InteractionType[this.type] === InteractionType.MessageComponent &&
-      ComponentType[this.componentType] === ComponentType.Button
-    );
+    return this.isMessageComponent() && this.componentType === ComponentType.Button;
   }
 
   /**
@@ -224,10 +221,7 @@ class Interaction extends Base {
    * @returns {boolean}
    */
   isSelectMenu() {
-    return (
-      InteractionType[this.type] === InteractionType.MessageComponent &&
-      ComponentType[this.componentType] === ComponentType.SelectMenu
-    );
+    return this.isMessageComponent() && this.componentType === ComponentType.SelectMenu;
   }
 
   /**
@@ -235,7 +229,7 @@ class Interaction extends Base {
    * @returns {boolean}
    */
   isRepliable() {
-    return ![InteractionType.Ping, InteractionType.ApplicationCommandAutocomplete].includes(InteractionType[this.type]);
+    return ![InteractionType.Ping, InteractionType.ApplicationCommandAutocomplete].includes(this.type);
   }
 }
 

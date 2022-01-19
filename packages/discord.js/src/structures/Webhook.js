@@ -56,7 +56,7 @@ class Webhook {
        * The type of the webhook
        * @type {WebhookType}
        */
-      this.type = WebhookType[data.type];
+      this.type = data.type;
     }
 
     if ('guild_id' in data) {
@@ -414,7 +414,7 @@ class Webhook {
    * @returns {boolean}
    */
   isChannelFollower() {
-    return this.type === 'ChannelFollower';
+    return this.type === WebhookType.ChannelFollower;
   }
 
   /**
@@ -422,7 +422,7 @@ class Webhook {
    * @returns {boolean}
    */
   isIncoming() {
-    return this.type === 'Incoming';
+    return this.type === WebhookType.Incoming;
   }
 
   static applyToClass(structure, ignore = []) {
