@@ -512,8 +512,8 @@ export type CategoryChannelResolvable = Snowflake | CategoryChannel;
 
 export abstract class Channel extends Base {
   public constructor(client: Client, data?: RawChannelData, immediatePatch?: boolean);
-  public readonly createdAt: Date;
-  public readonly createdTimestamp: number;
+  public readonly createdAt: Date | null;
+  public readonly createdTimestamp: number | null;
   public id: Snowflake;
   public readonly partial: false;
   public type: ChannelType;
@@ -1042,7 +1042,8 @@ export abstract class GuildChannel extends Channel {
   public constructor(guild: Guild, data?: RawGuildChannelData, client?: Client, immediatePatch?: boolean);
   private memberPermissions(member: GuildMember, checkAdmin: boolean): Readonly<Permissions>;
   private rolePermissions(role: Role, checkAdmin: boolean): Readonly<Permissions>;
-
+  public readonly createdAt: Date;
+  public readonly createdTimestamp: number;
   public readonly calculatedPosition: number;
   public readonly deletable: boolean;
   public guild: Guild;
@@ -1633,11 +1634,11 @@ export class MessageMentions {
     everyone: boolean,
     repliedUser?: APIUser | User,
   );
-  private _channels: Collection<Snowflake, TextBasedChannel> | null;
+  private _channels: Collection<Snowflake, AnyChannel> | null;
   private readonly _content: string;
   private _members: Collection<Snowflake, GuildMember> | null;
 
-  public readonly channels: Collection<Snowflake, TextBasedChannel>;
+  public readonly channels: Collection<Snowflake, AnyChannel>;
   public readonly client: Client;
   public everyone: boolean;
   public readonly guild: Guild;
@@ -2169,6 +2170,8 @@ export class ThreadChannel extends TextBasedChannelMixin(Channel) {
   public archived: boolean | null;
   public readonly archivedAt: Date | null;
   public archiveTimestamp: number | null;
+  public readonly createdAt: Date | null;
+  public createdTimestamp: number | null;
   public autoArchiveDuration: ThreadAutoArchiveDuration | null;
   public readonly editable: boolean;
   public guild: Guild;
@@ -2192,6 +2195,11 @@ export class ThreadChannel extends TextBasedChannelMixin(Channel) {
   public rateLimitPerUser: number | null;
   public type: ThreadChannelType;
   public readonly unarchivable: boolean;
+  public isPrivate(): this is this & {
+    readonly createdTimestamp: number;
+    readonly createdAt: Date;
+    type: ChannelType.GuildPrivateThread;
+  };
   public delete(reason?: string): Promise<this>;
   public edit(data: ThreadEditData, reason?: string): Promise<ThreadChannel>;
   public join(): Promise<ThreadChannel>;
@@ -2409,10 +2417,28 @@ export class Webhook extends WebhookMixin() {
   public sourceChannel: NewsChannel | APIPartialChannel | null;
   public token: string | null;
   public type: WebhookType;
-  public isIncoming(): this is this & { token: string };
+  public applicationId: Snowflake | null;
+  public isUserCreated(): this is this & {
+    type: WebhookType.Incoming;
+    applicationId: null;
+    owner: User | APIUser;
+  };
+  public isApplicationCreated(): this is this & {
+    type: WebhookType.Application;
+    applicationId: Snowflake;
+    owner: User | APIUser;
+  };
+  public isIncoming(): this is this & {
+    type: WebhookType.Incoming;
+    token: string;
+  };
   public isChannelFollower(): this is this & {
+    type: WebhookType.ChannelFollower;
     sourceGuild: Guild | APIPartialGuild;
     sourceChannel: NewsChannel | APIPartialChannel;
+    token: null;
+    applicationId: null;
+    owner: User | APIUser;
   };
 }
 
