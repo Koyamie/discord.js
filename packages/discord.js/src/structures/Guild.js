@@ -370,7 +370,7 @@ class Guild extends AnonymousGuild {
       /**
        * The preferred locale of the guild, defaults to `en-US`
        * @type {string}
-       * @see {@link https://discord.com/developers/docs/dispatch/field-values#predefined-field-values-accepted-locales}
+       * @see {@link https://discord.com/developers/docs/reference#locales}
        */
       this.preferredLocale = data.preferred_locale;
     }
@@ -971,7 +971,7 @@ class Guild extends AnonymousGuild {
 
   /**
    * Edits the verification level of the guild.
-   * @param {VerificationLevel|number} verificationLevel The new verification level of the guild
+   * @param {VerificationLevel} verificationLevel The new verification level of the guild
    * @param {string} [reason] Reason for changing the guild's verification level
    * @returns {Promise<Guild>}
    * @example
