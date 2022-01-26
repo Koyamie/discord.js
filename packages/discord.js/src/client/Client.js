@@ -1,8 +1,8 @@
 'use strict';
 
-const process = require('node:process');
 const { Collection } = require('@discordjs/collection');
 const { Routes } = require('discord-api-types/v9');
+const process = require('node:process');
 const BaseClient = require('./BaseClient');
 const ActionsManager = require('./actions/ActionsManager');
 const ClientVoiceManager = require('./voice/ClientVoiceManager');
@@ -293,7 +293,7 @@ class Client extends BaseClient {
    * @returns {Promise<ClientApplication>}
    */
   async fetchApplication() {
-    const app = await this.api.oauth2.applications('@me').get();
+    const app = await this.rest.get(Routes.oauth2CurrentApplication());
     this.application = new ClientApplication(this, app);
     return this.application;
   }

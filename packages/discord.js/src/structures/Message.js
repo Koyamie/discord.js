@@ -3,7 +3,7 @@
 const { createComponent, Embed } = require('@discordjs/builders');
 const { Collection } = require('@discordjs/collection');
 const { DiscordSnowflake } = require('@sapphire/snowflake');
-const { InteractionType, ChannelType, MessageType } = require('discord-api-types/v9');
+const { InteractionType, ChannelType, MessageType, Routes } = require('discord-api-types/v9');
 const Base = require('./Base');
 const ClientApplication = require('./ClientApplication');
 const InteractionCollector = require('./InteractionCollector');
@@ -744,7 +744,7 @@ class Message extends Base {
   async delete() {
     if (!this.channel) {
       if (!this.channelId) throw new Error('CHANNEL_NOT_CACHED');
-      return this.client.api.channels(this.channelId).messages(this.id).delete();
+      return this.client.rest.delete(Routes.channelMessage(this.channelId, this.id));
     }
     await this.channel.messages.delete(this.id);
     return this;
