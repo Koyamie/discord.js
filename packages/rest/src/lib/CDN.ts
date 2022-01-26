@@ -14,7 +14,7 @@ import {
 export interface BaseImageURLOptions {
 	/**
 	 * The extension to use for the image URL
-	 * @default 'webp'
+	 * @default 'png'
 	 */
 	extension?: ImageExtension;
 	/**
@@ -39,7 +39,7 @@ export interface ImageURLOptions extends BaseImageURLOptions {
 export interface MakeURLOptions {
 	/**
 	 * The extension to use for the image URL
-	 * @default 'webp'
+	 * @default 'png'
 	 */
 	extension?: string | undefined;
 	/**
@@ -247,7 +247,7 @@ export class CDN {
 	 */
 	private makeURL(
 		route: string,
-		{ allowedExtensions = ALLOWED_EXTENSIONS, extension = 'webp', size }: Readonly<MakeURLOptions> = {},
+		{ allowedExtensions = ALLOWED_EXTENSIONS, extension = 'png', size }: Readonly<MakeURLOptions> = {},
 	): string {
 		extension = String(extension).toLowerCase();
 
