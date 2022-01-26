@@ -1,6 +1,6 @@
 'use strict';
 
-const { ChannelType } = require('discord-api-types/v9');
+const { ChannelType, Routes } = require('discord-api-types/v9');
 const { Channel } = require('./Channel');
 const TextBasedChannel = require('./interfaces/TextBasedChannel');
 const { RangeError } = require('../errors');
@@ -103,12 +103,8 @@ class ThreadChannel extends Channel {
       this.archiveTimestamp = Date.parse(data.thread_metadata.archive_timestamp);
 
       if ('create_timestamp' in data.thread_metadata) {
-        /**
-         * The timestamp when this thread was created. This isn't available for threads
-         * created before 2022-01-09
-         * @type {?number}
-         */
-        this.createdTimestamp = Date.parse(data.thread_metadata.create_timestamp);
+        // Note: this is needed because we can't assign directly to getters
+        this._createdTimestamp = Date.parse(data.thread_metadata.create_timestamp);
       }
     } else {
       this.locked ??= null;
@@ -118,7 +114,7 @@ class ThreadChannel extends Channel {
       this.invitable ??= null;
     }
 
-    this.createdTimestamp ??= this.type === ChannelType.GuildPrivateThread ? super.createdTimestamp : null;
+    this._createdTimestamp ??= this.type === ChannelType.GuildPrivateThread ? super.createdTimestamp : null;
 
     if ('owner_id' in data) {
       /**
@@ -186,6 +182,16 @@ class ThreadChannel extends Channel {
 
     if (data.member && this.client.user) this.members._add({ user_id: this.client.user.id, ...data.member });
     if (data.messages) for (const message of data.messages) this.messages._add(message);
+  }
+
+  /**
+   * The timestamp when this thread was created. This isn't available for threads
+   * created before 2022-01-09
+   * @type {?number}
+   * @readonly
+   */
+  get createdTimestamp() {
+    return this._createdTimestamp;
   }
 
   /**
@@ -316,8 +322,8 @@ class ThreadChannel extends Channel {
         autoArchiveDuration = 4320;
       }
     }
-    const newData = await this.client.api.channels(this.id).patch({
-      data: {
+    const newData = await this.client.rest.patch(Routes.channel(this.id), {
+      body: {
         name: (data.name ?? this.name).trim(),
         archived: data.archived,
         auto_archive_duration: autoArchiveDuration,
@@ -534,7 +540,7 @@ class ThreadChannel extends Channel {
    *   .catch(console.error);
    */
   async delete(reason) {
-    await this.client.api.channels(this.id).delete({ reason });
+    await this.client.rest.delete(Routes.channel(this.id), { reason });
     return this;
   }
 
