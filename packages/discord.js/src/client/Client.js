@@ -554,3 +554,8 @@ module.exports = Client;
  * @external ImageURLOptions
  * @see {@link https://discord.js.org/#/docs/rest/main/typedef/ImageURLOptions}
  */
+
+/**
+ * @external BaseImageURLOptions
+ * @see {@link https://discord.js.org/#/docs/rest/main/typedef/BaseImageURLOptions}
+ */
