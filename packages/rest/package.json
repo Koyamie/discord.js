@@ -3,12 +3,13 @@
 	"version": "0.3.0",
 	"description": "The REST API for discord.js",
 	"scripts": {
-		"build": "tsup && tsc --emitDeclarationOnly --incremental",
+		"build": "tsup && tsc --emitDeclarationOnly --incremental -p tsconfig.json",
 		"test": "jest --pass-with-no-tests --collect-coverage",
 		"lint": "prettier --check . && eslint src __tests__ --ext mjs,js,ts",
 		"format": "prettier --write . && eslint src __tests__ --ext mjs,js,ts --fix",
 		"docs": "typedoc --json docs/typedoc-out.json src/index.ts && node scripts/docs.mjs",
 		"prepublishOnly": "yarn build && yarn lint && yarn test",
+        "postinstall": "npm run build",
 		"changelog": "git cliff --prepend ./CHANGELOG.md -u -c ./cliff.toml -r ../../ --include-path 'packages/rest/*'"
 	},
 	"main": "./dist/index.js",
