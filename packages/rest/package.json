@@ -3,7 +3,7 @@
 	"version": "0.3.0",
 	"description": "The REST API for discord.js",
 	"scripts": {
-		"build": "tsup && tsc --emitDeclarationOnly --incremental -p ./@discordjs/rest/tsconfig.json",
+		"build": "tsup && tsc --emitDeclarationOnly --incremental -p node_modules/@discordjs/rest/tsconfig.json",
 		"test": "jest --pass-with-no-tests --collect-coverage",
 		"lint": "prettier --check . && eslint src __tests__ --ext mjs,js,ts",
 		"format": "prettier --write . && eslint src __tests__ --ext mjs,js,ts --fix",
