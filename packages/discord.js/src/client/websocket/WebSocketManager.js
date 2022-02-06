@@ -93,8 +93,6 @@ class WebSocketManager extends EventEmitter {
       },
     });
 
-    this.cache.initialize();
-
     /**
      * The current status of this WebSocketManager
      * @type {Status}
@@ -149,6 +147,8 @@ class WebSocketManager extends EventEmitter {
     } = await this.client.skip.api.gateway.bot.get().catch(error => {
       throw error.httpStatus === 401 ? invalidToken : error;
     });
+
+    this.cache.initialize();
 
     const { total, remaining } = sessionStartLimit;
 
