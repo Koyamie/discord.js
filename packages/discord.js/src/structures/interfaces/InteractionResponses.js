@@ -162,7 +162,6 @@ class InteractionResponses {
    * @returns {Promise<Message|APIMessage>}
    */
   followUp(options) {
-    if (!this.deferred && !this.replied) console.warn('INTERACTION_NOT_REPLIED');
     return this.webhook.send(options);
   }
 
