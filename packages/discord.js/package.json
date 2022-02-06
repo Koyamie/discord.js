@@ -56,6 +56,7 @@
     "discord-api-types": "^0.26.1",
     "form-data": "^4.0.0",
     "node-fetch": "^2.6.1",
+    "raincache": "^0.5.0",
     "ws": "^8.4.0"
   },
   "devDependencies": {
