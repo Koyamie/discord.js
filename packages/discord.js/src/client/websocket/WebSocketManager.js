@@ -93,6 +93,8 @@ class WebSocketManager extends EventEmitter {
       },
     });
 
+    this.cache.initialize();
+
     /**
      * The current status of this WebSocketManager
      * @type {Status}
