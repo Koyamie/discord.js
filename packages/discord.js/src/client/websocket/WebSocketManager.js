@@ -88,7 +88,7 @@ class WebSocketManager extends EventEmitter {
     this.cache = new RainCache({
       storage: {
         default: new RedisStorageEngine({
-          redisOptions: this.client.config.redis ?? {},
+          redisOptions: this.client.options.redis ?? {},
         }),
       },
     });
