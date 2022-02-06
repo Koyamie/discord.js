@@ -1,10 +1,11 @@
 'use strict';
 
+const { Collection } = require('@discordjs/collection');
+const { RPCErrorCodes } = require('discord-api-types/v9');
 const EventEmitter = require('node:events');
 const { setImmediate, setTimeout } = require('node:timers');
 const { setTimeout: sleep } = require('node:timers/promises');
-const { Collection } = require('@discordjs/collection');
-const { RPCErrorCodes } = require('discord-api-types/v9');
+const { RainCache, RedisStorageEngine } = require('raincache');
 const WebSocketShard = require('./WebSocketShard');
 const PacketHandlers = require('./handlers');
 const { Error } = require('../../errors');
@@ -79,6 +80,18 @@ class WebSocketManager extends EventEmitter {
      * @name WebSocketManager#packetQueue
      */
     Object.defineProperty(this, 'packetQueue', { value: [] });
+
+    /**
+     * The rain cache instance of the web socket manager
+     * @type {RainCache}
+     */
+    this.cache = new RainCache({
+      storage: {
+        default: new RedisStorageEngine({
+          redisOptions: this.client.config.redis ?? {},
+        }),
+      },
+    });
 
     /**
      * The current status of this WebSocketManager
@@ -355,6 +368,7 @@ class WebSocketManager extends EventEmitter {
 
     if (packet && PacketHandlers[packet.t]) {
       PacketHandlers[packet.t](this.client, packet, shard);
+      this.cache.eventProcessor.inbound(packet);
     }
 
     return true;
