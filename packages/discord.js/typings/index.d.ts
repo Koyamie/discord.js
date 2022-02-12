@@ -335,6 +335,7 @@ export abstract class CommandInteraction<Cached extends CacheType = CacheType> e
     | 'getBoolean'
     | 'getSubcommandGroup'
     | 'getSubcommand'
+    | 'getAttachment'
   >;
   public channelId: Snowflake;
   public commandId: Snowflake;
@@ -794,6 +795,11 @@ export class CommandInteractionOptionResolver<Cached extends CacheType = CacheTy
   public getMessage(name: string, required?: boolean): NonNullable<CommandInteractionOption<Cached>['message']> | null;
   public getFocused(getFull: true): ApplicationCommandOptionChoice;
   public getFocused(getFull?: boolean): string | number;
+  public getAttachment(name: string, required: true): NonNullable<CommandInteractionOption<Cached>['attachment']>;
+  public getAttachment(
+    name: string,
+    required?: boolean,
+  ): NonNullable<CommandInteractionOption<Cached>['attachment']> | null;
 }
 
 export class ContextMenuCommandInteraction<Cached extends CacheType = CacheType> extends CommandInteraction<Cached> {
@@ -1318,7 +1324,7 @@ export class Interaction<Cached extends CacheType = CacheType> extends Base {
   public memberPermissions: CacheTypeReducer<Cached, Readonly<Permissions>>;
   public locale: string;
   public guildLocale: CacheTypeReducer<Cached, string, string, string>;
-  public inGuild(): this is Interaction<'raw' | 'cached'>;
+  public inGuild(): this is Interaction<'present'>;
   public inCachedGuild(): this is Interaction<'cached'>;
   public inRawGuild(): this is Interaction<'raw'>;
   public isButton(): this is ButtonInteraction<Cached>;
@@ -4057,6 +4063,7 @@ export interface CommandInteractionOption<Cached extends CacheType = CacheType> 
   channel?: CacheTypeReducer<Cached, GuildBasedChannel, APIInteractionDataResolvedChannel>;
   role?: CacheTypeReducer<Cached, Role, APIRole>;
   message?: GuildCacheMessage<Cached>;
+  attachment?: MessageAttachment;
 }
 
 export interface CommandInteractionResolvedData<Cached extends CacheType = CacheType> {
@@ -4065,6 +4072,7 @@ export interface CommandInteractionResolvedData<Cached extends CacheType = Cache
   roles?: Collection<Snowflake, CacheTypeReducer<Cached, Role, APIRole>>;
   channels?: Collection<Snowflake, CacheTypeReducer<Cached, AnyChannel, APIInteractionDataResolvedChannel>>;
   messages?: Collection<Snowflake, CacheTypeReducer<Cached, Message, APIMessage>>;
+  attachments?: Collection<Snowflake, MessageAttachment>;
 }
 
 export interface ConstantsClientApplicationAssetTypes {
