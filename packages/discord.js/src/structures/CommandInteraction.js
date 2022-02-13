@@ -115,7 +115,10 @@ class CommandInteraction extends Interaction {
     if (channels) {
       result.channels = new Collection();
       for (const channel of Object.values(channels)) {
-        result.channels.set(channel.id, this.client.channels._add(channel, this.guild) ?? channel);
+        result.channels.set(
+          channel.id,
+          this.client.channels._add(channel, this.guild, { allowUnknownGuild: true }) ?? channel,
+        );
       }
     }
 
