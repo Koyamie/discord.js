@@ -3,6 +3,7 @@
 const process = require('node:process');
 const CachedManager = require('./CachedManager');
 const { Channel } = require('../structures/Channel');
+const MessagePayload = require('../structures/MessagePayload');
 const { Events, ThreadChannelTypes } = require('../util/Constants');
 
 let cacheWarningEmitted = false;
@@ -114,6 +115,21 @@ class ChannelManager extends CachedManager {
 
     const data = await this.client.api.channels(id).get();
     return this._add(data, null, { cache, allowUnknownGuild });
+  }
+
+  async send(channelId, options) {
+    let messagePayload;
+
+    if (options instanceof MessagePayload) {
+      messagePayload = options.resolveData();
+    } else {
+      messagePayload = MessagePayload.create({ id: channelId, client: this.client }, options).resolveData();
+    }
+
+    const { data, files } = await messagePayload.resolveFiles();
+    const d = await this.client.api.channels[channelId].messages.post({ data, files });
+
+    return d;
   }
 }
 
