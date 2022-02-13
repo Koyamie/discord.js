@@ -181,7 +181,9 @@ class CommandInteraction extends Interaction {
       }
 
       const channel = resolved.channels?.[option.value];
-      if (channel) result.channel = this.client.channels._add(channel, this.guild) ?? channel;
+      if (channel) {
+        result.channel = this.client.channels._add(channel, this.guild, { allowUnknownGuild: true }) ?? channel;
+      }
 
       const role = resolved.roles?.[option.value];
       if (role) result.role = this.guild?.roles._add(role) ?? role;
