@@ -1,7 +1,7 @@
 'use strict';
 
 const { Buffer } = require('node:buffer');
-const { Embed, isJSONEncodable } = require('@discordjs/builders');
+const { isJSONEncodable } = require('@discordjs/builders');
 const { MessageFlags } = require('discord-api-types/v9');
 const { RangeError } = require('../errors');
 const DataResolver = require('../util/DataResolver');
@@ -143,7 +143,11 @@ class MessagePayload {
     }
 
     let flags;
-    if (typeof this.options.flags !== 'undefined' || this.isMessage || this.isMessageManager) {
+    if (
+      typeof this.options.flags !== 'undefined' ||
+      (this.isMessage && typeof this.options.reply === 'undefined') ||
+      this.isMessageManager
+    ) {
       flags =
         // eslint-disable-next-line eqeqeq
         this.options.flags != null
@@ -193,7 +197,7 @@ class MessagePayload {
       tts,
       nonce,
       embeds: this.options.embeds?.map(embed =>
-        embed instanceof Embed ? embed.toJSON() : this.target.client.options.jsonTransformer(embed),
+        isJSONEncodable(embed) ? embed.toJSON() : this.target.client.options.jsonTransformer(embed),
       ),
       components,
       username,

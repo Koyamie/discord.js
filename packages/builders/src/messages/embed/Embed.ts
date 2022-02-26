@@ -4,16 +4,13 @@ import {
 	colorPredicate,
 	descriptionPredicate,
 	embedFieldsArrayPredicate,
-	fieldInlinePredicate,
-	fieldNamePredicate,
-	fieldValuePredicate,
 	footerTextPredicate,
 	timestampPredicate,
 	titlePredicate,
 	urlPredicate,
 	validateFieldLength,
 } from './Assertions';
-import { EmbedAuthorOptions, EmbedFooterOptions, UnsafeEmbed } from './UnsafeEmbed';
+import { EmbedAuthorOptions, EmbedFooterOptions, RGBTuple, UnsafeEmbed } from './UnsafeEmbed';
 
 /**
  * Represents a validated embed in a message (image/video preview, rich embed, etc.)
@@ -48,7 +45,7 @@ export class Embed extends UnsafeEmbed {
 		return super.setAuthor(options);
 	}
 
-	public override setColor(color: number | null): this {
+	public override setColor(color: number | RGBTuple | null): this {
 		// Data assertions
 		return super.setColor(colorPredicate.parse(color));
 	}
@@ -93,20 +90,5 @@ export class Embed extends UnsafeEmbed {
 	public override setURL(url: string | null): this {
 		// Data assertions
 		return super.setURL(urlPredicate.parse(url)!);
-	}
-
-	/**
-	 * Normalizes field input and resolves strings
-	 *
-	 * @param fields Fields to normalize
-	 */
-	public static override normalizeFields(...fields: APIEmbedField[]): APIEmbedField[] {
-		return fields.flat(Infinity).map((field) => {
-			fieldNamePredicate.parse(field.name);
-			fieldValuePredicate.parse(field.value);
-			fieldInlinePredicate.parse(field.inline);
-
-			return { name: field.name, value: field.value, inline: field.inline ?? undefined };
-		});
 	}
 }

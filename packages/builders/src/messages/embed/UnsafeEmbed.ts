@@ -6,6 +6,10 @@ import type {
 	APIEmbedImage,
 	APIEmbedVideo,
 } from 'discord-api-types/v9';
+import type { Equatable } from '../../util/equatable';
+import isEqual from 'fast-deep-equal';
+
+export type RGBTuple = [red: number, green: number, blue: number];
 
 export interface IconData {
 	/**
@@ -36,8 +40,8 @@ export interface EmbedImageData extends Omit<APIEmbedImage, 'proxy_url'> {
 /**
  * Represents a non-validated embed in a message (image/video preview, rich embed, etc.)
  */
-export class UnsafeEmbed {
-	protected data: APIEmbed;
+export class UnsafeEmbed implements Equatable<APIEmbed | UnsafeEmbed> {
+	public readonly data: APIEmbed;
 
 	public constructor(data: APIEmbed = {}) {
 		this.data = { ...data };
@@ -165,6 +169,13 @@ export class UnsafeEmbed {
 	}
 
 	/**
+	 * The hex color of the current color of the embed
+	 */
+	public get hexColor() {
+		return typeof this.data.color === 'number' ? `#${this.data.color.toString(16).padStart(6, '0')}` : this.data.color;
+	}
+
+	/**
 	 * Adds a field to the embed (max 25)
 	 *
 	 * @param field The field to add.
@@ -179,7 +190,6 @@ export class UnsafeEmbed {
 	 * @param fields The fields to add
 	 */
 	public addFields(...fields: APIEmbedField[]): this {
-		fields = UnsafeEmbed.normalizeFields(...fields);
 		if (this.data.fields) this.data.fields.push(...fields);
 		else this.data.fields = fields;
 		return this;
@@ -193,7 +203,6 @@ export class UnsafeEmbed {
 	 * @param fields The replacing field objects
 	 */
 	public spliceFields(index: number, deleteCount: number, ...fields: APIEmbedField[]): this {
-		fields = UnsafeEmbed.normalizeFields(...fields);
 		if (this.data.fields) this.data.fields.splice(index, deleteCount, ...fields);
 		else this.data.fields = fields;
 		return this;
@@ -228,7 +237,12 @@ export class UnsafeEmbed {
 	 *
 	 * @param color The color of the embed
 	 */
-	public setColor(color: number | null): this {
+	public setColor(color: number | RGBTuple | null): this {
+		if (Array.isArray(color)) {
+			const [red, green, blue] = color;
+			this.data.color = (red << 16) + (green << 8) + blue;
+			return this;
+		}
 		this.data.color = color ?? undefined;
 		return this;
 	}
@@ -315,14 +329,10 @@ export class UnsafeEmbed {
 		return { ...this.data };
 	}
 
-	/**
-	 * Normalizes field input and resolves strings
-	 *
-	 * @param fields Fields to normalize
-	 */
-	public static normalizeFields(...fields: APIEmbedField[]): APIEmbedField[] {
-		return fields
-			.flat(Infinity)
-			.map((field) => ({ name: field.name, value: field.value, inline: field.inline ?? undefined }));
+	public equals(other: UnsafeEmbed | APIEmbed) {
+		const { image: thisImage, thumbnail: thisThumbnail, ...thisData } = this.data;
+		const data = other instanceof UnsafeEmbed ? other.data : other;
+		const { image, thumbnail, ...otherData } = data;
+		return isEqual(otherData, thisData) && image?.url === thisImage?.url && thumbnail?.url === thisThumbnail?.url;
 	}
 }

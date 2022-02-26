@@ -115,10 +115,8 @@ describe('Embed', () => {
 		});
 
 		test('GIVEN an embed using Embed#setColor THEN returns valid toJSON data', () => {
-			const embed = new Embed();
-			embed.setColor(0xff0000);
-
-			expect(embed.toJSON()).toStrictEqual({ color: 0xff0000 });
+			expect(new Embed().setColor(0xff0000).toJSON()).toStrictEqual({ color: 0xff0000 });
+			expect(new Embed().setColor([242, 66, 245]).toJSON()).toStrictEqual({ color: 0xf242f5 });
 		});
 
 		test('GIVEN an embed with a pre-defined color THEN unset color THEN return valid toJSON data', () => {
@@ -133,6 +131,9 @@ describe('Embed', () => {
 
 			// @ts-expect-error
 			expect(() => embed.setColor('RED')).toThrowError();
+			// @ts-expect-error
+			expect(() => embed.setColor([42, 36])).toThrowError();
+			expect(() => embed.setColor([42, 36, 1000])).toThrowError();
 		});
 	});
 
@@ -310,10 +311,10 @@ describe('Embed', () => {
 	describe('Embed Fields', () => {
 		test('GIVEN an embed with a pre-defined field THEN returns valid toJSON data', () => {
 			const embed = new Embed({
-				fields: [{ name: 'foo', value: 'bar', inline: undefined }],
+				fields: [{ name: 'foo', value: 'bar' }],
 			});
 			expect(embed.toJSON()).toStrictEqual({
-				fields: [{ name: 'foo', value: 'bar', inline: undefined }],
+				fields: [{ name: 'foo', value: 'bar' }],
 			});
 		});
 
@@ -322,7 +323,7 @@ describe('Embed', () => {
 			embed.addField({ name: 'foo', value: 'bar' });
 
 			expect(embed.toJSON()).toStrictEqual({
-				fields: [{ name: 'foo', value: 'bar', inline: undefined }],
+				fields: [{ name: 'foo', value: 'bar' }],
 			});
 		});
 
@@ -331,7 +332,7 @@ describe('Embed', () => {
 			embed.addFields({ name: 'foo', value: 'bar' });
 
 			expect(embed.toJSON()).toStrictEqual({
-				fields: [{ name: 'foo', value: 'bar', inline: undefined }],
+				fields: [{ name: 'foo', value: 'bar' }],
 			});
 		});
 
@@ -340,7 +341,7 @@ describe('Embed', () => {
 			embed.addFields({ name: 'foo', value: 'bar' }, { name: 'foo', value: 'baz' });
 
 			expect(embed.spliceFields(0, 1).toJSON()).toStrictEqual({
-				fields: [{ name: 'foo', value: 'baz', inline: undefined }],
+				fields: [{ name: 'foo', value: 'baz' }],
 			});
 		});
 

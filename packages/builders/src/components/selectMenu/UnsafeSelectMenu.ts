@@ -1,6 +1,7 @@
-import { ComponentType, type APISelectMenuComponent } from 'discord-api-types/v9';
+import { APISelectMenuOption, ComponentType, type APISelectMenuComponent } from 'discord-api-types/v9';
 import { Component } from '../Component';
 import { UnsafeSelectMenuOption } from './UnsafeSelectMenuOption';
+import isEqual from 'fast-deep-equal';
 
 /**
  * Represents a non-validated select menu component
@@ -8,6 +9,9 @@ import { UnsafeSelectMenuOption } from './UnsafeSelectMenuOption';
 export class UnsafeSelectMenuComponent extends Component<
 	Partial<Omit<APISelectMenuComponent, 'options'>> & { type: ComponentType.SelectMenu }
 > {
+	/**
+	 * The options within this select menu
+	 */
 	public readonly options: UnsafeSelectMenuOption[];
 
 	public constructor(data?: Partial<APISelectMenuComponent>) {
@@ -91,7 +95,7 @@ export class UnsafeSelectMenuComponent extends Component<
 	 * Sets whether or not this select menu is disabled
 	 * @param disabled Whether or not this select menu is disabled
 	 */
-	public setDisabled(disabled: boolean) {
+	public setDisabled(disabled = true) {
 		this.data.disabled = disabled;
 		return this;
 	}
@@ -101,8 +105,12 @@ export class UnsafeSelectMenuComponent extends Component<
 	 * @param options The options to add to this select menu
 	 * @returns
 	 */
-	public addOptions(...options: UnsafeSelectMenuOption[]) {
-		this.options.push(...options);
+	public addOptions(...options: (UnsafeSelectMenuOption | APISelectMenuOption)[]) {
+		this.options.push(
+			...options.map((option) =>
+				option instanceof UnsafeSelectMenuOption ? option : new UnsafeSelectMenuOption(option),
+			),
+		);
 		return this;
 	}
 
@@ -110,8 +118,14 @@ export class UnsafeSelectMenuComponent extends Component<
 	 * Sets the options on this select menu
 	 * @param options The options to set on this select menu
 	 */
-	public setOptions(...options: UnsafeSelectMenuOption[]) {
-		this.options.splice(0, this.options.length, ...options);
+	public setOptions(...options: (UnsafeSelectMenuOption | APISelectMenuOption)[]) {
+		this.options.splice(
+			0,
+			this.options.length,
+			...options.map((option) =>
+				option instanceof UnsafeSelectMenuOption ? option : new UnsafeSelectMenuOption(option),
+			),
+		);
 		return this;
 	}
 
@@ -121,5 +135,15 @@ export class UnsafeSelectMenuComponent extends Component<
 			...this.data,
 			options: this.options.map((o) => o.toJSON()),
 		} as APISelectMenuComponent;
+	}
+
+	public equals(other: APISelectMenuComponent | UnsafeSelectMenuComponent): boolean {
+		if (other instanceof UnsafeSelectMenuComponent) {
+			return isEqual(other.data, this.data) && isEqual(other.options, this.options);
+		}
+		return isEqual(other, {
+			...this.data,
+			options: this.options.map((o) => o.toJSON()),
+		});
 	}
 }
