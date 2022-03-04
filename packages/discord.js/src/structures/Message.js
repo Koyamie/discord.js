@@ -674,6 +674,7 @@ class Message extends Base {
 
   /**
    * Pins this message to the channel's pinned messages.
+   * @param {string} [reason] Reason for pinning
    * @returns {Promise<Message>}
    * @example
    * // Pin a message
@@ -681,14 +682,15 @@ class Message extends Base {
    *   .then(console.log)
    *   .catch(console.error)
    */
-  async pin() {
+  async pin(reason) {
     if (!this.channel) throw new Error('CHANNEL_NOT_CACHED');
-    await this.channel.messages.pin(this.id);
+    await this.channel.messages.pin(this.id, reason);
     return this;
   }
 
   /**
    * Unpins this message from the channel's pinned messages.
+   * @param {string} [reason] Reason for unpinning
    * @returns {Promise<Message>}
    * @example
    * // Unpin a message
@@ -696,9 +698,9 @@ class Message extends Base {
    *   .then(console.log)
    *   .catch(console.error)
    */
-  async unpin() {
+  async unpin(reason) {
     if (!this.channel) throw new Error('CHANNEL_NOT_CACHED');
-    await this.channel.messages.unpin(this.id);
+    await this.channel.messages.unpin(this.id, reason);
     return this;
   }
 

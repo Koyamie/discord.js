@@ -344,9 +344,9 @@ export abstract class CommandInteraction<Cached extends CacheType = CacheType> e
   public ephemeral: boolean | null;
   public replied: boolean;
   public webhook: InteractionWebhook;
-  public inGuild(): this is CommandInteraction<'raw' | 'cached'>;
-  public inCachedGuild(): this is CommandInteraction<'cached'>;
-  public inRawGuild(): this is CommandInteraction<'raw'>;
+  public inGuild(): this is BaseCommandInteraction<'raw' | 'cached'>;
+  public inCachedGuild(): this is BaseCommandInteraction<'cached'>;
+  public inRawGuild(): this is BaseCommandInteraction<'raw'>;
   public deferReply(options: InteractionDeferReplyOptions & { fetchReply: true }): Promise<GuildCacheMessage<Cached>>;
   public deferReply(options?: InteractionDeferReplyOptions): Promise<void>;
   public deleteReply(): Promise<void>;
@@ -516,8 +516,10 @@ export type CategoryChannelResolvable = Snowflake | CategoryChannel;
 
 export abstract class Channel extends Base {
   public constructor(client: Client, data?: RawChannelData, immediatePatch?: boolean);
-  public readonly createdAt: Date;
-  public readonly createdTimestamp: number;
+  public readonly createdAt: Date | null;
+  public readonly createdTimestamp: number | null;
+  /** @deprecated This will be removed in the next major version, see https://github.com/discordjs/discord.js/issues/7091 */
+  public deleted: boolean;
   public id: Snowflake;
   public readonly partial: false;
   public type: keyof typeof ChannelTypes;
@@ -718,9 +720,9 @@ export interface ApplicationCommandInteractionOptionResolver<Cached extends Cach
 
 export class ChatInputCommandInteraction<Cached extends CacheType = CacheType> extends CommandInteraction<Cached> {
   public options: Omit<CommandInteractionOptionResolver<Cached>, 'getMessage' | 'getFocused'>;
-  public inGuild(): this is ChatInputCommandInteraction<'raw' | 'cached'>;
-  public inCachedGuild(): this is ChatInputCommandInteraction<'cached'>;
-  public inRawGuild(): this is ChatInputCommandInteraction<'raw'>;
+  public inGuild(): this is CommandInteraction<'raw' | 'cached'>;
+  public inCachedGuild(): this is CommandInteraction<'cached'>;
+  public inRawGuild(): this is CommandInteraction<'raw'>;
   public toString(): string;
 }
 
@@ -817,9 +819,9 @@ export class ContextMenuCommandInteraction<Cached extends CacheType = CacheType>
   >;
   public targetId: Snowflake;
   public targetType: Exclude<ApplicationCommandType, 'CHAT_INPUT'>;
-  public inGuild(): this is ContextMenuCommandInteraction<'raw' | 'cached'>;
-  public inCachedGuild(): this is ContextMenuCommandInteraction<'cached'>;
-  public inRawGuild(): this is ContextMenuCommandInteraction<'raw'>;
+  public inGuild(): this is ContextMenuInteraction<'raw' | 'cached'>;
+  public inCachedGuild(): this is ContextMenuInteraction<'cached'>;
+  public inRawGuild(): this is ContextMenuInteraction<'raw'>;
   private resolveContextMenuOptions(data: APIApplicationCommandInteractionData): CommandInteractionOption<Cached>[];
 }
 
@@ -1030,7 +1032,8 @@ export abstract class GuildChannel extends Channel {
   public constructor(guild: Guild, data?: RawGuildChannelData, client?: Client, immediatePatch?: boolean);
   private memberPermissions(member: GuildMember, checkAdmin: boolean): Readonly<Permissions>;
   private rolePermissions(role: Role, checkAdmin: boolean): Readonly<Permissions>;
-
+  public readonly createdAt: Date;
+  public readonly createdTimestamp: number;
   public readonly calculatedPosition: number;
   public readonly deletable: boolean;
   public guild: Guild;
@@ -1134,6 +1137,7 @@ export class GuildPreview extends Base {
   public description: string | null;
   public discoverySplash: string | null;
   public emojis: Collection<Snowflake, GuildPreviewEmoji>;
+  public stickers: Collection<Snowflake, Sticker>;
   public features: GuildFeatures[];
   public icon: string | null;
   public id: Snowflake;
@@ -1323,7 +1327,7 @@ export class Interaction<Cached extends CacheType = CacheType> extends Base {
   public memberPermissions: CacheTypeReducer<Cached, Readonly<Permissions>>;
   public locale: string;
   public guildLocale: CacheTypeReducer<Cached, string, string, string>;
-  public inGuild(): this is Interaction<'present'>;
+  public inGuild(): this is Interaction<'raw' | 'cached'>;
   public inCachedGuild(): this is Interaction<'cached'>;
   public inRawGuild(): this is Interaction<'raw'>;
   public isButton(): this is ButtonInteraction<Cached>;
@@ -1523,7 +1527,7 @@ export class Message<Cached extends boolean = boolean> extends Base {
   public fetchWebhook(): Promise<Webhook>;
   public crosspost(): Promise<Message>;
   public fetch(force?: boolean): Promise<Message>;
-  public pin(): Promise<Message>;
+  public pin(reason?: string): Promise<Message>;
   public react(emoji: EmojiIdentifierResolvable): Promise<MessageReaction>;
   public removeAttachments(): Promise<Message>;
   public reply(options: string | MessagePayload | ReplyMessageOptions): Promise<Message>;
@@ -1532,7 +1536,7 @@ export class Message<Cached extends boolean = boolean> extends Base {
   public suppressEmbeds(suppress?: boolean): Promise<Message>;
   public toJSON(): unknown;
   public toString(): string;
-  public unpin(): Promise<Message>;
+  public unpin(reason?: string): Promise<Message>;
   public inGuild(): this is Message<true> & this;
 }
 
@@ -1649,9 +1653,9 @@ export class MessageContextMenuCommandInteraction<
   Cached extends CacheType = CacheType,
 > extends ContextMenuCommandInteraction<Cached> {
   public readonly targetMessage: NonNullable<CommandInteractionOption<Cached>['message']>;
-  public inGuild(): this is MessageContextMenuCommandInteraction<'raw' | 'cached'>;
-  public inCachedGuild(): this is MessageContextMenuCommandInteraction<'cached'>;
-  public inRawGuild(): this is MessageContextMenuCommandInteraction<'raw'>;
+  public inGuild(): this is MessageContextMenuInteraction<'raw' | 'cached'>;
+  public inCachedGuild(): this is MessageContextMenuInteraction<'cached'>;
+  public inRawGuild(): this is MessageContextMenuInteraction<'raw'>;
 }
 
 export class MessageEmbed {
@@ -1712,11 +1716,11 @@ export class MessageMentions {
     everyone: boolean,
     repliedUser?: APIUser | User,
   );
-  private _channels: Collection<Snowflake, TextBasedChannel> | null;
+  private _channels: Collection<Snowflake, AnyChannel> | null;
   private readonly _content: string;
   private _members: Collection<Snowflake, GuildMember> | null;
 
-  public readonly channels: Collection<Snowflake, TextBasedChannel>;
+  public readonly channels: Collection<Snowflake, AnyChannel>;
   public readonly client: Client;
   public everyone: boolean;
   public readonly guild: Guild;
@@ -2271,6 +2275,9 @@ export class ThreadChannel extends TextBasedChannelMixin(Channel) {
   public archived: boolean | null;
   public readonly archivedAt: Date | null;
   public archiveTimestamp: number | null;
+  public readonly createdAt: Date | null;
+  private _createdTimestamp: number | null;
+  public readonly createdTimestamp: number | null;
   public autoArchiveDuration: ThreadAutoArchiveDuration | null;
   public readonly editable: boolean;
   public guild: Guild;
@@ -2294,6 +2301,11 @@ export class ThreadChannel extends TextBasedChannelMixin(Channel) {
   public rateLimitPerUser: number | null;
   public type: ThreadChannelTypes;
   public readonly unarchivable: boolean;
+  public isPrivate(): this is this & {
+    readonly createdTimestamp: number;
+    readonly createdAt: Date;
+    type: 'GUILD_PRIVATE_THREAD';
+  };
   public delete(reason?: string): Promise<this>;
   public edit(data: ThreadEditData, reason?: string): Promise<ThreadChannel>;
   public join(): Promise<ThreadChannel>;
@@ -2384,9 +2396,9 @@ export class UserContextMenuCommandInteraction<
 > extends ContextMenuCommandInteraction<Cached> {
   public readonly targetUser: User;
   public readonly targetMember: CacheTypeReducer<Cached, GuildMember, APIInteractionGuildMember>;
-  public inGuild(): this is UserContextMenuCommandInteraction<'raw' | 'cached'>;
-  public inCachedGuild(): this is UserContextMenuCommandInteraction<'cached'>;
-  public inRawGuild(): this is UserContextMenuCommandInteraction<'raw'>;
+  public inGuild(): this is UserContextMenuInteraction<'raw' | 'cached'>;
+  public inCachedGuild(): this is UserContextMenuInteraction<'cached'>;
+  public inRawGuild(): this is UserContextMenuInteraction<'raw'>;
 }
 
 export class UserFlags extends BitField<UserFlagsString> {
@@ -3136,8 +3148,8 @@ export class MessageManager extends CachedManager<Snowflake, Message, MessageRes
   ): Promise<Collection<Snowflake, Message>>;
   public fetchPinned(cache?: boolean): Promise<Collection<Snowflake, Message>>;
   public react(message: MessageResolvable, emoji: EmojiIdentifierResolvable): Promise<void>;
-  public pin(message: MessageResolvable): Promise<void>;
-  public unpin(message: MessageResolvable): Promise<void>;
+  public pin(message: MessageResolvable, reason?: string): Promise<void>;
+  public unpin(message: MessageResolvable, reason?: string): Promise<void>;
 }
 
 export class PermissionOverwriteManager extends CachedManager<
@@ -3300,7 +3312,7 @@ export interface PartialWebhookFields {
   /** @deprecated */
   fetchMessage(message: Snowflake | '@original', cache?: boolean): Promise<Message | APIMessage>;
   /* tslint:enable:unified-signatures */
-  send(options: string | MessagePayload | WebhookMessageOptions): Promise<Message | APIMessage>;
+  send(options: string | MessagePayload | Omit<WebhookMessageOptions, 'flags'>): Promise<Message | APIMessage>;
 }
 
 export interface WebhookFields extends PartialWebhookFields {
@@ -4837,9 +4849,10 @@ export interface InteractionDeferReplyOptions {
 
 export type InteractionDeferUpdateOptions = Omit<InteractionDeferReplyOptions, 'ephemeral'>;
 
-export interface InteractionReplyOptions extends Omit<WebhookMessageOptions, 'username' | 'avatarURL'> {
+export interface InteractionReplyOptions extends Omit<WebhookMessageOptions, 'username' | 'avatarURL' | 'flags'> {
   ephemeral?: boolean;
   fetchReply?: boolean;
+  flags?: BitFieldResolvable<'SUPPRESS_EMBEDS' | 'EPHEMERAL', number>;
 }
 
 export type InteractionResponseType = keyof typeof InteractionResponseTypes;
@@ -5106,6 +5119,7 @@ export interface MessageOptions {
   reply?: ReplyOptions;
   stickers?: StickerResolvable[];
   attachments?: MessageAttachment[];
+  flags?: BitFieldResolvable<'SUPPRESS_EMBEDS', number>;
 }
 
 export type MessageReactionResolvable =
