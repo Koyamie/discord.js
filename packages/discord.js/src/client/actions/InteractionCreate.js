@@ -4,7 +4,7 @@ const Action = require('./Action');
 const AutocompleteInteraction = require('../../structures/AutocompleteInteraction');
 const ButtonInteraction = require('../../structures/ButtonInteraction');
 const ChatInputCommandInteraction = require('../../structures/ChatInputCommandInteraction');
-const MessageContextMenuInteraction = require('../../structures/MessageContextMenuInteraction');
+const MessageContextMenuCommandInteraction = require('../../structures/MessageContextMenuCommandInteraction');
 const ModalSubmitInteraction = require('../../structures/ModalSubmitInteraction');
 const SelectMenuInteraction = require('../../structures/SelectMenuInteraction');
 const UserContextMenuCommandInteraction = require('../../structures/UserContextMenuCommandInteraction');
@@ -31,7 +31,7 @@ class InteractionCreateAction extends Action {
             break;
           case ApplicationCommandTypes.MESSAGE:
             if (channel && !channel.isText()) return;
-            InteractionType = MessageContextMenuInteraction;
+            InteractionType = MessageContextMenuCommandInteraction;
             break;
           default:
             client.emit(
