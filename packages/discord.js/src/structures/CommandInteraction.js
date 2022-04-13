@@ -206,6 +206,8 @@ class CommandInteraction extends Interaction {
   editReply() {}
   deleteReply() {}
   followUp() {}
+  showModal() {}
+  awaitModalSubmit() {}
 }
 
 InteractionResponses.applyToClass(CommandInteraction, ['deferUpdate', 'update']);

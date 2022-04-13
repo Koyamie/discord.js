@@ -22,6 +22,7 @@ import {
 import { Collection } from '@discordjs/collection';
 import {
   APIActionRowComponent,
+  APIActionRowComponentTypes,
   APIApplicationCommand,
   APIApplicationCommandInteractionData,
   APIApplicationCommandOption,
@@ -35,7 +36,9 @@ import {
   APIInteractionDataResolvedGuildMember,
   APIInteractionGuildMember,
   APIMessage,
+  APIMessageActionRowComponent,
   APIMessageComponent,
+  APIModalActionRowComponent,
   APIOverwrite,
   APIPartialChannel,
   APIPartialEmoji,
@@ -43,6 +46,7 @@ import {
   APIRole,
   APISelectMenuComponent,
   APITemplateSerializedSourceGuild,
+  APITextInputComponent,
   APIUser,
   GatewayVoiceServerUpdateDispatchData,
   GatewayVoiceStateUpdateDispatchData,
@@ -71,6 +75,7 @@ import {
   MessageButtonStyles,
   MessageComponentTypes,
   MessageTypes,
+  ModalComponentTypes,
   MFALevels,
   NSFWLevels,
   OverwriteTypes,
@@ -78,6 +83,7 @@ import {
   PrivacyLevels,
   StickerFormatTypes,
   StickerTypes,
+  TextInputStyles,
   VerificationLevels,
   WebhookTypes,
   GuildScheduledEventEntityTypes,
@@ -117,6 +123,7 @@ import {
   RawMessagePayloadData,
   RawMessageReactionData,
   RawMessageSelectMenuInteractionData,
+  RawModalSubmitInteractionData,
   RawOAuth2GuildData,
   RawPartialGroupDMChannelData,
   RawPartialMessageData,
@@ -130,6 +137,7 @@ import {
   RawStickerPackData,
   RawTeamData,
   RawTeamMemberData,
+  RawTextInputComponentData,
   RawThreadChannelData,
   RawThreadMemberData,
   RawTypingData,
@@ -184,6 +192,7 @@ export abstract class AnonymousGuild extends BaseGuild {
   public banner: string | null;
   public description: string | null;
   public nsfwLevel: NSFWLevel;
+  public premiumSubscriptionCount: number | null;
   public splash: string | null;
   public vanityURLCode: string | null;
   public verificationLevel: VerificationLevel;
@@ -320,7 +329,22 @@ export type GuildCacheMessage<Cached extends CacheType> = CacheTypeReducer<
   Message | APIMessage
 >;
 
-export abstract class CommandInteraction<Cached extends CacheType = CacheType> extends Interaction<Cached> {
+export interface InteractionResponseFields<Cached extends CacheType = CacheType> {
+  deferred: boolean;
+  ephemeral: boolean | null;
+  replied: boolean;
+  webhook: InteractionWebhook;
+  reply(options: InteractionReplyOptions & { fetchReply: true }): Promise<GuildCacheMessage<Cached>>;
+  reply(options: string | MessagePayload | InteractionReplyOptions): Promise<void>;
+  deleteReply(): Promise<void>;
+  editReply(options: string | MessagePayload | WebhookEditMessageOptions): Promise<GuildCacheMessage<Cached>>;
+  deferReply(options: InteractionDeferReplyOptions & { fetchReply: true }): Promise<GuildCacheMessage<Cached>>;
+  deferReply(options?: InteractionDeferReplyOptions): Promise<void>;
+  fetchReply(): Promise<GuildCacheMessage<Cached>>;
+  followUp(options: string | MessagePayload | InteractionReplyOptions): Promise<GuildCacheMessage<Cached>>;
+}
+
+export abstract class BaseCommandInteraction<Cached extends CacheType = CacheType> extends Interaction<Cached> {
   public readonly command: ApplicationCommand | ApplicationCommand<{ guild: GuildResolvable }> | null;
   public options: Omit<
     CommandInteractionOptionResolver<Cached>,
@@ -344,6 +368,9 @@ export abstract class CommandInteraction<Cached extends CacheType = CacheType> e
   public ephemeral: boolean | null;
   public replied: boolean;
   public webhook: InteractionWebhook;
+  public awaitModalSubmit(
+    options: AwaitModalSubmitOptions<ModalSubmitInteraction>,
+  ): Promise<ModalSubmitInteraction<Cached>>;
   public inGuild(): this is BaseCommandInteraction<'raw' | 'cached'>;
   public inCachedGuild(): this is BaseCommandInteraction<'cached'>;
   public inRawGuild(): this is BaseCommandInteraction<'raw'>;
@@ -355,6 +382,7 @@ export abstract class CommandInteraction<Cached extends CacheType = CacheType> e
   public followUp(options: string | MessagePayload | InteractionReplyOptions): Promise<GuildCacheMessage<Cached>>;
   public reply(options: InteractionReplyOptions & { fetchReply: true }): Promise<GuildCacheMessage<Cached>>;
   public reply(options: string | MessagePayload | InteractionReplyOptions): Promise<void>;
+  public showModal(modal: Modal | ModalOptions): Promise<void>;
   private transformOption(
     option: APIApplicationCommandOption,
     resolved: APIApplicationCommandInteractionData['resolved'],
@@ -545,8 +573,8 @@ export class Client<Ready extends boolean = boolean> extends BaseClient {
   public readonly emojis: BaseGuildEmojiManager;
   public guilds: GuildManager;
   public options: ClientOptions;
-  public readonly readyAt: If<Ready, Date>;
-  public readyTimestamp: If<Ready, number>;
+  public readyAt: If<Ready, Date>;
+  public readonly readyTimestamp: If<Ready, number>;
   public sweepers: Sweepers;
   public shard: ShardClientUtil | null;
   public token: If<Ready, string, string | null>;
@@ -567,6 +595,8 @@ export class Client<Ready extends boolean = boolean> extends BaseClient {
   public generateInvite(options?: InviteGenerationOptions): string;
   public login(token?: string): Promise<string>;
   public isReady(): this is Client<true>;
+  /** @deprecated Use {@link Sweepers#sweepMessages} instead */
+  public sweepMessages(lifetime?: number): number;
   public toJSON(): unknown;
 
   public on<K extends keyof ClientEvents>(event: K, listener: (...args: ClientEvents[K]) => Awaitable<void>): this;
@@ -668,7 +698,7 @@ export abstract class Collector<K, V, F extends unknown[] = []> extends EventEmi
   public handleDispose(...args: unknown[]): Promise<void>;
   public stop(reason?: string): void;
   public resetTimer(options?: CollectorResetTimerOptions): void;
-  public [Symbol.asyncIterator](): AsyncIterableIterator<[V, ...F]>;
+  public [Symbol.asyncIterator](): AsyncIterableIterator<V>;
   public toJSON(): unknown;
 
   protected listener: (...args: any[]) => void;
@@ -718,7 +748,7 @@ export interface ApplicationCommandInteractionOptionResolver<Cached extends Cach
   ): NonNullable<CommandInteractionOption<Cached>['member' | 'role' | 'user']> | null;
 }
 
-export class ChatInputCommandInteraction<Cached extends CacheType = CacheType> extends CommandInteraction<Cached> {
+export class CommandInteraction<Cached extends CacheType = CacheType> extends BaseCommandInteraction<Cached> {
   public options: Omit<CommandInteractionOptionResolver<Cached>, 'getMessage' | 'getFocused'>;
   public inGuild(): this is CommandInteraction<'raw' | 'cached'>;
   public inCachedGuild(): this is CommandInteraction<'cached'>;
@@ -803,7 +833,7 @@ export class CommandInteractionOptionResolver<Cached extends CacheType = CacheTy
   ): NonNullable<CommandInteractionOption<Cached>['attachment']> | null;
 }
 
-export class ContextMenuCommandInteraction<Cached extends CacheType = CacheType> extends CommandInteraction<Cached> {
+export class ContextMenuInteraction<Cached extends CacheType = CacheType> extends BaseCommandInteraction<Cached> {
   public options: Omit<
     CommandInteractionOptionResolver<Cached>,
     | 'getFocused'
@@ -860,6 +890,8 @@ export class Emoji extends Base {
   public animated: boolean | null;
   public readonly createdAt: Date | null;
   public readonly createdTimestamp: number | null;
+  /** @deprecated This will be removed in the next major version, see https://github.com/discordjs/discord.js/issues/7091 */
+  public deleted: boolean;
   public id: Snowflake | null;
   public name: string | null;
   public readonly identifier: string;
@@ -884,6 +916,8 @@ export class Guild extends AnonymousGuild {
   public channels: GuildChannelManager;
   public commands: GuildApplicationCommandManager;
   public defaultMessageNotifications: DefaultMessageNotificationLevel | number;
+  /** @deprecated This will be removed in the next major version, see https://github.com/discordjs/discord.js/issues/7091 */
+  public deleted: boolean;
   public discoverySplash: string | null;
   public emojis: GuildEmojiManager;
   public explicitContentFilter: ExplicitContentFilterLevel;
@@ -899,7 +933,6 @@ export class Guild extends AnonymousGuild {
   public mfaLevel: MFALevel;
   public ownerId: Snowflake;
   public preferredLocale: string;
-  public premiumSubscriptionCount: number | null;
   public premiumProgressBarEnabled: boolean;
   public premiumTier: PremiumTier;
   public presences: PresenceManager;
@@ -945,6 +978,8 @@ export class Guild extends AnonymousGuild {
   public setAFKChannel(afkChannel: VoiceChannelResolvable | null, reason?: string): Promise<Guild>;
   public setAFKTimeout(afkTimeout: number, reason?: string): Promise<Guild>;
   public setBanner(banner: BufferResolvable | Base64Resolvable | null, reason?: string): Promise<Guild>;
+  /** @deprecated Use {@link GuildChannelManager.setPositions} instead */
+  public setChannelPositions(channelPositions: readonly ChannelPosition[]): Promise<Guild>;
   public setDefaultMessageNotifications(
     defaultMessageNotifications: DefaultMessageNotificationLevel | number,
     reason?: string,
@@ -962,6 +997,8 @@ export class Guild extends AnonymousGuild {
   public setOwner(owner: GuildMemberResolvable, reason?: string): Promise<Guild>;
   public setPreferredLocale(preferredLocale: string, reason?: string): Promise<Guild>;
   public setPublicUpdatesChannel(publicUpdatesChannel: TextChannelResolvable | null, reason?: string): Promise<Guild>;
+  /** @deprecated Use {@link RoleManager.setPositions} instead */
+  public setRolePositions(rolePositions: readonly RolePosition[]): Promise<Guild>;
   public setRulesChannel(rulesChannel: TextChannelResolvable | null, reason?: string): Promise<Guild>;
   public setSplash(splash: BufferResolvable | Base64Resolvable | null, reason?: string): Promise<Guild>;
   public setSystemChannel(systemChannel: TextChannelResolvable | null, reason?: string): Promise<Guild>;
@@ -1085,6 +1122,8 @@ export class GuildMember extends PartialTextBasedChannel(Base) {
   private constructor(client: Client, data: RawGuildMemberData, guild: Guild);
   public avatar: string | null;
   public readonly bannable: boolean;
+  /** @deprecated This will be removed in the next major version, see https://github.com/discordjs/discord.js/issues/7091 */
+  public deleted: boolean;
   public readonly displayColor: number;
   public readonly displayHexColor: HexColorString;
   public readonly displayName: string;
@@ -1203,8 +1242,8 @@ export class GuildScheduledEvent<S extends GuildScheduledEventStatus = GuildSche
 
 export class GuildTemplate extends Base {
   private constructor(client: Client, data: RawGuildTemplateData);
-  public createdTimestamp: number;
-  public updatedTimestamp: number;
+  public readonly createdTimestamp: number;
+  public readonly updatedTimestamp: number;
   public readonly url: string;
   public code: string;
   public name: string;
@@ -1212,8 +1251,8 @@ export class GuildTemplate extends Base {
   public usageCount: number;
   public creator: User;
   public creatorId: Snowflake;
-  public readonly createdAt: Date;
-  public readonly updatedAt: Date;
+  public createdAt: Date;
+  public updatedAt: Date;
   public guild: Guild | null;
   public guildId: Snowflake;
   public serializedGuild: APITemplateSerializedSourceGuild;
@@ -1252,17 +1291,16 @@ export class Integration extends Base {
   public account: IntegrationAccount;
   public application: IntegrationApplication | null;
   public enabled: boolean;
-  public expireBehavior: IntegrationExpireBehaviors | null;
-  public expireGracePeriod: number | null;
+  public expireBehavior: number | undefined;
+  public expireGracePeriod: number | undefined;
   public guild: Guild;
   public id: Snowflake | string;
   public name: string;
-  public role: Role | null;
+  public role: Role | undefined;
   public enableEmoticons: boolean | null;
   public readonly roles: Collection<Snowflake, Role>;
-  public readonly syncedAt: Date | null;
-  public syncedTimestamp: number | null;
-  public syncing: boolean | null;
+  public syncedAt: number | undefined;
+  public syncing: boolean | undefined;
   public type: IntegrationType;
   public user: User | null;
   public subscriberCount: number | null;
@@ -1332,15 +1370,17 @@ export class Interaction<Cached extends CacheType = CacheType> extends Base {
   public inGuild(): this is Interaction<'raw' | 'cached'>;
   public inCachedGuild(): this is Interaction<'cached'>;
   public inRawGuild(): this is Interaction<'raw'>;
+  public isApplicationCommand(): this is BaseCommandInteraction<Cached>;
   public isButton(): this is ButtonInteraction<Cached>;
   public isCommand(): this is CommandInteraction<Cached>;
-  public isChatInputCommand(): this is ChatInputCommandInteraction<Cached>;
-  public isContextMenuCommand(): this is ContextMenuCommandInteraction<Cached>;
-  public isMessageContextMenuCommand(): this is MessageContextMenuCommandInteraction<Cached>;
   public isAutocomplete(): this is AutocompleteInteraction<Cached>;
-  public isUserContextMenuCommand(): this is UserContextMenuCommandInteraction<Cached>;
+  public isContextMenu(): this is ContextMenuInteraction<Cached>;
+  public isUserContextMenu(): this is UserContextMenuInteraction<Cached>;
+  public isMessageContextMenu(): this is MessageContextMenuInteraction<Cached>;
   public isMessageComponent(): this is MessageComponentInteraction<Cached>;
+  public isModalSubmit(): this is ModalSubmitInteraction<Cached>;
   public isSelectMenu(): this is SelectMenuInteraction<Cached>;
+  public isRepliable(): this is this & InteractionResponseFields<Cached>;
 }
 
 export class InteractionCollector<T extends Interaction> extends Collector<Snowflake, T> {
@@ -1429,6 +1469,13 @@ export class LimitedCollection<K, V> extends Collection<K, V> {
   public constructor(options?: LimitedCollectionOptions<K, V>, iterable?: Iterable<readonly [K, V]>);
   public maxSize: number;
   public keepOverLimit: ((value: V, key: K, collection: this) => boolean) | null;
+  /** @deprecated Use Global Sweepers instead */
+  public interval: NodeJS.Timeout | null;
+  /** @deprecated Use Global Sweepers instead */
+  public sweepFilter: SweepFilter<K, V> | null;
+
+  /** @deprecated Use `Sweepers.filterByLifetime` instead */
+  public static filterByLifetime<K, V>(options?: LifetimeFilterOptions<K, V>): SweepFilter<K, V>;
 }
 
 export type MessageCollectorOptionsParams<T extends MessageComponentTypeResolvable, Cached extends boolean = boolean> =
@@ -1467,6 +1514,7 @@ export type MappedInteractionTypes<Cached extends boolean = boolean> = EnumValue
     BUTTON: ButtonInteraction<WrapBooleanCache<Cached>>;
     SELECT_MENU: SelectMenuInteraction<WrapBooleanCache<Cached>>;
     ACTION_ROW: MessageComponentInteraction<WrapBooleanCache<Cached>>;
+    TEXT_INPUT: ModalSubmitInteraction<WrapBooleanCache<Cached>>;
   }
 >;
 
@@ -1488,6 +1536,8 @@ export class Message<Cached extends boolean = boolean> extends Base {
   public createdTimestamp: number;
   public readonly crosspostable: boolean;
   public readonly deletable: boolean;
+  /** @deprecated This will be removed in the next major version, see https://github.com/discordjs/discord.js/issues/7091 */
+  public deleted: boolean;
   public readonly editable: boolean;
   public readonly editedAt: Date | null;
   public editedTimestamp: number | null;
@@ -1542,22 +1592,20 @@ export class Message<Cached extends boolean = boolean> extends Base {
   public inGuild(): this is Message<true> & this;
 }
 
-export class MessageActionRow extends BaseMessageComponent {
-  public constructor(data?: MessageActionRow | MessageActionRowOptions | APIActionRowComponent);
+export class MessageActionRow<
+  T extends MessageActionRowComponent | ModalActionRowComponent = MessageActionRowComponent,
+  U = T extends ModalActionRowComponent ? ModalActionRowComponentResolvable : MessageActionRowComponentResolvable,
+  V = T extends ModalActionRowComponent
+    ? APIActionRowComponent<APIModalActionRowComponent>
+    : APIActionRowComponent<APIMessageActionRowComponent>,
+> extends BaseMessageComponent {
+  public constructor(data?: MessageActionRow<T> | MessageActionRowOptions<U> | V);
   public type: 'ACTION_ROW';
-  public components: MessageActionRowComponent[];
-  public addComponents(
-    ...components: MessageActionRowComponentResolvable[] | MessageActionRowComponentResolvable[][]
-  ): this;
-  public setComponents(
-    ...components: MessageActionRowComponentResolvable[] | MessageActionRowComponentResolvable[][]
-  ): this;
-  public spliceComponents(
-    index: number,
-    deleteCount: number,
-    ...components: MessageActionRowComponentResolvable[] | MessageActionRowComponentResolvable[][]
-  ): this;
-  public toJSON(): APIActionRowComponent;
+  public components: T[];
+  public addComponents(...components: U[] | U[][]): this;
+  public setComponents(...components: U[] | U[][]): this;
+  public spliceComponents(index: number, deleteCount: number, ...components: U[] | U[][]): this;
+  public toJSON(): V;
 }
 
 export class MessageAttachment {
@@ -1620,9 +1668,9 @@ export class MessageComponentInteraction<Cached extends CacheType = CacheType> e
   public readonly component: CacheTypeReducer<
     Cached,
     MessageActionRowComponent,
-    Exclude<APIMessageComponent, APIActionRowComponent>,
-    MessageActionRowComponent | Exclude<APIMessageComponent, APIActionRowComponent>,
-    MessageActionRowComponent | Exclude<APIMessageComponent, APIActionRowComponent>
+    Exclude<APIMessageComponent, APIActionRowComponent<APIMessageActionRowComponent>>,
+    MessageActionRowComponent | Exclude<APIMessageComponent, APIActionRowComponent<APIMessageActionRowComponent>>,
+    MessageActionRowComponent | Exclude<APIMessageComponent, APIActionRowComponent<APIMessageActionRowComponent>>
   >;
   public componentType: Exclude<MessageComponentType, 'ACTION_ROW'>;
   public customId: string;
@@ -1632,6 +1680,9 @@ export class MessageComponentInteraction<Cached extends CacheType = CacheType> e
   public message: GuildCacheMessage<Cached>;
   public replied: boolean;
   public webhook: InteractionWebhook;
+  public awaitModalSubmit(
+    options: AwaitModalSubmitOptions<ModalSubmitInteraction>,
+  ): Promise<ModalSubmitInteraction<Cached>>;
   public inGuild(): this is MessageComponentInteraction<'raw' | 'cached'>;
   public inCachedGuild(): this is MessageComponentInteraction<'cached'>;
   public inRawGuild(): this is MessageComponentInteraction<'raw'>;
@@ -1645,15 +1696,16 @@ export class MessageComponentInteraction<Cached extends CacheType = CacheType> e
   public followUp(options: string | MessagePayload | InteractionReplyOptions): Promise<GuildCacheMessage<Cached>>;
   public reply(options: InteractionReplyOptions & { fetchReply: true }): Promise<GuildCacheMessage<Cached>>;
   public reply(options: string | MessagePayload | InteractionReplyOptions): Promise<void>;
+  public showModal(modal: Modal | ModalOptions): Promise<void>;
   public update(options: InteractionUpdateOptions & { fetchReply: true }): Promise<GuildCacheMessage<Cached>>;
   public update(options: string | MessagePayload | InteractionUpdateOptions): Promise<void>;
 
   public static resolveType(type: MessageComponentTypeResolvable): MessageComponentType;
 }
 
-export class MessageContextMenuCommandInteraction<
+export class MessageContextMenuInteraction<
   Cached extends CacheType = CacheType,
-> extends ContextMenuCommandInteraction<Cached> {
+> extends ContextMenuInteraction<Cached> {
   public readonly targetMessage: NonNullable<CommandInteractionOption<Cached>['message']>;
   public inGuild(): this is MessageContextMenuInteraction<'raw' | 'cached'>;
   public inCachedGuild(): this is MessageContextMenuInteraction<'cached'>;
@@ -1806,6 +1858,82 @@ export class MessageSelectMenu extends BaseMessageComponent {
   public toJSON(): APISelectMenuComponent;
 }
 
+export class Modal {
+  public constructor(data?: Modal | ModalOptions);
+  public components: MessageActionRow<ModalActionRowComponent>[];
+  public customId: string | null;
+  public title: string | null;
+  public addComponents(
+    ...components: (
+      | MessageActionRow<ModalActionRowComponent>
+      | (Required<BaseMessageComponentOptions> & MessageActionRowOptions<ModalActionRowComponentResolvable>)
+    )[]
+  ): this;
+  public setComponents(
+    ...components: (
+      | MessageActionRow<ModalActionRowComponent>
+      | (Required<BaseMessageComponentOptions> & MessageActionRowOptions<ModalActionRowComponentResolvable>)
+    )[]
+  ): this;
+  public setCustomId(customId: string): this;
+  public spliceComponents(
+    index: number,
+    deleteCount: number,
+    ...components: (
+      | MessageActionRow<ModalActionRowComponent>
+      | (Required<BaseMessageComponentOptions> & MessageActionRowOptions<ModalActionRowComponentResolvable>)
+    )[]
+  ): this;
+  public setTitle(title: string): this;
+  public toJSON(): RawModalSubmitInteractionData;
+}
+
+export class ModalSubmitFieldsResolver {
+  constructor(components: PartialModalActionRow[]);
+  private readonly _fields: PartialTextInputData[];
+  public getField(customId: string): PartialTextInputData;
+  public getTextInputValue(customId: string): string;
+}
+
+export interface ModalMessageModalSubmitInteraction<Cached extends CacheType = CacheType>
+  extends ModalSubmitInteraction<Cached> {
+  message: GuildCacheMessage<Cached> | null;
+  update(options: InteractionUpdateOptions & { fetchReply: true }): Promise<GuildCacheMessage<Cached>>;
+  update(options: string | MessagePayload | InteractionUpdateOptions): Promise<void>;
+  deferUpdate(options: InteractionDeferUpdateOptions & { fetchReply: true }): Promise<GuildCacheMessage<Cached>>;
+  deferUpdate(options?: InteractionDeferUpdateOptions): Promise<void>;
+  inGuild(): this is ModalMessageModalSubmitInteraction<'raw' | 'cached'>;
+  inCachedGuild(): this is ModalMessageModalSubmitInteraction<'cached'>;
+  inRawGuild(): this is ModalMessageModalSubmitInteraction<'raw'>;
+}
+
+export class ModalSubmitInteraction<Cached extends CacheType = CacheType> extends Interaction<Cached> {
+  protected constructor(client: Client, data: RawModalSubmitInteractionData);
+  public customId: string;
+  public components: PartialModalActionRow[];
+  public deferred: boolean;
+  public ephemeral: boolean | null;
+  public fields: ModalSubmitFieldsResolver;
+  public replied: false;
+  public webhook: InteractionWebhook;
+  public reply(options: InteractionReplyOptions & { fetchReply: true }): Promise<GuildCacheMessage<Cached>>;
+  public reply(options: string | MessagePayload | InteractionReplyOptions): Promise<void>;
+  public deleteReply(): Promise<void>;
+  public editReply(options: string | MessagePayload | WebhookEditMessageOptions): Promise<GuildCacheMessage<Cached>>;
+  public deferReply(options: InteractionDeferReplyOptions & { fetchReply: true }): Promise<GuildCacheMessage<Cached>>;
+  public deferReply(options?: InteractionDeferReplyOptions): Promise<void>;
+  public deferUpdate(options: InteractionDeferUpdateOptions & { fetchReply: true }): Promise<GuildCacheMessage<Cached>>;
+  public deferUpdate(options?: InteractionDeferUpdateOptions): Promise<void>;
+  public fetchReply(): Promise<GuildCacheMessage<Cached>>;
+  public followUp(options: string | MessagePayload | InteractionReplyOptions): Promise<GuildCacheMessage<Cached>>;
+  public inGuild(): this is ModalSubmitInteraction<'raw' | 'cached'>;
+  public inCachedGuild(): this is ModalSubmitInteraction<'cached'>;
+  public inRawGuild(): this is ModalSubmitInteraction<'raw'>;
+  public isFromMessage(): this is ModalMessageModalSubmitInteraction<Cached>;
+  public update(options: InteractionUpdateOptions & { fetchReply: true }): Promise<GuildCacheMessage<Cached>>;
+  public update(options: string | MessagePayload | InteractionUpdateOptions): Promise<void>;
+}
+
 export class NewsChannel extends BaseGuildTextChannel {
   public threads: ThreadManager<AllowedThreadTypeForNewsChannel>;
   public type: 'GUILD_NEWS';
@@ -1920,6 +2048,8 @@ export class Role extends Base {
   public color: number;
   public readonly createdAt: Date;
   public readonly createdTimestamp: number;
+  /** @deprecated This will be removed in the next major version, see https://github.com/discordjs/discord.js/issues/7091 */
+  public deleted: boolean;
   public readonly editable: boolean;
   public guild: Guild;
   public readonly hexColor: HexColorString;
@@ -1951,6 +2081,9 @@ export class Role extends Base {
   public setUnicodeEmoji(unicodeEmoji: string | null, reason?: string): Promise<Role>;
   public toJSON(): unknown;
   public toString(): RoleMention;
+
+  /** @deprecated Use {@link RoleManager.comparePositions} instead. */
+  public static comparePositions(role1: Role, role2: Role): number;
 }
 
 export class SelectMenuInteraction<Cached extends CacheType = CacheType> extends MessageComponentInteraction<Cached> {
@@ -2087,11 +2220,13 @@ export interface FetchRecommendedShardsOptions {
   multipleOf?: number;
 }
 
-export {
-  DiscordSnowflake as SnowflakeUtil,
-  SnowflakeGenerateOptions,
-  DeconstructedSnowflake,
-} from '@sapphire/snowflake';
+export class SnowflakeUtil extends null {
+  private constructor();
+  public static deconstruct(snowflake: Snowflake): DeconstructedSnowflake;
+  public static generate(timestamp?: number | Date): Snowflake;
+  public static timestampFrom(snowflake: Snowflake): number;
+  public static readonly EPOCH: number;
+}
 
 export class StageChannel extends BaseGuildVoiceChannel {
   public topic: string | null;
@@ -2104,13 +2239,17 @@ export class StageChannel extends BaseGuildVoiceChannel {
 export class StageInstance extends Base {
   private constructor(client: Client, data: RawStageInstanceData, channel: StageChannel);
   public id: Snowflake;
+  /** @deprecated This will be removed in the next major version, see https://github.com/discordjs/discord.js/issues/7091 */
+  public deleted: boolean;
   public guildId: Snowflake;
   public channelId: Snowflake;
   public topic: string;
   public privacyLevel: PrivacyLevel;
   public discoverableDisabled: boolean | null;
+  public guildScheduledEventId?: Snowflake;
   public readonly channel: StageChannel | null;
   public readonly guild: Guild | null;
+  public get guildScheduledEvent(): GuildScheduledEvent | null;
   public edit(options: StageInstanceEditOptions): Promise<StageInstance>;
   public delete(): Promise<StageInstance>;
   public setTopic(topic: string): Promise<StageInstance>;
@@ -2120,6 +2259,8 @@ export class StageInstance extends Base {
 
 export class Sticker extends Base {
   private constructor(client: Client, data: RawStickerData);
+  /** @deprecated This will be removed in the next major version, see https://github.com/discordjs/discord.js/issues/7091 */
+  public deleted: boolean;
   public readonly createdTimestamp: number;
   public readonly createdAt: Date;
   public available: boolean | null;
@@ -2272,6 +2413,28 @@ export class TextChannel extends BaseGuildTextChannel {
   public setRateLimitPerUser(rateLimitPerUser: number, reason?: string): Promise<TextChannel>;
 }
 
+export class TextInputComponent extends BaseMessageComponent {
+  public constructor(data?: TextInputComponent | TextInputComponentOptions);
+  public customId: string | null;
+  public label: string | null;
+  public required: boolean;
+  public maxLength: number | null;
+  public minLength: number | null;
+  public placeholder: string | null;
+  public style: TextInputStyle;
+  public value: string | null;
+  public setCustomId(customId: string): this;
+  public setLabel(label: string): this;
+  public setRequired(required?: boolean): this;
+  public setMaxLength(maxLength: number): this;
+  public setMinLength(minLength: number): this;
+  public setPlaceholder(placeholder: string): this;
+  public setStyle(style: TextInputStyleResolvable): this;
+  public setValue(value: string): this;
+  public toJSON(): RawTextInputComponentData;
+  public static resolveStyle(style: TextInputStyleResolvable): TextInputStyle;
+}
+
 export class ThreadChannel extends TextBasedChannelMixin(Channel) {
   private constructor(guild: Guild, data?: RawThreadChannelData, client?: Client, fromInteraction?: boolean);
   public archived: boolean | null;
@@ -2383,7 +2546,7 @@ export class User extends PartialTextBasedChannel(Base) {
   public readonly tag: string;
   public username: string;
   public avatarURL(options?: ImageURLOptions): string | null;
-  public bannerURL(options?: ImageURLOptions): string | null | undefined;
+  public bannerURL(options?: ImageURLOptions): string | null;
   public createDM(force?: boolean): Promise<DMChannel>;
   public deleteDM(): Promise<DMChannel>;
   public displayAvatarURL(options?: ImageURLOptions): string;
@@ -2393,9 +2556,7 @@ export class User extends PartialTextBasedChannel(Base) {
   public toString(): UserMention;
 }
 
-export class UserContextMenuCommandInteraction<
-  Cached extends CacheType = CacheType,
-> extends ContextMenuCommandInteraction<Cached> {
+export class UserContextMenuInteraction<Cached extends CacheType = CacheType> extends ContextMenuInteraction<Cached> {
   public readonly targetUser: User;
   public readonly targetMember: CacheTypeReducer<Cached, GuildMember, APIInteractionGuildMember>;
   public inGuild(): this is UserContextMenuInteraction<'raw' | 'cached'>;
@@ -2410,8 +2571,13 @@ export class UserFlags extends BitField<UserFlagsString> {
 
 export class Util extends null {
   private constructor();
+  /** @deprecated When not using with `makeCache` use `Sweepers.archivedThreadSweepFilter` instead */
+  public static archivedThreadSweepFilter<K, V>(lifetime?: number): SweepFilter<K, V>;
   public static basename(path: string, ext?: string): string;
   public static cleanContent(str: string, channel: TextBasedChannel): string;
+  /** @deprecated Use {@link MessageOptions.allowedMentions} to control mentions in a message instead. */
+  public static removeMentions(str: string): string;
+  private static _removeMentions(str: string): string;
   public static cloneObject(obj: unknown): unknown;
   public static discordSort<K, V extends { rawPosition: number; id: Snowflake }>(
     collection: Collection<K, V>,
@@ -2484,6 +2650,7 @@ export class VoiceRegion {
   public id: string;
   public name: string;
   public optimal: boolean;
+  public vip: boolean;
   public toJSON(): unknown;
 }
 
@@ -2501,9 +2668,9 @@ export class VoiceState extends Base {
   public serverDeaf: boolean | null;
   public serverMute: boolean | null;
   public sessionId: string | null;
-  public streaming: boolean | null;
+  public streaming: boolean;
   public selfVideo: boolean | null;
-  public suppress: boolean | null;
+  public suppress: boolean;
   public requestToSpeakTimestamp: number | null;
 
   public setDeaf(deaf?: boolean, reason?: string): Promise<GuildMember>;
@@ -2814,6 +2981,8 @@ export const Constants: {
   InteractionResponseTypes: EnumHolder<typeof InteractionResponseTypes>;
   MessageComponentTypes: EnumHolder<typeof MessageComponentTypes>;
   MessageButtonStyles: EnumHolder<typeof MessageButtonStyles>;
+  ModalComponentTypes: EnumHolder<typeof ModalComponentTypes>;
+  TextInputStyles: EnumHolder<typeof TextInputStyles>;
   MFALevels: EnumHolder<typeof MFALevels>;
   NSFWLevels: EnumHolder<typeof NSFWLevels>;
   PrivacyLevels: EnumHolder<typeof PrivacyLevels>;
@@ -2996,12 +3165,24 @@ export class GuildChannelManager extends CachedManager<Snowflake, GuildBasedChan
     name: string,
     options: GuildChannelCreateOptions & { type: 'GUILD_STORE' | ChannelTypes.GUILD_STORE },
   ): Promise<StoreChannel>;
-
   public create(name: string, options?: GuildChannelCreateOptions): Promise<TextChannel>;
+  public createWebhook(
+    channel: GuildChannelResolvable,
+    name: string,
+    options?: ChannelWebhookCreateOptions,
+  ): Promise<Webhook>;
+  public edit(channel: GuildChannelResolvable, data: ChannelData, reason?: string): Promise<GuildChannel>;
   public fetch(id: Snowflake, options?: BaseFetchOptions): Promise<NonThreadGuildBasedChannel | null>;
   public fetch(id?: undefined, options?: BaseFetchOptions): Promise<Collection<Snowflake, NonThreadGuildBasedChannel>>;
+  public fetchWebhooks(channel: GuildChannelResolvable): Promise<Collection<Snowflake, Webhook>>;
+  public setPosition(
+    channel: GuildChannelResolvable,
+    position: number,
+    options?: SetChannelPositionOptions,
+  ): Promise<GuildChannel>;
   public setPositions(channelPositions: readonly ChannelPosition[]): Promise<Guild>;
   public fetchActiveThreads(cache?: boolean): Promise<FetchedThreads>;
+  public delete(channel: GuildChannelResolvable, reason?: string): Promise<void>;
 }
 
 export class GuildEmojiManager extends BaseGuildEmojiManager {
@@ -3014,6 +3195,9 @@ export class GuildEmojiManager extends BaseGuildEmojiManager {
   ): Promise<GuildEmoji>;
   public fetch(id: Snowflake, options?: BaseFetchOptions): Promise<GuildEmoji>;
   public fetch(id?: undefined, options?: BaseFetchOptions): Promise<Collection<Snowflake, GuildEmoji>>;
+  public fetchAuthor(emoji: EmojiResolvable): Promise<User>;
+  public delete(emoji: EmojiResolvable, reason?: string): Promise<void>;
+  public edit(emoji: EmojiResolvable, data: GuildEmojiEditData, reason?: string): Promise<GuildEmoji>;
 }
 
 export class GuildEmojiRoleManager extends DataManager<Snowflake, Role, RoleResolvable> {
@@ -3112,6 +3296,7 @@ export class GuildStickerManager extends CachedManager<Snowflake, Sticker, Stick
   public delete(sticker: StickerResolvable, reason?: string): Promise<void>;
   public fetch(id: Snowflake, options?: BaseFetchOptions): Promise<Sticker>;
   public fetch(id?: Snowflake, options?: BaseFetchOptions): Promise<Collection<Snowflake, Sticker>>;
+  public fetchUser(sticker: StickerResolvable): Promise<User | null>;
 }
 
 export class GuildMemberRoleManager extends DataManager<Snowflake, Role, RoleResolvable> {
@@ -3212,6 +3397,7 @@ export class RoleManager extends CachedManager<Snowflake, Role, RoleResolvable> 
   public create(options?: CreateRoleOptions): Promise<Role>;
   public edit(role: RoleResolvable, options: RoleData, reason?: string): Promise<Role>;
   public delete(role: RoleResolvable, reason?: string): Promise<void>;
+  public setPosition(role: RoleResolvable, position: number, options?: SetRolePositionOptions): Promise<Role>;
   public setPositions(rolePositions: readonly RolePosition[]): Promise<Guild>;
   public comparePositions(role1: RoleResolvable, role2: RoleResolvable): number;
 }
@@ -3239,7 +3425,8 @@ export class ThreadMemberManager extends CachedManager<Snowflake, ThreadMember, 
   private constructor(thread: ThreadChannel, iterable?: Iterable<RawThreadMemberData>);
   public thread: ThreadChannel;
   public add(member: UserResolvable | '@me', reason?: string): Promise<Snowflake>;
-  public fetch(options?: ThreadMemberFetchOptions): Promise<ThreadMember>;
+  public fetch(member?: UserResolvable, options?: BaseFetchOptions): Promise<ThreadMember>;
+  /** @deprecated Use `fetch(member, options)` instead. */
   public fetch(cache?: boolean): Promise<Collection<Snowflake, ThreadMember>>;
   public remove(id: Snowflake | '@me', reason?: string): Promise<Snowflake>;
 }
@@ -3739,6 +3926,13 @@ export interface AwaitMessagesOptions extends MessageCollectorOptions {
   errors?: string[];
 }
 
+export type AwaitModalSubmitOptions<T extends ModalSubmitInteraction> = Omit<
+  ModalSubmitInteractionCollectorOptions<T>,
+  'max' | 'maxComponents' | 'maxUsers'
+> & {
+  time: number;
+};
+
 export interface AwaitReactionsOptions extends ReactionCollectorOptions {
   errors?: string[];
 }
@@ -3755,10 +3949,6 @@ export type Base64String = string;
 export interface BaseFetchOptions {
   cache?: boolean;
   force?: boolean;
-}
-
-export interface ThreadMemberFetchOptions extends BaseFetchOptions {
-  member?: UserResolvable;
 }
 
 export interface BaseMessageComponentOptions {
@@ -3893,6 +4083,12 @@ export interface BaseClientEvents {
 }
 
 export interface ClientEvents extends BaseClientEvents {
+  /** @deprecated See [this issue](https://github.com/discord/discord-api-docs/issues/3690) for more information. */
+  applicationCommandCreate: [command: ApplicationCommand];
+  /** @deprecated See [this issue](https://github.com/discord/discord-api-docs/issues/3690) for more information. */
+  applicationCommandDelete: [command: ApplicationCommand];
+  /** @deprecated See [this issue](https://github.com/discord/discord-api-docs/issues/3690) for more information. */
+  applicationCommandUpdate: [oldCommand: ApplicationCommand | null, newCommand: ApplicationCommand];
   cacheSweep: [message: string];
   channelCreate: [channel: NonThreadGuildBasedChannel];
   channelDelete: [channel: DMChannel | NonThreadGuildBasedChannel];
@@ -3924,6 +4120,8 @@ export interface ClientEvents extends BaseClientEvents {
   guildUpdate: [oldGuild: Guild, newGuild: Guild];
   inviteCreate: [invite: Invite];
   inviteDelete: [invite: Invite];
+  /** @deprecated Use messageCreate instead */
+  message: [message: Message];
   messageCreate: [message: Message];
   messageDelete: [message: Message | PartialMessage];
   messageReactionRemoveAll: [
@@ -3954,6 +4152,8 @@ export interface ClientEvents extends BaseClientEvents {
   userUpdate: [oldUser: User | PartialUser, newUser: User];
   voiceStateUpdate: [oldState: VoiceState, newState: VoiceState];
   webhookUpdate: [channel: TextChannel | NewsChannel];
+  /** @deprecated Use interactionCreate instead */
+  interaction: [interaction: Interaction];
   interactionCreate: [interaction: Interaction];
   shardDisconnect: [closeEvent: CloseEvent, shardId: number];
   shardError: [error: Error, shardId: number];
@@ -3981,9 +4181,14 @@ export interface ClientOptions {
   shards?: number | number[] | 'auto';
   shardCount?: number;
   makeCache?: CacheFactory;
+  /** @deprecated Pass the value of this property as `lifetime` to `sweepers.messages` instead. */
+  messageCacheLifetime?: number;
+  /** @deprecated Pass the value of this property as `interval` to `sweepers.messages` instead. */
+  messageSweepInterval?: number;
   allowedMentions?: MessageMentionOptions;
   invalidRequestWarningInterval?: number;
   partials?: PartialTypes[];
+  restWsBridgeTimeout?: number;
   restTimeOffset?: number;
   restRequestTimeout?: number;
   restGlobalRateLimit?: number;
@@ -4138,6 +4343,12 @@ export interface ConstantsEvents {
   API_RESPONSE: 'apiResponse';
   API_REQUEST: 'apiRequest';
   CLIENT_READY: 'ready';
+  /** @deprecated See [this issue](https://github.com/discord/discord-api-docs/issues/3690) for more information. */
+  APPLICATION_COMMAND_CREATE: 'applicationCommandCreate';
+  /** @deprecated See [this issue](https://github.com/discord/discord-api-docs/issues/3690) for more information. */
+  APPLICATION_COMMAND_DELETE: 'applicationCommandDelete';
+  /** @deprecated See [this issue](https://github.com/discord/discord-api-docs/issues/3690) for more information. */
+  APPLICATION_COMMAND_UPDATE: 'applicationCommandUpdate';
   GUILD_CREATE: 'guildCreate';
   GUILD_DELETE: 'guildDelete';
   GUILD_UPDATE: 'guildUpdate';
@@ -4260,6 +4471,15 @@ export interface CrosspostedChannel {
 }
 
 export type DateResolvable = Date | number | string;
+
+export interface DeconstructedSnowflake {
+  timestamp: number;
+  readonly date: Date;
+  workerId: number;
+  processId: number;
+  increment: number;
+  binary: string;
+}
 
 export type DefaultMessageNotificationLevel = keyof typeof DefaultMessageNotificationLevels;
 
@@ -4825,11 +5045,6 @@ export interface ImageURLOptions extends Omit<StaticImageURLOptions, 'format'> {
   format?: DynamicImageFormat;
 }
 
-export interface IntegrationAccount {
-  id: string | Snowflake;
-  name: string;
-}
-
 export type IntegrationType = 'twitch' | 'youtube' | 'discord';
 
 export interface InteractionCollectorOptions<T extends Interaction, Cached extends CacheType = CacheType>
@@ -4949,10 +5164,26 @@ export type MessageActionRowComponentOptions =
   | (Required<BaseMessageComponentOptions> & MessageButtonOptions)
   | (Required<BaseMessageComponentOptions> & MessageSelectMenuOptions);
 
-export type MessageActionRowComponentResolvable = MessageActionRowComponent | MessageActionRowComponentOptions;
+export type MessageActionRowComponentResolvable =
+  | MessageActionRowComponent
+  | MessageActionRowComponentOptions
+  | APIMessageActionRowComponent;
 
-export interface MessageActionRowOptions extends BaseMessageComponentOptions {
-  components: MessageActionRowComponentResolvable[];
+export type ModalActionRowComponent = TextInputComponent;
+
+export type ModalActionRowComponentOptions = TextInputComponentOptions;
+
+export type ModalActionRowComponentResolvable =
+  | ModalActionRowComponent
+  | ModalActionRowComponentOptions
+  | APIModalActionRowComponent;
+
+export interface MessageActionRowOptions<
+  T extends
+    | MessageActionRowComponentResolvable
+    | ModalActionRowComponentResolvable = MessageActionRowComponentResolvable,
+> extends BaseMessageComponentOptions {
+  components: T[];
 }
 
 export interface MessageActivity {
@@ -4989,15 +5220,13 @@ export interface MessageCollectorOptions extends CollectorOptions<[Message]> {
 
 export type MessageComponent = BaseMessageComponent | MessageActionRow | MessageButton | MessageSelectMenu;
 
-export type MessageComponentCollectorOptions<T extends MessageComponentInteraction> = Omit<
+export type MessageComponentCollectorOptions<T extends MessageComponentInteraction | ModalSubmitInteraction> = Omit<
   InteractionCollectorOptions<T>,
   'channel' | 'message' | 'guild' | 'interactionType'
 >;
 
-export type MessageChannelComponentCollectorOptions<T extends MessageComponentInteraction> = Omit<
-  InteractionCollectorOptions<T>,
-  'channel' | 'guild' | 'interactionType'
->;
+export type MessageChannelComponentCollectorOptions<T extends MessageComponentInteraction | ModalSubmitInteraction> =
+  Omit<InteractionCollectorOptions<T>, 'channel' | 'guild' | 'interactionType'>;
 
 export type MessageComponentOptions =
   | BaseMessageComponentOptions
@@ -5181,6 +5410,19 @@ export type MessageType = keyof typeof MessageTypes;
 
 export type MFALevel = keyof typeof MFALevels;
 
+export interface ModalOptions {
+  components:
+    | MessageActionRow<ModalActionRowComponent>[]
+    | MessageActionRowOptions<ModalActionRowComponentResolvable>[];
+  customId: string;
+  title: string;
+}
+
+export type ModalSubmitInteractionCollectorOptions<T extends ModalSubmitInteraction> = Omit<
+  InteractionCollectorOptions<T>,
+  'channel' | 'message' | 'guild' | 'interactionType'
+>;
+
 export interface MultipleShardRespawnOptions {
   shardDelay?: number;
   respawnDelay?: number;
@@ -5205,6 +5447,18 @@ export interface OverwriteData {
 export type OverwriteResolvable = PermissionOverwrites | OverwriteData;
 
 export type OverwriteType = 'member' | 'role';
+
+export interface PartialModalActionRow {
+  type: MessageComponentType;
+  components: PartialTextInputData[];
+}
+
+export interface PartialTextInputData {
+  value: string;
+  // TODO: use dapi types
+  type: MessageComponentType;
+  customId: string;
+}
 
 export type PermissionFlags = Record<PermissionString, bigint>;
 
@@ -5249,7 +5503,9 @@ export type PermissionString =
   | 'USE_APPLICATION_COMMANDS'
   | 'REQUEST_TO_SPEAK'
   | 'MANAGE_THREADS'
+  | 'USE_PUBLIC_THREADS'
   | 'CREATE_PUBLIC_THREADS'
+  | 'USE_PRIVATE_THREADS'
   | 'CREATE_PRIVATE_THREADS'
   | 'USE_EXTERNAL_STICKERS'
   | 'SEND_MESSAGES_IN_THREADS'
@@ -5474,7 +5730,7 @@ export type SystemChannelFlagsResolvable = BitFieldResolvable<SystemChannelFlags
 
 export type SystemMessageType = Exclude<
   MessageType,
-  'DEFAULT' | 'REPLY' | 'CHAT_INPUT_COMMAND' | 'CONTEXT_MENU_COMMAND'
+  'DEFAULT' | 'REPLY' | 'APPLICATION_COMMAND' | 'CONTEXT_MENU_COMMAND'
 >;
 
 export type StageChannelResolvable = StageChannel | Snowflake;
@@ -5487,6 +5743,10 @@ export interface StageInstanceEditOptions {
 export type SweeperKey = keyof SweeperDefinitions;
 
 export type CollectionSweepFilter<K, V> = (value: V, key: K, collection: Collection<K, V>) => boolean;
+
+export type SweepFilter<K, V> = (
+  collection: LimitedCollection<K, V>,
+) => ((value: V, key: K, collection: LimitedCollection<K, V>) => boolean) | null;
 
 export interface SweepOptions<K, V> {
   interval: number;
@@ -5525,6 +5785,10 @@ export type SweeperOptions = {
 export interface LimitedCollectionOptions<K, V> {
   maxSize?: number;
   keepOverLimit?: (value: V, key: K, collection: LimitedCollection<K, V>) => boolean;
+  /** @deprecated Use Global Sweepers instead */
+  sweepFilter?: SweepFilter<K, V>;
+  /** @deprecated Use Global Sweepers instead */
+  sweepInterval?: number;
 }
 
 export type AnyChannel =
@@ -5541,6 +5805,25 @@ export type AnyChannel =
 export type TextBasedChannel = Extract<AnyChannel, { messages: MessageManager }>;
 
 export type TextBasedChannelTypes = TextBasedChannel['type'];
+
+export interface TextInputComponentOptions extends BaseMessageComponentOptions {
+  customId?: string;
+  label?: string;
+  minLength?: number;
+  maxLength?: number;
+  placeholder?: string;
+  required?: boolean;
+  style?: TextInputStyleResolvable;
+  value?: string;
+}
+
+export type TextInputStyle = keyof typeof TextInputStyles;
+
+export type TextInputStyleResolvable = TextInputStyle | TextInputStyles;
+export interface IntegrationAccount {
+  id: string | Snowflake;
+  name: string;
+}
 
 export type VoiceBasedChannel = Extract<AnyChannel, { bitrate: number }>;
 
@@ -5581,19 +5864,19 @@ export type ThreadMemberFlagsString = '';
 export type ThreadMemberResolvable = ThreadMember | UserResolvable;
 
 export type UserFlagsString =
-  | 'STAFF'
-  | 'PARTNER'
-  | 'HYPESQUAD'
-  | 'BUG_HUNTER_LEVEL_1'
-  | 'HYPESQUAD_ONLINE_HOUSE_1'
-  | 'HYPESQUAD_ONLINE_HOUSE_2'
-  | 'HYPESQUAD_ONLINE_HOUSE_3'
-  | 'PREMIUM_EARLY_SUPPORTER'
-  | 'TEAM_PSEUDO_USER'
-  | 'BUG_HUNTER_LEVEL_2'
+  | 'DISCORD_EMPLOYEE'
+  | 'PARTNERED_SERVER_OWNER'
+  | 'HYPESQUAD_EVENTS'
+  | 'BUGHUNTER_LEVEL_1'
+  | 'HOUSE_BRAVERY'
+  | 'HOUSE_BRILLIANCE'
+  | 'HOUSE_BALANCE'
+  | 'EARLY_SUPPORTER'
+  | 'TEAM_USER'
+  | 'BUGHUNTER_LEVEL_2'
   | 'VERIFIED_BOT'
-  | 'VERIFIED_DEVELOPER'
-  | 'CERTIFIED_MODERATOR'
+  | 'EARLY_VERIFIED_BOT_DEVELOPER'
+  | 'DISCORD_CERTIFIED_MODERATOR'
   | 'BOT_HTTP_INTERACTIONS';
 
 export type UserMention = `<@${Snowflake}>`;
@@ -5688,6 +5971,9 @@ export interface WelcomeScreenEditData {
 export type WSEventType =
   | 'READY'
   | 'RESUMED'
+  | 'APPLICATION_COMMAND_CREATE'
+  | 'APPLICATION_COMMAND_DELETE'
+  | 'APPLICATION_COMMAND_UPDATE'
   | 'GUILD_CREATE'
   | 'GUILD_DELETE'
   | 'GUILD_UPDATE'

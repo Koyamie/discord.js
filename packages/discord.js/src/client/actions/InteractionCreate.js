@@ -4,7 +4,8 @@ const Action = require('./Action');
 const AutocompleteInteraction = require('../../structures/AutocompleteInteraction');
 const ButtonInteraction = require('../../structures/ButtonInteraction');
 const ChatInputCommandInteraction = require('../../structures/ChatInputCommandInteraction');
-const MessageContextMenuCommandInteraction = require('../../structures/MessageContextMenuCommandInteraction');
+const MessageContextMenuInteraction = require('../../structures/MessageContextMenuInteraction');
+const ModalSubmitInteraction = require('../../structures/ModalSubmitInteraction');
 const SelectMenuInteraction = require('../../structures/SelectMenuInteraction');
 const UserContextMenuCommandInteraction = require('../../structures/UserContextMenuCommandInteraction');
 const { Events, InteractionTypes, MessageComponentTypes, ApplicationCommandTypes } = require('../../util/Constants');
@@ -14,9 +15,11 @@ class InteractionCreateAction extends Action {
     const client = this.client;
 
     // Resolve and cache partial channels for Interaction#channel getter
-    this.getChannel(data);
+    const channel = this.getChannel(data);
 
+    // Do not emit this for interactions that cache messages that are non-text-based.
     let InteractionType;
+
     switch (data.type) {
       case InteractionTypes.APPLICATION_COMMAND:
         switch (data.data.type) {
@@ -27,7 +30,8 @@ class InteractionCreateAction extends Action {
             InteractionType = UserContextMenuCommandInteraction;
             break;
           case ApplicationCommandTypes.MESSAGE:
-            InteractionType = MessageContextMenuCommandInteraction;
+            if (channel && !channel.isText()) return;
+            InteractionType = MessageContextMenuInteraction;
             break;
           default:
             client.emit(
@@ -38,6 +42,8 @@ class InteractionCreateAction extends Action {
         }
         break;
       case InteractionTypes.MESSAGE_COMPONENT:
+        if (channel && !channel.isText()) return;
+
         switch (data.data.component_type) {
           case MessageComponentTypes.BUTTON:
             InteractionType = ButtonInteraction;
@@ -55,6 +61,9 @@ class InteractionCreateAction extends Action {
         break;
       case InteractionTypes.APPLICATION_COMMAND_AUTOCOMPLETE:
         InteractionType = AutocompleteInteraction;
+        break;
+      case InteractionTypes.MODAL_SUBMIT:
+        InteractionType = ModalSubmitInteraction;
         break;
       default:
         client.emit(Events.DEBUG, `[INTERACTION] Received interaction with unknown type: ${data.type}`);

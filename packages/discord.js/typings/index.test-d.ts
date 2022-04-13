@@ -90,6 +90,7 @@ import {
   MessageActionRowComponent,
   MessageSelectMenu,
   PartialDMChannel,
+  InteractionResponseFields,
 } from '.';
 import type { ApplicationCommandOptionTypes } from './enums';
 import { expectAssignable, expectDeprecated, expectNotAssignable, expectNotType, expectType } from 'tsd';
@@ -670,6 +671,8 @@ client.on('interactionCreate', async interaction => {
 
   void new MessageActionRow();
 
+  void new MessageActionRow({});
+
   const button = new MessageButton();
 
   const actionRow = new MessageActionRow({ components: [button] });
@@ -678,9 +681,6 @@ client.on('interactionCreate', async interaction => {
 
   // @ts-expect-error
   interaction.reply({ content: 'Hi!', components: [[button]] });
-
-  // @ts-expect-error
-  void new MessageActionRow({});
 
   // @ts-expect-error
   await interaction.reply({ content: 'Hi!', components: [button] });
@@ -1129,6 +1129,16 @@ client.on('interactionCreate', async interaction => {
     expectType<string>(interaction.options.getSubcommandGroup(true));
     expectType<string | null>(interaction.options.getSubcommandGroup(booleanValue));
     expectType<string | null>(interaction.options.getSubcommandGroup(false));
+  }
+
+  if (interaction.isRepliable()) {
+    expectAssignable<InteractionResponseFields>(interaction);
+    interaction.reply('test');
+  }
+
+  if (interaction.isCommand() && interaction.isRepliable()) {
+    expectAssignable<CommandInteraction>(interaction);
+    expectAssignable<InteractionResponseFields>(interaction);
   }
 });
 
