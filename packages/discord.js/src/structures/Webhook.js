@@ -1,5 +1,6 @@
 'use strict';
 
+const { makeURLSearchParams } = require('@discordjs/rest');
 const { DiscordSnowflake } = require('@sapphire/snowflake');
 const { Routes, WebhookType } = require('discord-api-types/v10');
 const MessagePayload = require('./MessagePayload');
@@ -199,11 +200,10 @@ class Webhook {
       messagePayload = MessagePayload.create(this, options).resolveBody();
     }
 
-    const query = new URLSearchParams({ wait: true });
-
-    if (messagePayload.options.threadId) {
-      query.set('thread_id', messagePayload.options.threadId);
-    }
+    const query = makeURLSearchParams({
+      wait: true,
+      thread_id: messagePayload.options.threadId,
+    });
 
     const { body, files } = await messagePayload.resolveFiles();
     const d = await this.client.rest.post(Routes.webhook(this.id, this.token), { body, files, query, auth: false });
@@ -239,7 +239,7 @@ class Webhook {
     if (!this.token) throw new Error('WEBHOOK_TOKEN_UNAVAILABLE');
 
     const data = await this.client.rest.post(Routes.webhookPlatform(this.id, this.token, 'slack'), {
-      query: new URLSearchParams({ wait: true }),
+      query: makeURLSearchParams({ wait: true }),
       auth: false,
       body,
     });
@@ -296,11 +296,7 @@ class Webhook {
     if (!this.token) throw new Error('WEBHOOK_TOKEN_UNAVAILABLE');
 
     const data = await this.client.rest.get(Routes.webhookMessage(this.id, this.token, messageId), {
-      query: threadId
-        ? new URLSearchParams({
-            thread_id: threadId,
-          })
-        : undefined,
+      query: threadId ? makeURLSearchParams({ thread_id: threadId }) : undefined,
       auth: false,
     });
 
@@ -337,9 +333,7 @@ class Webhook {
         body,
         files,
         query: messagePayload.options.threadId
-          ? new URLSearchParams({
-              thread_id: messagePayload.options.threadId,
-            })
+          ? makeURLSearchParams({ thread_id: messagePayload.options.threadId })
           : undefined,
         auth: false,
       },
@@ -377,11 +371,7 @@ class Webhook {
     await this.client.rest.delete(
       Routes.webhookMessage(this.id, this.token, typeof message === 'string' ? message : message.id),
       {
-        query: threadId
-          ? new URLSearchParams({
-              thread_id: threadId,
-            })
-          : undefined,
+        query: threadId ? makeURLSearchParams({ thread_id: threadId }) : undefined,
         auth: false,
       },
     );
