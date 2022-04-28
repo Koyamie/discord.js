@@ -48,6 +48,7 @@ export const enum ChannelTypes {
   GUILD_PUBLIC_THREAD = 11,
   GUILD_PRIVATE_THREAD = 12,
   GUILD_STAGE_VOICE = 13,
+  GUILD_DIRECTORY = 14,
 }
 
 export const enum MessageTypes {
@@ -203,6 +204,11 @@ export const enum VerificationLevels {
   MEDIUM = 2,
   HIGH = 3,
   VERY_HIGH = 4,
+}
+
+export const enum VideoQualityModes {
+  AUTO = 1,
+  FULL = 2,
 }
 
 export const enum WebhookTypes {

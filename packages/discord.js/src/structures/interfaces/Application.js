@@ -1,10 +1,13 @@
 'use strict';
 
+const process = require('node:process');
 const { DiscordSnowflake } = require('@sapphire/snowflake');
 const { ClientApplicationAssetTypes, Endpoints } = require('../../util/Constants');
 const Base = require('../Base');
 
 const AssetTypes = Object.keys(ClientApplicationAssetTypes);
+
+let deprecationEmittedForFetchAssets = false;
 
 /**
  * Represents an OAuth2 Application.
@@ -103,8 +106,18 @@ class Application extends Base {
   /**
    * Gets the application's rich presence assets.
    * @returns {Promise<Array<ApplicationAsset>>}
+   * @deprecated This will be removed in the next major as it is unsupported functionality.
    */
   async fetchAssets() {
+    if (!deprecationEmittedForFetchAssets) {
+      process.emitWarning(
+        'Application#fetchAssets is deprecated as it is unsupported and will be removed in the next major version.',
+        'DeprecationWarning',
+      );
+
+      deprecationEmittedForFetchAssets = true;
+    }
+
     const assets = await this.client.api.oauth2.applications(this.id).assets.get();
     return assets.map(a => ({
       id: a.id,

@@ -8,6 +8,9 @@ const Options = require('./Options');
 const { Error: DiscordError, RangeError, TypeError } = require('../errors');
 const isObject = d => typeof d === 'object' && d !== null;
 
+let deprecationEmittedForSplitMessage = false;
+let deprecationEmittedForRemoveMentions = false;
+
 /**
  * Contains various general-purpose utility methods.
  */
@@ -66,9 +69,19 @@ class Util extends null {
    * Splits a string into multiple chunks at a designated character that do not exceed a specific length.
    * @param {string} text Content to split
    * @param {SplitOptions} [options] Options controlling the behavior of the split
+   * @deprecated This will be removed in the next major version.
    * @returns {string[]}
    */
   static splitMessage(text, { maxLength = 2_000, char = '\n', prepend = '', append = '' } = {}) {
+    if (!deprecationEmittedForSplitMessage) {
+      process.emitWarning(
+        'The Util.splitMessage method is deprecated and will be removed in the next major version.',
+        'DeprecationWarning',
+      );
+
+      deprecationEmittedForSplitMessage = true;
+    }
+
     text = Util.verifyString(text);
     if (text.length <= maxLength) return [text];
     let splitText = [text];
@@ -562,6 +575,29 @@ class Util extends null {
    */
   static cleanCodeBlockContent(text) {
     return text.replaceAll('```', '`\u200b``');
+  }
+
+  /**
+   * Creates a sweep filter that sweeps archived threads
+   * @param {number} [lifetime=14400] How long a thread has to be archived to be valid for sweeping
+   * @deprecated When not using with `makeCache` use `Sweepers.archivedThreadSweepFilter` instead
+   * @returns {SweepFilter}
+   */
+  static archivedThreadSweepFilter(lifetime = 14400) {
+    const filter = require('./Sweepers').archivedThreadSweepFilter(lifetime);
+    filter.isDefault = true;
+    return filter;
+  }
+
+  /**
+   * Resolves the maximum time a guild's thread channels should automatcally archive in case of no recent activity.
+   * @param {Guild} guild The guild to resolve this limit from.
+   * @returns {number}
+   */
+  static resolveAutoArchiveMaxLimit({ features }) {
+    if (features.includes('SEVEN_DAY_THREAD_ARCHIVE')) return 10080;
+    if (features.includes('THREE_DAY_THREAD_ARCHIVE')) return 4320;
+    return 1440;
   }
 }
 

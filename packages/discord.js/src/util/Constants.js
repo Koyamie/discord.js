@@ -511,6 +511,7 @@ exports.ActivityTypes = createEnum(['PLAYING', 'STREAMING', 'LISTENING', 'WATCHI
  * * `GUILD_PUBLIC_THREAD` - a guild text channel's public thread channel
  * * `GUILD_PRIVATE_THREAD` - a guild text channel's private thread channel
  * * `GUILD_STAGE_VOICE` - a guild stage voice channel
+ * * `GUILD_DIRECTORY` - the channel in a hub containing guilds
  * * `UNKNOWN` - a generic channel of unknown type, could be Channel or GuildChannel
  * @typedef {string} ChannelType
  * @see {@link https://discord.com/developers/docs/resources/channel#channel-object-channel-types}
@@ -529,6 +530,7 @@ exports.ChannelTypes = createEnum([
   'GUILD_PUBLIC_THREAD',
   'GUILD_PRIVATE_THREAD',
   'GUILD_STAGE_VOICE',
+  'GUILD_DIRECTORY',
 ]);
 
 /**
@@ -1185,6 +1187,15 @@ exports.GuildScheduledEventStatuses = createEnum([null, 'SCHEDULED', 'ACTIVE', '
  * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-object-guild-scheduled-event-entity-types}
  */
 exports.GuildScheduledEventEntityTypes = createEnum([null, 'STAGE_INSTANCE', 'VOICE', 'EXTERNAL']);
+
+/**
+ * The camera video quality mode of a {@link VoiceChannel}:
+ * * AUTO
+ * * FULL
+ * @typedef {string} VideoQualityMode
+ * @see {@link https://discord.com/developers/docs/resources/channel#channel-object-video-quality-modes}
+ */
+exports.VideoQualityModes = createEnum([null, 'AUTO', 'FULL']);
 /* eslint-enable max-len */
 
 function keyMirror(arr) {
@@ -1236,6 +1247,7 @@ function createEnum(keys) {
  * @property {StickerFormatType} StickerFormatTypes The value set for a sticker's format type.
  * @property {StickerType} StickerTypes The value set for a sticker's type.
  * @property {VerificationLevel} VerificationLevels The value set for the verification levels for a guild.
+ * @property {VideoQualityMode} VideoQualityModes The camera video quality mode for a {@link VoiceChannel}.
  * @property {WebhookType} WebhookTypes The value set for a webhook's type.
  * @property {WSEventType} WSEvents The type of a WebSocket message event.
  */
