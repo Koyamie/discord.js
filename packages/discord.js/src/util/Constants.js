@@ -8,6 +8,7 @@ exports.UserAgent = `DiscordBot (${Package.homepage}, ${Package.version}) Node.j
 
 exports.WSCodes = {
   1000: 'WS_CLOSE_REQUESTED',
+  1011: 'INTERNAL_ERROR',
   4004: 'TOKEN_INVALID',
   4010: 'SHARDING_INVALID',
   4011: 'SHARDING_REQUIRED',
@@ -539,7 +540,8 @@ exports.ChannelTypes = createEnum([
  * * TextChannel
  * * NewsChannel
  * * ThreadChannel
- * @typedef {DMChannel|TextChannel|NewsChannel|ThreadChannel} TextBasedChannels
+ * * VoiceChannel
+ * @typedef {DMChannel|TextChannel|NewsChannel|ThreadChannel|VoiceChannel} TextBasedChannels
  */
 
 /**
@@ -557,6 +559,7 @@ exports.ChannelTypes = createEnum([
  * * GUILD_NEWS_THREAD
  * * GUILD_PUBLIC_THREAD
  * * GUILD_PRIVATE_THREAD
+ * * GUILD_VOICE
  * @typedef {string} TextBasedChannelTypes
  */
 exports.TextBasedChannelTypes = [
@@ -566,6 +569,7 @@ exports.TextBasedChannelTypes = [
   'GUILD_NEWS_THREAD',
   'GUILD_PUBLIC_THREAD',
   'GUILD_PRIVATE_THREAD',
+  'GUILD_VOICE',
 ];
 
 /**
@@ -1018,6 +1022,7 @@ exports.ApplicationCommandTypes = createEnum([null, 'CHAT_INPUT', 'USER', 'MESSA
  * * ROLE
  * * MENTIONABLE
  * * NUMBER
+ * * ATTACHMENT
  * @typedef {string} ApplicationCommandOptionType
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-type}
  */
