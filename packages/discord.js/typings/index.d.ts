@@ -837,8 +837,8 @@ export class CommandInteractionOptionResolver<Cached extends CacheType = CacheTy
   ): NonNullable<CommandInteractionOption<Cached>['member' | 'role' | 'user']> | null;
   public getMessage(name: string, required: true): NonNullable<CommandInteractionOption<Cached>['message']>;
   public getMessage(name: string, required?: boolean): NonNullable<CommandInteractionOption<Cached>['message']> | null;
-  public getFocused(getFull: true): ApplicationCommandOptionChoiceData;
-  public getFocused(getFull?: boolean): string | number;
+  public getFocused(getFull: true): AutocompleteFocusedOption;
+  public getFocused(getFull?: boolean): string;
   public getAttachment(name: string, required: true): NonNullable<CommandInteractionOption<Cached>['attachment']>;
   public getAttachment(
     name: string,
@@ -1060,7 +1060,7 @@ export class GuildAuditLogsEntry<
   private constructor(logs: GuildAuditLogs, guild: Guild, data: RawGuildAuditLogEntryData);
   public action: TAction;
   public actionType: TActionType;
-  public changes: AuditLogChange[] | null;
+  public changes: AuditLogChange[];
   public readonly createdAt: Date;
   public readonly createdTimestamp: number;
   public executor: User | null;
@@ -1117,7 +1117,7 @@ export abstract class GuildChannel extends Channel {
   public setName(name: string, reason?: string): Promise<this>;
   public setParent(channel: CategoryChannelResolvable | null, options?: SetParentOptions): Promise<this>;
   public setPosition(position: number, options?: SetChannelPositionOptions): Promise<this>;
-  public isText(): this is TextChannel | NewsChannel;
+  public isText(): this is GuildTextBasedChannel;
 }
 
 export class GuildEmoji extends BaseGuildEmoji {
@@ -4357,6 +4357,18 @@ export interface ConstantsClientApplicationAssetTypes {
   SMALL: 1;
   BIG: 2;
 }
+
+export type AutocompleteFocusedOption = Pick<CommandInteractionOption, 'name'> & {
+  focused: true;
+  type:
+    | 'STRING'
+    | 'INTEGER'
+    | 'NUMBER'
+    | ApplicationCommandOptionTypes.STRING
+    | ApplicationCommandOptionTypes.INTEGER
+    | ApplicationCommandOptionTypes.NUMBER;
+  value: string;
+};
 
 export interface ConstantsColors {
   DEFAULT: 0x000000;
