@@ -2127,7 +2127,7 @@ export interface ShardEventTypes {
   death: [child: ChildProcess];
   disconnect: [];
   ready: [];
-  reconnection: [];
+  reconnecting: [];
   error: [error: Error];
   message: [message: any];
 }
@@ -6016,8 +6016,14 @@ export interface WebSocketOptions {
 }
 
 export interface WebSocketProperties {
+  os?: string;
+  browser?: string;
+  device?: string;
+  /** @deprecated Use {@link os} instead. */
   $os?: string;
+  /** @deprecated Use {@link browser} instead. */
   $browser?: string;
+  /** @deprecated Use {@link device} instead. */
   $device?: string;
 }
 
