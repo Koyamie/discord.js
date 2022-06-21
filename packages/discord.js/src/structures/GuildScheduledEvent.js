@@ -3,7 +3,7 @@
 const { DiscordSnowflake } = require('@sapphire/snowflake');
 const { GuildScheduledEventStatus, GuildScheduledEventEntityType, RouteBases } = require('discord-api-types/v10');
 const Base = require('./Base');
-const { Error } = require('../errors');
+const { Error, ErrorCodes } = require('../errors');
 
 /**
  * Represents a scheduled event in a {@link Guild}.
@@ -253,9 +253,9 @@ class GuildScheduledEvent extends Base {
   async createInviteURL(options) {
     let channelId = this.channelId;
     if (this.entityType === GuildScheduledEventEntityType.External) {
-      if (!options?.channel) throw new Error('INVITE_OPTIONS_MISSING_CHANNEL');
+      if (!options?.channel) throw new Error(ErrorCodes.InviteOptionsMissingChannel);
       channelId = this.guild.channels.resolveId(options.channel);
-      if (!channelId) throw new Error('GUILD_CHANNEL_RESOLVE');
+      if (!channelId) throw new Error(ErrorCodes.GuildChannelResolve);
     }
     const invite = await this.guild.invites.create(channelId, options);
     return `${RouteBases.invite}/${invite.code}?event=${this.id}`;
@@ -354,7 +354,7 @@ class GuildScheduledEvent extends Base {
    * Sets the new status of the guild scheduled event.
    * <info>If you're working with TypeScript, use this method in conjunction with status type-guards
    * like {@link GuildScheduledEvent#isScheduled} to get only valid status as suggestion</info>
-   * @param {GuildScheduledEventStatus|number} status The status of the guild scheduled event
+   * @param {GuildScheduledEventStatus} status The status of the guild scheduled event
    * @param {string} [reason] The reason for changing the status
    * @returns {Promise<GuildScheduledEvent>}
    * @example

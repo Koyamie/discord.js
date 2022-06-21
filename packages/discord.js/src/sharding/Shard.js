@@ -5,8 +5,8 @@ const path = require('node:path');
 const process = require('node:process');
 const { setTimeout, clearTimeout } = require('node:timers');
 const { setTimeout: sleep } = require('node:timers/promises');
-const { Error } = require('../errors');
-const Util = require('../util/Util');
+const { Error, ErrorCodes } = require('../errors');
+const { makeError, makePlainError } = require('../util/Util');
 let childProcess = null;
 let Worker = null;
 
@@ -106,8 +106,8 @@ class Shard extends EventEmitter {
    * @returns {Promise<ChildProcess>}
    */
   spawn(timeout = 30_000) {
-    if (this.process) throw new Error('SHARDING_PROCESS_EXISTS', this.id);
-    if (this.worker) throw new Error('SHARDING_WORKER_EXISTS', this.id);
+    if (this.process) throw new Error(ErrorCodes.ShardingProcessExists, this.id);
+    if (this.worker) throw new Error(ErrorCodes.ShardingWorkerExists, this.id);
 
     this._exitListener = this._handleExit.bind(this, undefined, timeout);
 
@@ -153,17 +153,17 @@ class Shard extends EventEmitter {
 
       const onDisconnect = () => {
         cleanup();
-        reject(new Error('SHARDING_READY_DISCONNECTED', this.id));
+        reject(new Error(ErrorCodes.ShardingReadyDisconnected, this.id));
       };
 
       const onDeath = () => {
         cleanup();
-        reject(new Error('SHARDING_READY_DIED', this.id));
+        reject(new Error(ErrorCodes.ShardingReadyDied, this.id));
       };
 
       const onTimeout = () => {
         cleanup();
-        reject(new Error('SHARDING_READY_TIMEOUT', this.id));
+        reject(new Error(ErrorCodes.ShardingReadyTimeout, this.id));
       };
 
       const spawnTimeoutTimer = setTimeout(onTimeout, timeout);
@@ -238,7 +238,7 @@ class Shard extends EventEmitter {
    */
   fetchClientValue(prop) {
     // Shard is dead (maybe respawning), don't cache anything and error immediately
-    if (!this.process && !this.worker) return Promise.reject(new Error('SHARDING_NO_CHILD_EXISTS', this.id));
+    if (!this.process && !this.worker) return Promise.reject(new Error(ErrorCodes.ShardingNoChildExists, this.id));
 
     // Cached promise from previous call
     if (this._fetches.has(prop)) return this._fetches.get(prop);
@@ -252,7 +252,7 @@ class Shard extends EventEmitter {
         this.decrementMaxListeners(child);
         this._fetches.delete(prop);
         if (!message._error) resolve(message._result);
-        else reject(Util.makeError(message._error));
+        else reject(makeError(message._error));
       };
 
       this.incrementMaxListeners(child);
@@ -281,7 +281,7 @@ class Shard extends EventEmitter {
     const _eval = typeof script === 'function' ? `(${script})(this, ${JSON.stringify(context)})` : script;
 
     // Shard is dead (maybe respawning), don't cache anything and error immediately
-    if (!this.process && !this.worker) return Promise.reject(new Error('SHARDING_NO_CHILD_EXISTS', this.id));
+    if (!this.process && !this.worker) return Promise.reject(new Error(ErrorCodes.ShardingNoChildExists, this.id));
 
     // Cached promise from previous call
     if (this._evals.has(_eval)) return this._evals.get(_eval);
@@ -295,7 +295,7 @@ class Shard extends EventEmitter {
         this.decrementMaxListeners(child);
         this._evals.delete(_eval);
         if (!message._error) resolve(message._result);
-        else reject(Util.makeError(message._error));
+        else reject(makeError(message._error));
       };
 
       this.incrementMaxListeners(child);
@@ -358,7 +358,7 @@ class Shard extends EventEmitter {
         const resp = { _sFetchProp: message._sFetchProp, _sFetchPropShard: message._sFetchPropShard };
         this.manager.fetchClientValues(message._sFetchProp, message._sFetchPropShard).then(
           results => this.send({ ...resp, _result: results }),
-          err => this.send({ ...resp, _error: Util.makePlainError(err) }),
+          err => this.send({ ...resp, _error: makePlainError(err) }),
         );
         return;
       }
@@ -368,7 +368,7 @@ class Shard extends EventEmitter {
         const resp = { _sEval: message._sEval, _sEvalShard: message._sEvalShard };
         this.manager._performOnShards('eval', [message._sEval], message._sEvalShard).then(
           results => this.send({ ...resp, _result: results }),
-          err => this.send({ ...resp, _error: Util.makePlainError(err) }),
+          err => this.send({ ...resp, _error: makePlainError(err) }),
         );
         return;
       }

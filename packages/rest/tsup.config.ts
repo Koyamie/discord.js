@@ -1,20 +1,3 @@
-import type { Options } from 'tsup';
+import { createTsupConfig } from '../../tsup.config';
 
-export const tsup: Options = {
-	clean: true,
-	dts: false,
-	entryPoints: ['src/index.ts'],
-	format: ['esm', 'cjs'],
-	minify: false,
-	keepNames: true,
-	skipNodeModulesBundle: true,
-	sourcemap: true,
-	target: 'es2021',
-	esbuildOptions: (options, context) => {
-		if (context.format === 'cjs') {
-			options.banner = {
-				js: '"use strict";',
-			};
-		}
-	},
-};
+export default createTsupConfig();

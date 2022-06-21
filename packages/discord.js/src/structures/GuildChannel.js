@@ -2,7 +2,7 @@
 
 const { PermissionFlagsBits } = require('discord-api-types/v10');
 const { Channel } = require('./Channel');
-const { Error } = require('../errors');
+const { Error, ErrorCodes } = require('../errors');
 const PermissionOverwriteManager = require('../managers/PermissionOverwriteManager');
 const { VoiceBasedChannelTypes } = require('../util/Constants');
 const PermissionsBitField = require('../util/PermissionsBitField');
@@ -246,7 +246,7 @@ class GuildChannel extends Channel {
    * @returns {Promise<GuildChannel>}
    */
   lockPermissions() {
-    if (!this.parent) return Promise.reject(new Error('GUILD_CHANNEL_ORPHAN'));
+    if (!this.parent) return Promise.reject(new Error(ErrorCodes.GuildChannelOrphan));
     const permissionOverwrites = this.parent.permissionOverwrites.cache.map(overwrite => overwrite.toJSON());
     return this.edit({ permissionOverwrites });
   }
@@ -264,8 +264,7 @@ class GuildChannel extends Channel {
 
   /**
    * Edits the channel.
-   * @param {ChannelData} data The new data for the channel
-   * @param {string} [reason] Reason for editing this channel
+   * @param {ChannelEditData} data The new data for the channel
    * @returns {Promise<GuildChannel>}
    * @example
    * // Edit a channel
@@ -273,8 +272,8 @@ class GuildChannel extends Channel {
    *   .then(console.log)
    *   .catch(console.error);
    */
-  edit(data, reason) {
-    return this.guild.channels.edit(this, data, reason);
+  edit(data) {
+    return this.guild.channels.edit(this, data);
   }
 
   /**
@@ -289,7 +288,7 @@ class GuildChannel extends Channel {
    *   .catch(console.error);
    */
   setName(name, reason) {
-    return this.edit({ name }, reason);
+    return this.edit({ name, reason });
   }
 
   /**
@@ -311,13 +310,11 @@ class GuildChannel extends Channel {
    *   .catch(console.error);
    */
   setParent(channel, { lockPermissions = true, reason } = {}) {
-    return this.edit(
-      {
-        parent: channel ?? null,
-        lockPermissions,
-      },
+    return this.edit({
+      parent: channel ?? null,
+      lockPermissions,
       reason,
-    );
+    });
   }
 
   /**
@@ -354,7 +351,8 @@ class GuildChannel extends Channel {
    * @returns {Promise<GuildChannel>}
    */
   clone(options = {}) {
-    return this.guild.channels.create(options.name ?? this.name, {
+    return this.guild.channels.create({
+      name: options.name ?? this.name,
       permissionOverwrites: this.permissionOverwrites.cache,
       topic: this.topic,
       type: this.type,

@@ -1,15 +1,15 @@
 {
 	"name": "@discordjs/collection",
-	"version": "0.7.0-dev",
+	"version": "0.8.0-dev",
 	"description": "Utility data structure used in discord.js",
 	"scripts": {
-		"test": "jest --pass-with-no-tests",
 		"build": "tsup",
 		"lint": "prettier --check . && eslint src __tests__ --ext mjs,js,ts",
 		"format": "prettier --write . && eslint src __tests__ --ext mjs,js,ts --fix",
-		"docs": "typedoc --json docs/typedoc-out.json src/index.ts && node scripts/docs.mjs",
+		"docs": "docgen -i src/index.ts -c docs/index.json -o docs/docs.json --typescript",
 		"prepublishOnly": "yarn build && yarn lint && yarn test",
-		"changelog": "git cliff --prepend ./CHANGELOG.md -u -c ./cliff.toml -r ../../ --include-path 'packages/collection/*'"
+		"changelog": "git cliff --prepend ./CHANGELOG.md -u -c ./cliff.toml -r ../../ --include-path 'packages/collection/*'",
+		"release": "cliff-jumper"
 	},
 	"main": "./dist/index.js",
 	"module": "./dist/index.mjs",
@@ -48,23 +48,20 @@
 	},
 	"homepage": "https://discord.js.org",
 	"devDependencies": {
-		"@babel/core": "^7.17.9",
-		"@babel/preset-env": "^7.16.11",
-		"@babel/preset-typescript": "^7.16.7",
-		"@discordjs/ts-docgen": "^0.4.1",
-		"@types/jest": "^27.4.1",
-		"@types/node": "^16.11.27",
-		"@typescript-eslint/eslint-plugin": "^5.19.0",
-		"@typescript-eslint/parser": "^5.19.0",
-		"eslint": "^8.13.0",
+		"@discordjs/docgen": "workspace:^",
+		"@discordjs/scripts": "workspace:^",
+		"@favware/cliff-jumper": "^1.8.3",
+		"@types/node": "^16.11.41",
+		"@typescript-eslint/eslint-plugin": "^5.28.0",
+		"@typescript-eslint/parser": "^5.28.0",
+		"eslint": "^8.18.0",
 		"eslint-config-marine": "^9.4.1",
 		"eslint-config-prettier": "^8.5.0",
+		"eslint-import-resolver-typescript": "^2.7.1",
 		"eslint-plugin-import": "^2.26.0",
-		"jest": "^27.5.1",
-		"prettier": "^2.6.2",
-		"tsup": "^5.12.5",
-		"typedoc": "^0.22.15",
-		"typescript": "^4.6.3"
+		"prettier": "^2.7.1",
+		"tsup": "^6.1.2",
+		"typescript": "^4.7.4"
 	},
 	"engines": {
 		"node": ">=16.9.0"

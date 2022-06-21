@@ -14,6 +14,18 @@ chore:
   - packages/discord.js/*
   - packages/discord.js/**/*
 
+'packages:docgen':
+  - packages/docgen/*
+  - packages/docgen/**/*
+
+'packages:proxy':
+  - packages/proxy/*
+  - packages/proxy/**/*
+
+'packages:proxy-container':
+  - packages/proxy-container/*
+  - packages/proxy-container/**/*
+
 'packages:rest':
   - packages/rest/*
   - packages/rest/**/*
@@ -21,6 +33,10 @@ chore:
 'packages:voice':
   - packages/voice/*
   - packages/voice/**/*
+
+'packages:website':
+  - packages/website/*
+  - packages/website/**/*
 
 'packages:ws':
   - packages/ws/*

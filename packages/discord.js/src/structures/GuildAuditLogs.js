@@ -1,28 +1,11 @@
 'use strict';
 
 const { Collection } = require('@discordjs/collection');
+const ApplicationCommand = require('./ApplicationCommand');
 const GuildAuditLogsEntry = require('./GuildAuditLogsEntry');
 const Integration = require('./Integration');
 const Webhook = require('./Webhook');
-const Util = require('../util/Util');
-
-/**
- * The target type of an entry. Here are the available types:
- * * Guild
- * * Channel
- * * User
- * * Role
- * * Invite
- * * Webhook
- * * Emoji
- * * Message
- * * Integration
- * * StageInstance
- * * Sticker
- * * Thread
- * * GuildScheduledEvent
- * @typedef {string} AuditLogTargetType
- */
+const { flatten } = require('../util/Util');
 
 /**
  * Audit logs entries are held in this class.
@@ -56,6 +39,29 @@ class GuildAuditLogs {
     }
 
     /**
+     * Cached {@link GuildScheduledEvent}s.
+     * @type {Collection<Snowflake, GuildScheduledEvent>}
+     * @private
+     */
+    this.guildScheduledEvents = data.guild_scheduled_events.reduce(
+      (guildScheduledEvents, guildScheduledEvent) =>
+        guildScheduledEvents.set(guildScheduledEvent.id, guild.scheduledEvents._add(guildScheduledEvent)),
+      new Collection(),
+    );
+
+    /**
+     * Cached application commands, includes application commands from other applications
+     * @type {Collection<Snowflake, ApplicationCommand>}
+     * @private
+     */
+    this.applicationCommands = new Collection();
+    if (data.application_commands) {
+      for (const command of data.application_commands) {
+        this.applicationCommands.set(command.id, new ApplicationCommand(guild.client, command, guild));
+      }
+    }
+
+    /**
      * The entries for this guild's audit logs
      * @type {Collection<Snowflake, GuildAuditLogsEntry>}
      */
@@ -67,7 +73,7 @@ class GuildAuditLogs {
   }
 
   toJSON() {
-    return Util.flatten(this);
+    return flatten(this);
   }
 }
 

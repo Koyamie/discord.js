@@ -1,8 +1,8 @@
 'use strict';
 
-const { SelectMenuOptionBuilder: BuildersSelectMenuOption } = require('@discordjs/builders');
-const Transformers = require('../util/Transformers');
-const Util = require('../util/Util');
+const { SelectMenuOptionBuilder: BuildersSelectMenuOption, isJSONEncodable } = require('@discordjs/builders');
+const { toSnakeCase } = require('../util/Transformers');
+const { parseEmoji } = require('../util/Util');
 
 /**
  * Represents a select menu option builder.
@@ -11,9 +11,9 @@ const Util = require('../util/Util');
 class SelectMenuOptionBuilder extends BuildersSelectMenuOption {
   constructor({ emoji, ...data } = {}) {
     super(
-      Transformers.toSnakeCase({
+      toSnakeCase({
         ...data,
-        emoji: emoji && typeof emoji === 'string' ? Util.parseEmoji(emoji) : emoji,
+        emoji: emoji && typeof emoji === 'string' ? parseEmoji(emoji) : emoji,
       }),
     );
   }
@@ -24,9 +24,21 @@ class SelectMenuOptionBuilder extends BuildersSelectMenuOption {
    */
   setEmoji(emoji) {
     if (typeof emoji === 'string') {
-      return super.setEmoji(Util.parseEmoji(emoji));
+      return super.setEmoji(parseEmoji(emoji));
     }
     return super.setEmoji(emoji);
+  }
+
+  /**
+   * Creates a new select menu option builder from JSON data
+   * @param {JSONEncodable<APISelectMenuOption>|APISelectMenuOption} other The other data
+   * @returns {SelectMenuOptionBuilder}
+   */
+  static from(other) {
+    if (isJSONEncodable(other)) {
+      return new this(other.toJSON());
+    }
+    return new this(other);
   }
 }
 

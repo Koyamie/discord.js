@@ -3,6 +3,7 @@
 const { DiscordSnowflake } = require('@sapphire/snowflake');
 const { Routes, StickerFormatType } = require('discord-api-types/v10');
 const Base = require('./Base');
+const { ErrorCodes } = require('../errors');
 
 /**
  * Represents a Sticker.
@@ -70,10 +71,10 @@ class Sticker extends Base {
 
     if ('tags' in sticker) {
       /**
-       * An array of tags for the sticker
-       * @type {?string[]}
+       * Autocomplete/suggestions for the sticker
+       * @type {?string}
        */
-      this.tags = sticker.tags.split(', ');
+      this.tags = sticker.tags;
     } else {
       this.tags ??= null;
     }
@@ -190,7 +191,7 @@ class Sticker extends Base {
    */
   async fetchUser() {
     if (this.partial) await this.fetch();
-    if (!this.guildId) throw new Error('NOT_GUILD_STICKER');
+    if (!this.guildId) throw new Error(ErrorCodes.NotGuildSticker);
     return this.guild.stickers.fetchUser(this);
   }
 
@@ -200,12 +201,12 @@ class Sticker extends Base {
    * @property {string} [name] The name of the sticker
    * @property {?string} [description] The description of the sticker
    * @property {string} [tags] The Discord name of a unicode emoji representing the sticker's expression
+   * @property {string} [reason] Reason for editing this sticker
    */
 
   /**
    * Edits the sticker.
-   * @param {GuildStickerEditData} [data] The new data for the sticker
-   * @param {string} [reason] Reason for editing this sticker
+   * @param {GuildStickerEditData} data The new data for the sticker
    * @returns {Promise<Sticker>}
    * @example
    * // Update the name of a sticker
@@ -213,8 +214,8 @@ class Sticker extends Base {
    *   .then(s => console.log(`Updated the name of the sticker to ${s.name}`))
    *   .catch(console.error);
    */
-  edit(data, reason) {
-    return this.guild.stickers.edit(this, data, reason);
+  edit(data) {
+    return this.guild.stickers.edit(this, data);
   }
 
   /**
@@ -246,8 +247,7 @@ class Sticker extends Base {
         other.format === this.format &&
         other.name === this.name &&
         other.packId === this.packId &&
-        other.tags.length === this.tags.length &&
-        other.tags.every(tag => this.tags.includes(tag)) &&
+        other.tags === this.tags &&
         other.available === this.available &&
         other.guildId === this.guildId &&
         other.sortValue === this.sortValue
@@ -257,7 +257,7 @@ class Sticker extends Base {
         other.id === this.id &&
         other.description === this.description &&
         other.name === this.name &&
-        other.tags === this.tags.join(', ')
+        other.tags === this.tags
       );
     }
   }

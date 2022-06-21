@@ -45,16 +45,16 @@ pnpm add discord.js
 Install all required dependencies:
 
 ```sh-session
-npm install discord.js @discordjs/rest discord-api-types
-yarn add discord.js @discordjs/rest discord-api-types
-pnpm add discord.js @discordjs/rest discord-api-types
+npm install discord.js @discordjs/rest
+yarn add discord.js @discordjs/rest
+pnpm add discord.js @discordjs/rest
 ```
 
 Register a slash command against the Discord API:
 
 ```js
 const { REST } = require('@discordjs/rest');
-const { Routes } = require('discord-api-types/v10');
+const { Routes } = require('discord.js');
 
 const commands = [
   {
@@ -89,7 +89,7 @@ client.on('ready', () => {
 });
 
 client.on('interactionCreate', async interaction => {
-  if (!interaction.isCommand()) return;
+  if (!interaction.isChatInputCommand()) return;
 
   if (interaction.commandName === 'ping') {
     await interaction.reply('Pong!');
@@ -101,13 +101,13 @@ client.login('token');
 
 ## Links
 
-- [Website](https://discord.js.org/) ([source](https://github.com/discordjs/website))
+- [Website](https://discord.js.org/) ([source](https://github.com/discordjs/discord.js/tree/main/packages/website))
 - [Documentation](https://discord.js.org/#/docs)
 - [Guide](https://discordjs.guide/) ([source](https://github.com/discordjs/guide))
   See also the [Update Guide](https://discordjs.guide/additional-info/changes-in-v13.html), including updated and removed items in the library.
 - [discord.js Discord server](https://discord.gg/djs)
 - [Discord API Discord server](https://discord.gg/discord-api)
-- [GitHub](https://github.com/discordjs/discord.js)
+- [GitHub](https://github.com/discordjs/discord.js/tree/main/packages/discord.js)
 - [npm](https://www.npmjs.com/package/discord.js)
 - [Related libraries](https://discord.com/developers/docs/topics/community-resources#libraries)
 

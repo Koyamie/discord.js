@@ -4,7 +4,7 @@ const { Collection } = require('@discordjs/collection');
 const { makeURLSearchParams } = require('@discordjs/rest');
 const { ChannelType, Routes } = require('discord-api-types/v10');
 const CachedManager = require('./CachedManager');
-const { TypeError } = require('../errors');
+const { TypeError, ErrorCodes } = require('../errors');
 const ThreadChannel = require('../structures/ThreadChannel');
 
 /**
@@ -65,7 +65,8 @@ class ThreadManager extends CachedManager {
    * @typedef {StartThreadOptions} ThreadCreateOptions
    * @property {MessageResolvable} [startMessage] The message to start a thread from. <warn>If this is defined then type
    * of thread gets automatically defined and cannot be changed. The provided `type` field will be ignored</warn>
-   * @property {ThreadChannelTypes|number} [type] The type of thread to create.
+   * @property {ChannelType.GuildNewsThread|ChannelType.GuildPublicThread|ChannelType.GuildPrivateThread} [type]
+   * The type of thread to create.
    * Defaults to {@link ChannelType.GuildPublicThread} if created in a {@link TextChannel}
    * <warn>When creating threads in a {@link NewsChannel} this is ignored and is always
    * {@link ChannelType.GuildNewsThread}</warn>
@@ -109,14 +110,14 @@ class ThreadManager extends CachedManager {
     rateLimitPerUser,
   } = {}) {
     if (type && typeof type !== 'string' && typeof type !== 'number') {
-      throw new TypeError('INVALID_TYPE', 'type', 'ThreadChannelType or Number');
+      throw new TypeError(ErrorCodes.InvalidType, 'type', 'ThreadChannelType or Number');
     }
     let resolvedType =
       this.channel.type === ChannelType.GuildNews ? ChannelType.GuildNewsThread : ChannelType.GuildPublicThread;
     let startMessageId;
     if (startMessage) {
       startMessageId = this.channel.messages.resolveId(startMessage);
-      if (!startMessageId) throw new TypeError('INVALID_TYPE', 'startMessage', 'MessageResolvable');
+      if (!startMessageId) throw new TypeError(ErrorCodes.InvalidType, 'startMessage', 'MessageResolvable');
     } else if (this.channel.type !== ChannelType.GuildNews) {
       resolvedType = type ?? resolvedType;
     }
@@ -220,7 +221,7 @@ class ThreadManager extends CachedManager {
             query.set('before', timestamp);
           }
         } catch {
-          throw new TypeError('INVALID_TYPE', 'before', 'DateResolvable or ThreadChannelResolvable');
+          throw new TypeError(ErrorCodes.InvalidType, 'before', 'DateResolvable or ThreadChannelResolvable');
         }
       }
     }

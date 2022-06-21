@@ -1,74 +1,26 @@
 'use strict';
 
-const Util = require('../util/Util');
+const { basename, flatten } = require('../util/Util');
 
 /**
- * Represents an attachment.
+ * @typedef {Object} AttachmentPayload
+ * @property {?string} name The name of the attachment
+ * @property {Stream|BufferResolvable} attachment The attachment in this payload
+ * @property {?string} description The description of the attachment
+ */
+
+/**
+ * Represents an attachment
  */
 class Attachment {
-  /**
-   * @param {BufferResolvable|Stream} attachment The file
-   * @param {string} [name=null] The name of the file, if any
-   * @param {APIAttachment} [data] Extra data
-   */
-  constructor(attachment, name = null, data) {
-    this.attachment = attachment;
+  constructor(data) {
+    this.attachment = data.url;
     /**
      * The name of this attachment
-     * @type {?string}
+     * @type {string}
      */
-    this.name = name;
-    if (data) this._patch(data);
-  }
-
-  /**
-   * Sets the description of this attachment.
-   * @param {string} description The description of the file
-   * @returns {Attachment} This attachment
-   */
-  setDescription(description) {
-    this.description = description;
-    return this;
-  }
-
-  /**
-   * Sets the file of this attachment.
-   * @param {BufferResolvable|Stream} attachment The file
-   * @param {string} [name=null] The name of the file, if any
-   * @returns {Attachment} This attachment
-   */
-  setFile(attachment, name = null) {
-    this.attachment = attachment;
-    this.name = name;
-    return this;
-  }
-
-  /**
-   * Sets the name of this attachment.
-   * @param {string} name The name of the file
-   * @returns {Attachment} This attachment
-   */
-  setName(name) {
-    this.name = name;
-    return this;
-  }
-
-  /**
-   * Sets whether this attachment is a spoiler
-   * @param {boolean} [spoiler=true] Whether the attachment should be marked as a spoiler
-   * @returns {Attachment} This attachment
-   */
-  setSpoiler(spoiler = true) {
-    if (spoiler === this.spoiler) return this;
-
-    if (!spoiler) {
-      while (this.spoiler) {
-        this.name = this.name.slice('SPOILER_'.length);
-      }
-      return this;
-    }
-    this.name = `SPOILER_${this.name}`;
-    return this;
+    this.name = data.filename;
+    this._patch(data);
   }
 
   _patch(data) {
@@ -155,17 +107,12 @@ class Attachment {
    * @readonly
    */
   get spoiler() {
-    return Util.basename(this.url ?? this.name).startsWith('SPOILER_');
+    return basename(this.url ?? this.name).startsWith('SPOILER_');
   }
 
   toJSON() {
-    return Util.flatten(this);
+    return flatten(this);
   }
 }
 
 module.exports = Attachment;
-
-/**
- * @external APIAttachment
- * @see {@link https://discord.com/developers/docs/resources/channel#attachment-object}
- */

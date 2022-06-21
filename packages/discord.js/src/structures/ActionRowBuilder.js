@@ -1,8 +1,8 @@
 'use strict';
 
-const { ActionRowBuilder: BuildersActionRow, ComponentBuilder } = require('@discordjs/builders');
-const Components = require('../util/Components');
-const Transformers = require('../util/Transformers');
+const { ActionRowBuilder: BuildersActionRow, ComponentBuilder, isJSONEncodable } = require('@discordjs/builders');
+const { createComponentBuilder } = require('../util/Components');
+const { toSnakeCase } = require('../util/Transformers');
 
 /**
  * Represents an action row builder.
@@ -11,9 +11,22 @@ const Transformers = require('../util/Transformers');
 class ActionRowBuilder extends BuildersActionRow {
   constructor({ components, ...data } = {}) {
     super({
-      ...Transformers.toSnakeCase(data),
-      components: components?.map(c => (c instanceof ComponentBuilder ? c : Components.createComponentBuilder(c))),
+      ...toSnakeCase(data),
+      components: components?.map(c => (c instanceof ComponentBuilder ? c : createComponentBuilder(c))),
     });
+  }
+
+  /**
+   * Creates a new action row builder from JSON data
+   * @param {JSONEncodable<APIActionRowComponent<APIActionRowComponentTypes>>
+   * |APIActionRowComponent<APIActionRowComponentTypes>} other The other data
+   * @returns {ActionRowBuilder}
+   */
+  static from(other) {
+    if (isJSONEncodable(other)) {
+      return new this(other.toJSON());
+    }
+    return new this(other);
   }
 }
 

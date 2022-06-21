@@ -1,4 +1,5 @@
 import { APIActionRowComponent, APIMessageActionRowComponent, ButtonStyle, ComponentType } from 'discord-api-types/v10';
+import { describe, test, expect } from 'vitest';
 import {
 	ActionRowBuilder,
 	ButtonBuilder,
@@ -44,6 +45,8 @@ const rowWithSelectMenuData: APIActionRowComponent<APIMessageActionRowComponent>
 describe('Action Row Components', () => {
 	describe('Assertion Tests', () => {
 		test('GIVEN valid components THEN do not throw', () => {
+			expect(() => new ActionRowBuilder().addComponents(new ButtonBuilder())).not.toThrowError();
+			expect(() => new ActionRowBuilder().setComponents(new ButtonBuilder())).not.toThrowError();
 			expect(() => new ActionRowBuilder().addComponents([new ButtonBuilder()])).not.toThrowError();
 			expect(() => new ActionRowBuilder().setComponents([new ButtonBuilder()])).not.toThrowError();
 		});
@@ -82,6 +85,7 @@ describe('Action Row Components', () => {
 			expect(new ActionRowBuilder().toJSON()).toEqual({ type: ComponentType.ActionRow, components: [] });
 			expect(() => createComponentBuilder({ type: ComponentType.ActionRow, components: [] })).not.toThrowError();
 		});
+
 		test('GIVEN valid builder options THEN valid JSON output is given', () => {
 			const rowWithButtonData: APIActionRowComponent<APIMessageActionRowComponent> = {
 				type: ComponentType.ActionRow,
@@ -122,17 +126,24 @@ describe('Action Row Components', () => {
 			expect(new ActionRowBuilder().toJSON()).toEqual({ type: ComponentType.ActionRow, components: [] });
 			expect(() => createComponentBuilder({ type: ComponentType.ActionRow, components: [] })).not.toThrowError();
 		});
-		test('GIVEN valid builder options THEN valid JSON output is given', () => {
+
+		test('GIVEN valid builder options THEN valid JSON output is given 2', () => {
 			const button = new ButtonBuilder().setLabel('test').setStyle(ButtonStyle.Primary).setCustomId('123');
 			const selectMenu = new SelectMenuBuilder()
 				.setCustomId('1234')
 				.setMaxValues(10)
 				.setMinValues(12)
+				.setOptions(
+					new SelectMenuOptionBuilder().setLabel('one').setValue('one'),
+					new SelectMenuOptionBuilder().setLabel('two').setValue('two'),
+				)
 				.setOptions([
 					new SelectMenuOptionBuilder().setLabel('one').setValue('one'),
 					new SelectMenuOptionBuilder().setLabel('two').setValue('two'),
 				]);
 
+			expect(new ActionRowBuilder().addComponents(button).toJSON()).toEqual(rowWithButtonData);
+			expect(new ActionRowBuilder().addComponents(selectMenu).toJSON()).toEqual(rowWithSelectMenuData);
 			expect(new ActionRowBuilder().addComponents([button]).toJSON()).toEqual(rowWithButtonData);
 			expect(new ActionRowBuilder().addComponents([selectMenu]).toJSON()).toEqual(rowWithSelectMenuData);
 		});

@@ -3,7 +3,7 @@
 const { Collection } = require('@discordjs/collection');
 const { Routes } = require('discord-api-types/v10');
 const CachedManager = require('./CachedManager');
-const { TypeError } = require('../errors');
+const { TypeError, ErrorCodes } = require('../errors');
 const MessagePayload = require('../structures/MessagePayload');
 const { Sticker } = require('../structures/Sticker');
 
@@ -33,33 +33,33 @@ class GuildStickerManager extends CachedManager {
   }
 
   /**
-   * Options for creating a guild sticker.
+   * Options used to create a guild sticker.
    * @typedef {Object} GuildStickerCreateOptions
+   * @property {BufferResolvable|Stream|JSONEncodable<AttachmentPayload>} file The file for the sticker
+   * @property {string} name The name for the sticker
+   * @property {string} tags The Discord name of a unicode emoji representing the sticker's expression
    * @property {?string} [description] The description for the sticker
    * @property {string} [reason] Reason for creating the sticker
    */
 
   /**
    * Creates a new custom sticker in the guild.
-   * @param {BufferResolvable|Stream|FileOptions|Attachment} file The file for the sticker
-   * @param {string} name The name for the sticker
-   * @param {string} tags The Discord name of a unicode emoji representing the sticker's expression
-   * @param {GuildStickerCreateOptions} [options] Options
+   * @param {GuildStickerCreateOptions} options Options for creating a guild sticker
    * @returns {Promise<Sticker>} The created sticker
    * @example
    * // Create a new sticker from a URL
-   * guild.stickers.create('https://i.imgur.com/w3duR07.png', 'rip', 'headstone')
+   * guild.stickers.create({ file: 'https://i.imgur.com/w3duR07.png', name: 'rip', tags: 'headstone' })
    *   .then(sticker => console.log(`Created new sticker with name ${sticker.name}!`))
    *   .catch(console.error);
    * @example
    * // Create a new sticker from a file on your computer
-   * guild.stickers.create('./memes/banana.png', 'banana', 'banana')
+   * guild.stickers.create({ file: './memes/banana.png', name: 'banana', tags: 'banana' })
    *   .then(sticker => console.log(`Created new sticker with name ${sticker.name}!`))
    *   .catch(console.error);
    */
-  async create(file, name, tags, { description, reason } = {}) {
+  async create({ file, name, tags, description, reason } = {}) {
     const resolvedFile = await MessagePayload.resolveFile(file);
-    if (!resolvedFile) throw new TypeError('REQ_RESOURCE_TYPE');
+    if (!resolvedFile) throw new TypeError(ErrorCodes.ReqResourceType);
     file = { ...resolvedFile, key: 'file' };
 
     const body = { name, tags, description: description ?? '' };
@@ -101,17 +101,16 @@ class GuildStickerManager extends CachedManager {
   /**
    * Edits a sticker.
    * @param {StickerResolvable} sticker The sticker to edit
-   * @param {GuildStickerEditData} [data] The new data for the sticker
-   * @param {string} [reason] Reason for editing this sticker
+   * @param {GuildStickerEditData} [data={}] The new data for the sticker
    * @returns {Promise<Sticker>}
    */
-  async edit(sticker, data, reason) {
+  async edit(sticker, data = {}) {
     const stickerId = this.resolveId(sticker);
-    if (!stickerId) throw new TypeError('INVALID_TYPE', 'sticker', 'StickerResolvable');
+    if (!stickerId) throw new TypeError(ErrorCodes.InvalidType, 'sticker', 'StickerResolvable');
 
     const d = await this.client.rest.patch(Routes.guildSticker(this.guild.id, stickerId), {
       body: data,
-      reason,
+      reason: data.reason,
     });
 
     const existing = this.cache.get(stickerId);
@@ -131,7 +130,7 @@ class GuildStickerManager extends CachedManager {
    */
   async delete(sticker, reason) {
     sticker = this.resolveId(sticker);
-    if (!sticker) throw new TypeError('INVALID_TYPE', 'sticker', 'StickerResolvable');
+    if (!sticker) throw new TypeError(ErrorCodes.InvalidType, 'sticker', 'StickerResolvable');
 
     await this.client.rest.delete(Routes.guildSticker(this.guild.id, sticker), { reason });
   }
@@ -173,7 +172,7 @@ class GuildStickerManager extends CachedManager {
    */
   async fetchUser(sticker) {
     sticker = this.resolve(sticker);
-    if (!sticker) throw new TypeError('INVALID_TYPE', 'sticker', 'StickerResolvable');
+    if (!sticker) throw new TypeError(ErrorCodes.InvalidType, 'sticker', 'StickerResolvable');
     const data = await this.client.rest.get(Routes.guildSticker(this.guild.id, sticker.id));
     sticker._patch(data);
     return sticker.user;

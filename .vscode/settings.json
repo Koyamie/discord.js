@@ -6,7 +6,5 @@
 		"source.fixAll": true,
 		"source.organizeImports": false
 	},
-	"files.exclude": {
-		"**/node_modules": true
-	}
+	"unocss.root": "./packages/website"
 }

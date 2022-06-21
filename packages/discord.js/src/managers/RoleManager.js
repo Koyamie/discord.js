@@ -4,12 +4,11 @@ const process = require('node:process');
 const { Collection } = require('@discordjs/collection');
 const { Routes } = require('discord-api-types/v10');
 const CachedManager = require('./CachedManager');
-const { TypeError } = require('../errors');
+const { TypeError, ErrorCodes } = require('../errors');
 const { Role } = require('../structures/Role');
 const DataResolver = require('../util/DataResolver');
 const PermissionsBitField = require('../util/PermissionsBitField');
-const { resolveColor } = require('../util/Util');
-const Util = require('../util/Util');
+const { setPosition, resolveColor } = require('../util/Util');
 
 let cacheWarningEmitted = false;
 
@@ -166,10 +165,15 @@ class RoleManager extends CachedManager {
   }
 
   /**
+   * Options for editing a role
+   * @typedef {RoleData} EditRoleOptions
+   * @property {string} [reason] The reason for editing this role
+   */
+
+  /**
    * Edits a role of the guild.
    * @param {RoleResolvable} role The role to edit
-   * @param {RoleData} data The new data for the role
-   * @param {string} [reason] Reason for editing this role
+   * @param {EditRoleOptions} data The new data for the role
    * @returns {Promise<Role>}
    * @example
    * // Edit a role
@@ -177,12 +181,12 @@ class RoleManager extends CachedManager {
    *   .then(updated => console.log(`Edited role name to ${updated.name}`))
    *   .catch(console.error);
    */
-  async edit(role, data, reason) {
+  async edit(role, data) {
     role = this.resolve(role);
-    if (!role) throw new TypeError('INVALID_TYPE', 'role', 'RoleResolvable');
+    if (!role) throw new TypeError(ErrorCodes.InvalidType, 'role', 'RoleResolvable');
 
     if (typeof data.position === 'number') {
-      await this.setPosition(role, data.position, { reason });
+      await this.setPosition(role, data.position, { reason: data.reason });
     }
 
     let icon = data.icon;
@@ -202,7 +206,7 @@ class RoleManager extends CachedManager {
       unicode_emoji: data.unicodeEmoji,
     };
 
-    const d = await this.client.rest.patch(Routes.guildRole(this.guild.id, role.id), { body, reason });
+    const d = await this.client.rest.patch(Routes.guildRole(this.guild.id, role.id), { body, reason: data.reason });
 
     const clone = role._clone();
     clone._patch(d);
@@ -240,8 +244,8 @@ class RoleManager extends CachedManager {
    */
   async setPosition(role, position, { relative, reason } = {}) {
     role = this.resolve(role);
-    if (!role) throw new TypeError('INVALID_TYPE', 'role', 'RoleResolvable');
-    const updatedRoles = await Util.setPosition(
+    if (!role) throw new TypeError(ErrorCodes.InvalidType, 'role', 'RoleResolvable');
+    const updatedRoles = await setPosition(
       role,
       position,
       relative,
@@ -299,7 +303,7 @@ class RoleManager extends CachedManager {
   comparePositions(role1, role2) {
     const resolvedRole1 = this.resolve(role1);
     const resolvedRole2 = this.resolve(role2);
-    if (!resolvedRole1 || !resolvedRole2) throw new TypeError('INVALID_TYPE', 'role', 'Role nor a Snowflake');
+    if (!resolvedRole1 || !resolvedRole2) throw new TypeError(ErrorCodes.InvalidType, 'role', 'Role nor a Snowflake');
 
     if (resolvedRole1.position === resolvedRole2.position) {
       return Number(BigInt(resolvedRole2.id) - BigInt(resolvedRole1.id));

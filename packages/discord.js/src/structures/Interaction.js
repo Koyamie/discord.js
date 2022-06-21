@@ -190,19 +190,11 @@ class Interaction extends Base {
   }
 
   /**
-   * Indicates whether this interaction is a {@link CommandInteraction}.
-   * @returns {boolean}
-   */
-  isCommand() {
-    return this.type === InteractionType.ApplicationCommand;
-  }
-
-  /**
    * Indicates whether this interaction is a {@link ChatInputCommandInteraction}.
    * @returns {boolean}
    */
   isChatInputCommand() {
-    return this.isCommand() && this.commandType === ApplicationCommandType.ChatInput;
+    return this.type === InteractionType.ApplicationCommand && this.commandType === ApplicationCommandType.ChatInput;
   }
 
   /**
@@ -210,7 +202,10 @@ class Interaction extends Base {
    * @returns {boolean}
    */
   isContextMenuCommand() {
-    return this.isCommand() && [ApplicationCommandType.User, ApplicationCommandType.Message].includes(this.commandType);
+    return (
+      this.type === InteractionType.ApplicationCommand &&
+      [ApplicationCommandType.User, ApplicationCommandType.Message].includes(this.commandType)
+    );
   }
 
   /**
@@ -230,35 +225,11 @@ class Interaction extends Base {
   }
 
   /**
-   * Indicates whether this interaction is a {@link ModalSubmitInteraction}
-   * @returns {boolean}
-   */
-  isModalSubmit() {
-    return this.type === InteractionType.ModalSubmit;
-  }
-
-  /**
-   * Indicates whether this interaction is an {@link AutocompleteInteraction}
-   * @returns {boolean}
-   */
-  isAutocomplete() {
-    return this.type === InteractionType.ApplicationCommandAutocomplete;
-  }
-
-  /**
-   * Indicates whether this interaction is a {@link MessageComponentInteraction}.
-   * @returns {boolean}
-   */
-  isMessageComponent() {
-    return this.type === InteractionType.MessageComponent;
-  }
-
-  /**
    * Indicates whether this interaction is a {@link ButtonInteraction}.
    * @returns {boolean}
    */
   isButton() {
-    return this.isMessageComponent() && this.componentType === ComponentType.Button;
+    return this.type === InteractionType.MessageComponent && this.componentType === ComponentType.Button;
   }
 
   /**
@@ -266,7 +237,7 @@ class Interaction extends Base {
    * @returns {boolean}
    */
   isSelectMenu() {
-    return this.isMessageComponent() && this.componentType === ComponentType.SelectMenu;
+    return this.type === InteractionType.MessageComponent && this.componentType === ComponentType.SelectMenu;
   }
 
   /**

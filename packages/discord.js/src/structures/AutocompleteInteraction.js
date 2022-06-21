@@ -3,6 +3,7 @@
 const { InteractionResponseType, Routes } = require('discord-api-types/v10');
 const CommandInteractionOptionResolver = require('./CommandInteractionOptionResolver');
 const Interaction = require('./Interaction');
+const { ErrorCodes } = require('../errors');
 
 /**
  * Represents an autocomplete interaction.
@@ -32,9 +33,15 @@ class AutocompleteInteraction extends Interaction {
 
     /**
      * The invoked application command's type
-     * @type {ApplicationCommandType.ChatInput}
+     * @type {ApplicationCommandType}
      */
     this.commandType = data.data.type;
+
+    /**
+     * The id of the guild the invoked application command is registered to
+     * @type {?Snowflake}
+     */
+    this.commandGuildId = data.data.guild_id ?? null;
 
     /**
      * Whether this interaction has already received a response
@@ -70,11 +77,11 @@ class AutocompleteInteraction extends Interaction {
    *    value: 'option1',
    *  },
    * ])
-   *  .then(console.log)
+   *  .then(() => console.log('Successfully responded to the autocomplete interaction'))
    *  .catch(console.error);
    */
   async respond(options) {
-    if (this.responded) throw new Error('INTERACTION_ALREADY_REPLIED');
+    if (this.responded) throw new Error(ErrorCodes.InteractionAlreadyReplied);
 
     await this.client.rest.post(Routes.interactionCallback(this.id, this.token), {
       body: {

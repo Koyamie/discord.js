@@ -2,7 +2,37 @@
 
 All notable changes to this project will be documented in this file.
 
-# [0.13.0](https://github.com/discordjs/discord.js/compare/@discordjs/builders@0.12.0...@discordjs/builders@0.13.0) (2022-04-17)
+# [@discordjs/builders@0.15.0](https://github.com/discordjs/discord.js/compare/@discordjs/builders@0.14.0...@discordjs/builders@0.15.0) - (2022-06-05)
+
+## Features
+
+- Allow builders to accept rest params and arrays (#7874) ([ad75be9](https://github.com/discordjs/discord.js/commit/ad75be9a9cf90c8624495df99b75177e6c24022f))
+- Use vitest instead of jest for more speed ([8d8e6c0](https://github.com/discordjs/discord.js/commit/8d8e6c03decd7352a2aa180f6e5bc1a13602539b))
+- Add scripts package for locally used scripts ([f2ae1f9](https://github.com/discordjs/discord.js/commit/f2ae1f9348bfd893332a9060f71a8a5f272a1b8b))
+
+# [@discordjs/builders@0.14.0](https://github.com/discordjs/discord.js/compare/@discordjs/builders@0.13.0...@discordjs/builders@0.14.0) - (2022-06-04)
+
+## Bug Fixes
+
+- **builders:** Leftover invalid null type ([8a7cd10](https://github.com/discordjs/discord.js/commit/8a7cd10554a2a71cd2fe7f6a177b5f4f43464348))
+- **SlashCommandBuilder:** Import `Permissions` correctly (#7921) ([7ce641d](https://github.com/discordjs/discord.js/commit/7ce641d33a4af6586d5e7beffbe7d38619dcf1a2))
+- Add localizations for subcommand builders and option choices (#7862) ([c1b5e73](https://github.com/discordjs/discord.js/commit/c1b5e731daa9cbbfca03a046e47cb1221ee1ed7c))
+
+## Features
+
+- Export types from `interactions/slashCommands/mixins` (#7942) ([68d5169](https://github.com/discordjs/discord.js/commit/68d5169f66c96f8fe5be17a1c01cdd5155607ab2))
+- **builders:** Add new command permissions v2 (#7861) ([de3f157](https://github.com/discordjs/discord.js/commit/de3f1573f07dda294cc0fbb1ca4b659eb2388a12))
+- **builders:** Improve embed errors and predicates (#7795) ([ec8d87f](https://github.com/discordjs/discord.js/commit/ec8d87f93272cc9987f9613735c0361680c4ed1e))
+
+## Refactor
+
+- Use arrays instead of rest parameters for builders (#7759) ([29293d7](https://github.com/discordjs/discord.js/commit/29293d7bbb5ed463e52e5a5853817e5a09cf265b))
+
+## Styling
+
+- Cleanup tests and tsup configs ([6b8ef20](https://github.com/discordjs/discord.js/commit/6b8ef20cb3af5b5cfd176dd0aa0a1a1e98551629))
+
+# [@discordjs/builders@0.13.0](https://github.com/discordjs/discord.js/compare/@discordjs/builders@0.12.0...@discordjs/builders@0.13.0) - (2022-04-17)
 
 ## Bug Fixes
 
@@ -15,13 +45,11 @@ All notable changes to this project will be documented in this file.
 - Fix some typos (#7393) ([92a04f4](https://github.com/discordjs/discord.js/commit/92a04f4d98f6c6760214034cc8f5a1eaa78893c7))
 - **builders:** Make type optional in constructor (#7391) ([4abb28c](https://github.com/discordjs/discord.js/commit/4abb28c0a1256c57a60369a6b8ec9e98c265b489))
 - Don't create new instances of builders classes (#7343) ([d6b56d0](https://github.com/discordjs/discord.js/commit/d6b56d0080c4c5f8ace731f1e8bcae0c9d3fb5a5))
-- **builders:** Dont export `Button` component stuff twice (#7289) ([86d9d06](https://github.com/discordjs/discord.js/commit/86d9d0674347c08d056cd054cb4ce4253195bf94))
 
 ## Documentation
 
 - Completely fix builders example link (#7543) ([1a14c0c](https://github.com/discordjs/discord.js/commit/1a14c0ca562ea173d363a770a0437209f461fd23))
 - Add slash command builders example, fixes #7338 (#7339) ([3ae6f3c](https://github.com/discordjs/discord.js/commit/3ae6f3c313091151245d6e6b52337b459ecfc765))
-- **SlashCommandSubcommands:** Updating old links from Discord developer portal (#7224) ([bd7a6f2](https://github.com/discordjs/discord.js/commit/bd7a6f265212624199fb0b2ddc8ece39759c63de))
 
 ## Features
 
@@ -33,7 +61,6 @@ All notable changes to this project will be documented in this file.
 - **builders:** Add attachment command option type (#7203) ([ae0f35f](https://github.com/discordjs/discord.js/commit/ae0f35f51d68dfa5a7dc43d161ef9365171debdb))
 - **components:** Add unsafe message component builders (#7387) ([6b6222b](https://github.com/discordjs/discord.js/commit/6b6222bf513d1ee8cd98fba0ad313def560b864f))
 - **embed:** Add setFields (#7322) ([bcc5cda](https://github.com/discordjs/discord.js/commit/bcc5cda8a902ddb28c7e3578e0f29b4272832624))
-- Add components to /builders (#7195) ([2bb40fd](https://github.com/discordjs/discord.js/commit/2bb40fd767cf5918e3ba422ff73082734bfa05b0))
 
 ## Refactor
 
@@ -55,9 +82,8 @@ All notable changes to this project will be documented in this file.
 ## Typings
 
 - Fix regressions (#7649) ([5748dbe](https://github.com/discordjs/discord.js/commit/5748dbe08783beb80c526de38ccd105eb0e82664))
-- Make `required` a boolean (#7307) ([c10afea](https://github.com/discordjs/discord.js/commit/c10afeadc702ab98bec5e077b3b92494a9596f9c))
 
-# [0.12.0](https://github.com/discordjs/discord.js/compare/@discordjs/builders@0.11.0...@discordjs/builders@0.12.0) (2021-12-08)
+# [@discordjs/builders@0.12.0](https://github.com/discordjs/discord.js/compare/@discordjs/builders@0.11.0...@discordjs/builders@0.12.0) - (2022-01-24)
 
 ## Bug Fixes
 

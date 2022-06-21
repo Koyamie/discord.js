@@ -19,13 +19,13 @@ const Mentions = require('./MessageMentions');
 const MessagePayload = require('./MessagePayload');
 const ReactionCollector = require('./ReactionCollector');
 const { Sticker } = require('./Sticker');
-const { Error } = require('../errors');
+const { Error, ErrorCodes } = require('../errors');
 const ReactionManager = require('../managers/ReactionManager');
-const Components = require('../util/Components');
+const { createComponent } = require('../util/Components');
 const { NonSystemMessageTypes } = require('../util/Constants');
 const MessageFlagsBitField = require('../util/MessageFlagsBitField');
 const PermissionsBitField = require('../util/PermissionsBitField');
-const Util = require('../util/Util');
+const { cleanContent, resolvePartialEmoji } = require('../util/Util');
 
 /**
  * Represents a message on Discord.
@@ -147,7 +147,7 @@ class Message extends Base {
        * A list of MessageActionRows in the message
        * @type {ActionRow[]}
        */
-      this.components = data.components.map(c => Components.createComponent(c));
+      this.components = data.components.map(c => createComponent(c));
     } else {
       this.components = this.components?.slice() ?? [];
     }
@@ -160,7 +160,7 @@ class Message extends Base {
       this.attachments = new Collection();
       if (data.attachments) {
         for (const attachment of data.attachments) {
-          this.attachments.set(attachment.id, new Attachment(attachment.url, attachment.filename, attachment));
+          this.attachments.set(attachment.id, new Attachment(attachment));
         }
       }
     } else {
@@ -352,7 +352,7 @@ class Message extends Base {
 
   /**
    * The channel that the message was sent in
-   * @type {TextBasedChannel}
+   * @type {TextBasedChannels}
    * @readonly
    */
   get channel() {
@@ -442,7 +442,7 @@ class Message extends Base {
    */
   get cleanContent() {
     // eslint-disable-next-line eqeqeq
-    return this.content != null ? Util.cleanContent(this.content, this.channel) : null;
+    return this.content != null ? cleanContent(this.content, this.channel) : null;
   }
 
   /**
@@ -542,7 +542,7 @@ class Message extends Base {
       collector.once('end', (interactions, reason) => {
         const interaction = interactions.first();
         if (interaction) resolve(interaction);
-        else reject(new Error('INTERACTION_COLLECTOR_ERROR', reason));
+        else reject(new Error(ErrorCodes.InteractionCollectorError, reason));
       });
     });
   }
@@ -608,10 +608,10 @@ class Message extends Base {
    * @returns {Promise<Message>}
    */
   async fetchReference() {
-    if (!this.reference) throw new Error('MESSAGE_REFERENCE_MISSING');
+    if (!this.reference) throw new Error(ErrorCodes.MessageReferenceMissing);
     const { channelId, messageId } = this.reference;
     const channel = this.client.channels.resolve(channelId);
-    if (!channel) throw new Error('GUILD_CHANNEL_RESOLVE');
+    if (!channel) throw new Error(ErrorCodes.GuildChannelResolve);
     const message = await channel.messages.fetch(messageId);
     return message;
   }
@@ -645,7 +645,8 @@ class Message extends Base {
    * Only `MessageFlags.SuppressEmbeds` can be edited.
    * @property {Attachment[]} [attachments] An array of attachments to keep,
    * all attachments will be kept if omitted
-   * @property {FileOptions[]|BufferResolvable[]|Attachment[]} [files] Files to add to the message
+   * @property {Array<JSONEncodable<AttachmentPayload>>|BufferResolvable[]|Attachment[]|AttachmentBuilder[]} [files]
+   * Files to add to the message
    * @property {ActionRow[]|ActionRowOptions[]} [components]
    * Action rows containing interactive components for the message (buttons, select menus)
    */
@@ -661,7 +662,7 @@ class Message extends Base {
    *   .catch(console.error);
    */
   edit(options) {
-    if (!this.channel) return Promise.reject(new Error('CHANNEL_NOT_CACHED'));
+    if (!this.channel) return Promise.reject(new Error(ErrorCodes.ChannelNotCached));
     return this.channel.messages.edit(this, options);
   }
 
@@ -677,7 +678,7 @@ class Message extends Base {
    * }
    */
   crosspost() {
-    if (!this.channel) return Promise.reject(new Error('CHANNEL_NOT_CACHED'));
+    if (!this.channel) return Promise.reject(new Error(ErrorCodes.ChannelNotCached));
     return this.channel.messages.crosspost(this.id);
   }
 
@@ -692,7 +693,7 @@ class Message extends Base {
    *   .catch(console.error)
    */
   async pin(reason) {
-    if (!this.channel) throw new Error('CHANNEL_NOT_CACHED');
+    if (!this.channel) throw new Error(ErrorCodes.ChannelNotCached);
     await this.channel.messages.pin(this.id, reason);
     return this;
   }
@@ -708,7 +709,7 @@ class Message extends Base {
    *   .catch(console.error)
    */
   async unpin(reason) {
-    if (!this.channel) throw new Error('CHANNEL_NOT_CACHED');
+    if (!this.channel) throw new Error(ErrorCodes.ChannelNotCached);
     await this.channel.messages.unpin(this.id, reason);
     return this;
   }
@@ -729,7 +730,7 @@ class Message extends Base {
    *   .catch(console.error);
    */
   async react(emoji) {
-    if (!this.channel) throw new Error('CHANNEL_NOT_CACHED');
+    if (!this.channel) throw new Error(ErrorCodes.ChannelNotCached);
     await this.channel.messages.react(this.id, emoji);
 
     return this.client.actions.MessageReactionAdd.handle(
@@ -737,7 +738,7 @@ class Message extends Base {
         user: this.client.user,
         channel: this.channel,
         message: this,
-        emoji: Util.resolvePartialEmoji(emoji),
+        emoji: resolvePartialEmoji(emoji),
       },
       true,
     ).reaction;
@@ -754,7 +755,7 @@ class Message extends Base {
    */
   async delete() {
     if (!this.channel) {
-      if (!this.channelId) throw new Error('CHANNEL_NOT_CACHED');
+      if (!this.channel) throw new Error(ErrorCodes.ChannelNotCached);
       return this.client.rest.delete(Routes.channelMessage(this.channelId, this.id));
     }
     await this.channel.messages.delete(this.id);
@@ -780,7 +781,7 @@ class Message extends Base {
    *   .catch(console.error);
    */
   reply(options) {
-    if (!this.channel) return Promise.reject(new Error('CHANNEL_NOT_CACHED'));
+    if (!this.channel) return Promise.reject(new Error(ErrorCodes.ChannelNotCached));
     let data;
 
     if (options instanceof MessagePayload) {
@@ -823,11 +824,11 @@ class Message extends Base {
    * @returns {Promise<ThreadChannel>}
    */
   startThread(options = {}) {
-    if (!this.channel) return Promise.reject(new Error('CHANNEL_NOT_CACHED'));
+    if (!this.channel) return Promise.reject(new Error(ErrorCodes.ChannelNotCached));
     if (![ChannelType.GuildText, ChannelType.GuildNews].includes(this.channel.type)) {
-      return Promise.reject(new Error('MESSAGE_THREAD_PARENT'));
+      return Promise.reject(new Error(ErrorCodes.MessageThreadParent));
     }
-    if (this.hasThread) return Promise.reject(new Error('MESSAGE_EXISTING_THREAD'));
+    if (this.hasThread) return Promise.reject(new Error(ErrorCodes.MessageExistingThread));
     return this.channel.threads.create({ ...options, startMessage: this });
   }
 
@@ -837,8 +838,8 @@ class Message extends Base {
    * @returns {Promise<Message>}
    */
   fetch(force = true) {
-    if (!this.channel) return Promise.reject(new Error('CHANNEL_NOT_CACHED'));
-    return this.channel.messages.fetch(this.id, { force });
+    if (!this.channel) return Promise.reject(new Error(ErrorCodes.ChannelNotCached));
+    return this.channel.messages.fetch({ message: this.id, force });
   }
 
   /**
@@ -846,8 +847,8 @@ class Message extends Base {
    * @returns {Promise<?Webhook>}
    */
   fetchWebhook() {
-    if (!this.webhookId) return Promise.reject(new Error('WEBHOOK_MESSAGE'));
-    if (this.webhookId === this.applicationId) return Promise.reject(new Error('WEBHOOK_APPLICATION'));
+    if (!this.webhookId) return Promise.reject(new Error(ErrorCodes.WebhookMessage));
+    if (this.webhookId === this.applicationId) return Promise.reject(new Error(ErrorCodes.WebhookApplication));
     return this.client.fetchWebhook(this.webhookId);
   }
 

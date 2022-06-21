@@ -1,3 +1,4 @@
+import { describe, test, expect } from 'vitest';
 import { EmbedBuilder, embedLength } from '../../src';
 
 const alpha = 'abcdefghijklmnopqrstuvwxyz';
@@ -13,13 +14,13 @@ describe('Embed', () => {
 				footer: { text: alpha },
 			});
 
-			expect(embedLength(embed.data)).toBe(alpha.length * 6);
+			expect(embedLength(embed.data)).toEqual(alpha.length * 6);
 		});
 
 		test('GIVEN an embed with zero characters THEN returns amount of characters', () => {
 			const embed = new EmbedBuilder();
 
-			expect(embedLength(embed.data)).toBe(0);
+			expect(embedLength(embed.data)).toEqual(0);
 		});
 	});
 
@@ -322,28 +323,29 @@ describe('Embed', () => {
 
 		test('GIVEN an embed using Embed#addFields THEN returns valid toJSON data', () => {
 			const embed = new EmbedBuilder();
+			embed.addFields({ name: 'foo', value: 'bar' });
 			embed.addFields([{ name: 'foo', value: 'bar' }]);
 
 			expect(embed.toJSON()).toStrictEqual({
-				fields: [{ name: 'foo', value: 'bar' }],
+				fields: [
+					{ name: 'foo', value: 'bar' },
+					{ name: 'foo', value: 'bar' },
+				],
 			});
 		});
 
 		test('GIVEN an embed using Embed#spliceFields THEN returns valid toJSON data', () => {
 			const embed = new EmbedBuilder();
-			embed.addFields([
-				{ name: 'foo', value: 'bar' },
-				{ name: 'foo', value: 'baz' },
-			]);
+			embed.addFields({ name: 'foo', value: 'bar' }, { name: 'foo', value: 'baz' });
 
 			expect(embed.spliceFields(0, 1).toJSON()).toStrictEqual({
 				fields: [{ name: 'foo', value: 'baz' }],
 			});
 		});
 
-		test('GIVEN an embed using Embed#spliceFields THEN returns valid toJSON data', () => {
+		test('GIVEN an embed using Embed#spliceFields THEN returns valid toJSON data 2', () => {
 			const embed = new EmbedBuilder();
-			embed.addFields(Array.from({ length: 23 }, () => ({ name: 'foo', value: 'bar' })));
+			embed.addFields(...Array.from({ length: 23 }, () => ({ name: 'foo', value: 'bar' })));
 
 			expect(() =>
 				embed.spliceFields(0, 3, ...Array.from({ length: 5 }, () => ({ name: 'foo', value: 'bar' }))),
@@ -352,7 +354,7 @@ describe('Embed', () => {
 
 		test('GIVEN an embed using Embed#spliceFields that adds additional fields resulting in fields > 25 THEN throws error', () => {
 			const embed = new EmbedBuilder();
-			embed.addFields(Array.from({ length: 23 }, () => ({ name: 'foo', value: 'bar' })));
+			embed.addFields(...Array.from({ length: 23 }, () => ({ name: 'foo', value: 'bar' })));
 
 			expect(() =>
 				embed.spliceFields(0, 3, ...Array.from({ length: 8 }, () => ({ name: 'foo', value: 'bar' }))),
@@ -363,6 +365,9 @@ describe('Embed', () => {
 			const embed = new EmbedBuilder();
 
 			expect(() =>
+				embed.setFields(...Array.from({ length: 25 }, () => ({ name: 'foo', value: 'bar' }))),
+			).not.toThrowError();
+			expect(() =>
 				embed.setFields(Array.from({ length: 25 }, () => ({ name: 'foo', value: 'bar' }))),
 			).not.toThrowError();
 		});
@@ -370,38 +375,43 @@ describe('Embed', () => {
 		test('GIVEN an embed using Embed#setFields that sets more than 25 fields THEN throws error', () => {
 			const embed = new EmbedBuilder();
 
+			expect(() =>
+				embed.setFields(...Array.from({ length: 26 }, () => ({ name: 'foo', value: 'bar' }))),
+			).toThrowError();
 			expect(() => embed.setFields(Array.from({ length: 26 }, () => ({ name: 'foo', value: 'bar' })))).toThrowError();
 		});
 
 		describe('GIVEN invalid field amount THEN throws error', () => {
-			test('', () => {
+			test('1', () => {
 				const embed = new EmbedBuilder();
 
-				expect(() => embed.addFields(Array.from({ length: 26 }, () => ({ name: 'foo', value: 'bar' })))).toThrowError();
+				expect(() =>
+					embed.addFields(...Array.from({ length: 26 }, () => ({ name: 'foo', value: 'bar' }))),
+				).toThrowError();
 			});
 		});
 
 		describe('GIVEN invalid field name THEN throws error', () => {
-			test('', () => {
+			test('2', () => {
 				const embed = new EmbedBuilder();
 
-				expect(() => embed.addFields([{ name: '', value: 'bar' }])).toThrowError();
+				expect(() => embed.addFields({ name: '', value: 'bar' })).toThrowError();
 			});
 		});
 
 		describe('GIVEN invalid field name length THEN throws error', () => {
-			test('', () => {
+			test('3', () => {
 				const embed = new EmbedBuilder();
 
-				expect(() => embed.addFields([{ name: 'a'.repeat(257), value: 'bar' }])).toThrowError();
+				expect(() => embed.addFields({ name: 'a'.repeat(257), value: 'bar' })).toThrowError();
 			});
 		});
 
 		describe('GIVEN invalid field value length THEN throws error', () => {
-			test('', () => {
+			test('4', () => {
 				const embed = new EmbedBuilder();
 
-				expect(() => embed.addFields([{ name: '', value: 'a'.repeat(1025) }])).toThrowError();
+				expect(() => embed.addFields({ name: '', value: 'a'.repeat(1025) })).toThrowError();
 			});
 		});
 	});

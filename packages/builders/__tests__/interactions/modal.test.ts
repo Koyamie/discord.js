@@ -1,4 +1,5 @@
 import { APIModalInteractionResponseCallbackData, ComponentType, TextInputStyle } from 'discord-api-types/v10';
+import { describe, test, expect } from 'vitest';
 import {
 	ActionRowBuilder,
 	ButtonBuilder,
@@ -48,7 +49,11 @@ describe('Modals', () => {
 
 	test('GIVEN valid fields THEN builder does not throw', () => {
 		expect(() =>
-			modal().setTitle('test').setCustomId('foobar').setComponents([new ActionRowBuilder()]),
+			modal()
+				.setTitle('test')
+				.setCustomId('foobar')
+				.setComponents(new ActionRowBuilder())
+				.addComponents([new ActionRowBuilder()]),
 		).not.toThrowError();
 	});
 
@@ -74,6 +79,17 @@ describe('Modals', () => {
 						},
 					],
 				},
+				{
+					type: ComponentType.ActionRow,
+					components: [
+						{
+							type: ComponentType.TextInput,
+							label: 'label',
+							style: TextInputStyle.Paragraph,
+							custom_id: 'custom id',
+						},
+					],
+				},
 			],
 		};
 
@@ -83,10 +99,15 @@ describe('Modals', () => {
 			modal()
 				.setTitle(modalData.title)
 				.setCustomId('custom id')
-				.setComponents([
-					new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents([
+				.setComponents(
+					new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
 						new TextInputBuilder().setCustomId('custom id').setLabel('label').setStyle(TextInputStyle.Paragraph),
-					]),
+					),
+				)
+				.addComponents([
+					new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
+						new TextInputBuilder().setCustomId('custom id').setLabel('label').setStyle(TextInputStyle.Paragraph),
+					),
 				])
 				.toJSON(),
 		).toEqual(modalData);

@@ -7,7 +7,7 @@ const { makeURLSearchParams } = require('@discordjs/rest');
 const { DiscordSnowflake } = require('@sapphire/snowflake');
 const { Routes, GatewayOpcodes } = require('discord-api-types/v10');
 const CachedManager = require('./CachedManager');
-const { Error, TypeError, RangeError } = require('../errors');
+const { Error, TypeError, RangeError, ErrorCodes } = require('../errors');
 const BaseGuildVoiceChannel = require('../structures/BaseGuildVoiceChannel');
 const { GuildMember } = require('../structures/GuildMember');
 const { Role } = require('../structures/Role');
@@ -93,7 +93,7 @@ class GuildMemberManager extends CachedManager {
    */
   async add(user, options) {
     const userId = this.client.users.resolveId(user);
-    if (!userId) throw new TypeError('INVALID_TYPE', 'user', 'UserResolvable');
+    if (!userId) throw new TypeError(ErrorCodes.InvalidType, 'user', 'UserResolvable');
     if (!options.force) {
       const cachedUser = this.cache.get(userId);
       if (cachedUser) return cachedUser;
@@ -106,12 +106,19 @@ class GuildMemberManager extends CachedManager {
     };
     if (options.roles) {
       if (!Array.isArray(options.roles) && !(options.roles instanceof Collection)) {
-        throw new TypeError('INVALID_TYPE', 'options.roles', 'Array or Collection of Roles or Snowflakes', true);
+        throw new TypeError(
+          ErrorCodes.InvalidType,
+          'options.roles',
+          'Array or Collection of Roles or Snowflakes',
+          true,
+        );
       }
       const resolvedRoles = [];
       for (const role of options.roles.values()) {
         const resolvedRole = this.guild.roles.resolveId(role);
-        if (!resolvedRole) throw new TypeError('INVALID_ELEMENT', 'Array or Collection', 'options.roles', role);
+        if (!resolvedRole) {
+          throw new TypeError(ErrorCodes.InvalidElement, 'Array or Collection', 'options.roles', role);
+        }
         resolvedRoles.push(resolvedRole);
       }
       resolvedOptions.roles = resolvedRoles;
@@ -207,6 +214,15 @@ class GuildMemberManager extends CachedManager {
   }
 
   /**
+   * Fetches the client user as a GuildMember of the guild.
+   * @param {BaseFetchOptions} [options] The options for fetching the member
+   * @returns {Promise<GuildMember>}
+   */
+  fetchMe(options) {
+    return this.fetch({ ...options, user: this.client.user.id });
+  }
+
+  /**
    * Options used for searching guild members.
    * @typedef {Object} GuildSearchMembersOptions
    * @property {string} query Filter members whose username or nickname start with this query
@@ -256,6 +272,7 @@ class GuildMemberManager extends CachedManager {
    * (if they are connected to voice), or `null` if you want to disconnect them from voice
    * @property {DateResolvable|null} [communicationDisabledUntil] The date or timestamp
    * for the member's communication to be disabled until. Provide `null` to enable communication again.
+   * @property {string} [reason] Reason for editing this user
    */
 
   /**
@@ -263,33 +280,30 @@ class GuildMemberManager extends CachedManager {
    * <info>The user must be a member of the guild</info>
    * @param {UserResolvable} user The member to edit
    * @param {GuildMemberEditData} data The data to edit the member with
-   * @param {string} [reason] Reason for editing this user
    * @returns {Promise<GuildMember>}
    */
-  async edit(user, data, reason) {
+  async edit(user, { reason, ...data }) {
     const id = this.client.users.resolveId(user);
-    if (!id) throw new TypeError('INVALID_TYPE', 'user', 'UserResolvable');
+    if (!id) throw new TypeError(ErrorCodes.InvalidType, 'user', 'UserResolvable');
 
-    // Clone the data object for immutability
-    const _data = { ...data };
-    if (_data.channel) {
-      _data.channel = this.guild.channels.resolve(_data.channel);
-      if (!(_data.channel instanceof BaseGuildVoiceChannel)) {
-        throw new Error('GUILD_VOICE_CHANNEL_RESOLVE');
+    if (data.channel) {
+      data.channel = this.guild.channels.resolve(data.channel);
+      if (!(data.channel instanceof BaseGuildVoiceChannel)) {
+        throw new Error(ErrorCodes.GuildVoiceChannelResolve);
       }
-      _data.channel_id = _data.channel.id;
-      _data.channel = undefined;
-    } else if (_data.channel === null) {
-      _data.channel_id = null;
-      _data.channel = undefined;
+      data.channel_id = data.channel.id;
+      data.channel = undefined;
+    } else if (data.channel === null) {
+      data.channel_id = null;
+      data.channel = undefined;
     }
-    _data.roles &&= _data.roles.map(role => (role instanceof Role ? role.id : role));
+    data.roles &&= data.roles.map(role => (role instanceof Role ? role.id : role));
 
-    _data.communication_disabled_until =
+    data.communication_disabled_until =
       // eslint-disable-next-line eqeqeq
-      _data.communicationDisabledUntil != null
-        ? new Date(_data.communicationDisabledUntil).toISOString()
-        : _data.communicationDisabledUntil;
+      data.communicationDisabledUntil != null
+        ? new Date(data.communicationDisabledUntil).toISOString()
+        : data.communicationDisabledUntil;
 
     let endpoint;
     if (id === this.client.user.id) {
@@ -299,7 +313,7 @@ class GuildMemberManager extends CachedManager {
     } else {
       endpoint = Routes.guildMember(this.guild.id, id);
     }
-    const d = await this.client.rest.patch(endpoint, { body: _data, reason });
+    const d = await this.client.rest.patch(endpoint, { body: data, reason });
 
     const clone = this.cache.get(id)?._clone();
     clone?._patch(d);
@@ -339,7 +353,7 @@ class GuildMemberManager extends CachedManager {
    *    .catch(console.error);
    */
   async prune({ days, dry = false, count: compute_prune_count, roles = [], reason } = {}) {
-    if (typeof days !== 'number') throw new TypeError('PRUNE_DAYS_TYPE');
+    if (typeof days !== 'number') throw new TypeError(ErrorCodes.PruneDaysType);
 
     const query = { days };
     const resolvedRoles = [];
@@ -347,7 +361,7 @@ class GuildMemberManager extends CachedManager {
     for (const role of roles) {
       const resolvedRole = this.guild.roles.resolveId(role);
       if (!resolvedRole) {
-        throw new TypeError('INVALID_ELEMENT', 'Array', 'options.roles', role);
+        throw new TypeError(ErrorCodes.InvalidElement, 'Array', 'options.roles', role);
       }
       resolvedRoles.push(resolvedRole);
     }
@@ -381,7 +395,7 @@ class GuildMemberManager extends CachedManager {
    */
   async kick(user, reason) {
     const id = this.client.users.resolveId(user);
-    if (!id) return Promise.reject(new TypeError('INVALID_TYPE', 'user', 'UserResolvable'));
+    if (!id) return Promise.reject(new TypeError(ErrorCodes.InvalidType, 'user', 'UserResolvable'));
 
     await this.client.rest.delete(Routes.guildMember(this.guild.id, id), { reason });
 
@@ -441,7 +455,7 @@ class GuildMemberManager extends CachedManager {
   } = {}) {
     return new Promise((resolve, reject) => {
       if (!query && !user_ids) query = '';
-      if (nonce.length > 32) throw new RangeError('MEMBER_FETCH_NONCE_LENGTH');
+      if (nonce.length > 32) throw new RangeError(ErrorCodes.MemberFetchNonceLength);
       this.guild.shard.send({
         op: GatewayOpcodes.RequestGuildMembers,
         d: {
@@ -474,7 +488,7 @@ class GuildMemberManager extends CachedManager {
       const timeout = setTimeout(() => {
         this.client.removeListener(Events.GuildMembersChunk, handler);
         this.client.decrementMaxListeners();
-        reject(new Error('GUILD_MEMBERS_TIMEOUT'));
+        reject(new Error(ErrorCodes.GuildMembersTimeout));
       }, time).unref();
       this.client.incrementMaxListeners();
       this.client.on(Events.GuildMembersChunk, handler);

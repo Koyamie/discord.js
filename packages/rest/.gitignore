@@ -18,15 +18,10 @@ pids
 dist/
 typings/
 docs/**/*
-!docs/index.yml
+!docs/index.json
 !docs/README.md
 
 # Miscellaneous
 .tmp/
 coverage/
 tsconfig.tsbuildinfo
-.turbo
-
-# Yarn files
-.yarn/install-state.gz
-.yarn/build-state.yml

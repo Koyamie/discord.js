@@ -4,10 +4,10 @@ const { Buffer } = require('node:buffer');
 const { isJSONEncodable } = require('@discordjs/builders');
 const { MessageFlags } = require('discord-api-types/v10');
 const ActionRowBuilder = require('./ActionRowBuilder');
-const { RangeError } = require('../errors');
+const { RangeError, ErrorCodes } = require('../errors');
 const DataResolver = require('../util/DataResolver');
 const MessageFlagsBitField = require('../util/MessageFlagsBitField');
-const Util = require('../util/Util');
+const { basename, cloneObject, verifyString } = require('../util/Util');
 
 /**
  * Represents a message to be sent to the API.
@@ -105,7 +105,7 @@ class MessagePayload {
     if (this.options.content === null) {
       content = '';
     } else if (typeof this.options.content !== 'undefined') {
-      content = Util.verifyString(this.options.content, RangeError, 'MESSAGE_CONTENT_TYPE', true);
+      content = verifyString(this.options.content, RangeError, ErrorCodes.MessageContentType, true);
     }
 
     return content;
@@ -128,7 +128,7 @@ class MessagePayload {
       nonce = this.options.nonce;
       // eslint-disable-next-line max-len
       if (typeof nonce === 'number' ? !Number.isInteger(nonce) : typeof nonce !== 'string') {
-        throw new RangeError('MESSAGE_NONCE_TYPE');
+        throw new RangeError(ErrorCodes.MessageNonceType);
       }
     }
 
@@ -164,7 +164,7 @@ class MessagePayload {
         : this.options.allowedMentions;
 
     if (allowedMentions) {
-      allowedMentions = Util.cloneObject(allowedMentions);
+      allowedMentions = cloneObject(allowedMentions);
       allowedMentions.replied_user = allowedMentions.repliedUser;
       delete allowedMentions.repliedUser;
     }
@@ -224,7 +224,8 @@ class MessagePayload {
 
   /**
    * Resolves a single file into an object sendable to the API.
-   * @param {BufferResolvable|Stream|FileOptions|Attachment} fileLike Something that could be resolved to a file
+   * @param {BufferResolvable|Stream|JSONEncodable<AttachmentPayload>} fileLike Something that could
+   * be resolved to a file
    * @returns {Promise<RawFile>}
    */
   static async resolveFile(fileLike) {
@@ -233,11 +234,11 @@ class MessagePayload {
 
     const findName = thing => {
       if (typeof thing === 'string') {
-        return Util.basename(thing);
+        return basename(thing);
       }
 
       if (thing.path) {
-        return Util.basename(thing.path);
+        return basename(thing.path);
       }
 
       return 'file.jpg';
@@ -278,7 +279,7 @@ module.exports = MessagePayload;
 
 /**
  * A target for a message.
- * @typedef {TextBasedChannel|User|GuildMember|Webhook|WebhookClient|Interaction|InteractionWebhook|
+ * @typedef {TextBasedChannels|User|GuildMember|Webhook|WebhookClient|Interaction|InteractionWebhook|
  * Message|MessageManager} MessageTarget
  */
 
