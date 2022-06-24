@@ -135,6 +135,11 @@ client.on('ready', async () => {
   const guildCommandFromGlobal = await client.application?.commands.fetch(guildCommandId, { guildId: testGuildId });
   const guildCommandFromGuild = await client.guilds.cache.get(testGuildId)?.commands.fetch(guildCommandId);
 
+  await client.application?.commands.edit(globalCommandId, { defaultMemberPermissions: null });
+  await globalCommand?.edit({ defaultMemberPermissions: null });
+  await globalCommand?.setDefaultMemberPermissions(null);
+  await guildCommandFromGlobal?.edit({ dmPermission: false });
+
   // @ts-expect-error
   await client.guilds.cache.get(testGuildId)?.commands.fetch(guildCommandId, { guildId: testGuildId });
 
@@ -835,6 +840,14 @@ declare const applicationCommandManager: ApplicationCommandManager;
   expectType<Promise<Collection<Snowflake, ApplicationCommand>>>(
     applicationCommandManager.set([applicationCommandData], '0'),
   );
+
+  applicationCommandManager.create({
+    name: 'yeet',
+    description: 'abc',
+    defaultMemberPermissions: 1n,
+    dmPermission: false,
+    type: 'CHAT_INPUT',
+  });
 }
 
 declare const applicationNonChoiceOptionData: ApplicationCommandOptionData & {
