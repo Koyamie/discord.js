@@ -9,8 +9,9 @@ const PermissionsBitField = require('../util/PermissionsBitField');
 /**
  * Represents an interaction.
  * @extends {Base}
+ * @abstract
  */
-class Interaction extends Base {
+class BaseInteraction extends Base {
   constructor(client, data) {
     super(client);
 
@@ -29,7 +30,7 @@ class Interaction extends Base {
     /**
      * The interaction's token
      * @type {string}
-     * @name Interaction#token
+     * @name BaseInteraction#token
      * @readonly
      */
     Object.defineProperty(this, 'token', { value: data.token });
@@ -249,4 +250,4 @@ class Interaction extends Base {
   }
 }
 
-module.exports = Interaction;
+module.exports = BaseInteraction;

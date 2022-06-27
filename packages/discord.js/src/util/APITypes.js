@@ -304,11 +304,6 @@
  */
 
 /**
- * @external ChannelType
- * @see {@link https://discord-api-types.dev/api/discord-api-types-v10/enum/ChannelType}
- */
-
-/**
  * @external PermissionFlagsBits
  * @see {@link https://discord-api-types.dev/api/discord-api-types-payloads/common#PermissionFlagsBits}
  */
@@ -341,6 +336,11 @@
 /**
  * @external TextInputStyle
  * @see {@link https://discord-api-types.dev/api/discord-api-types-v10/enum/TextInputStyle}
+ */
+
+/**
+ * @external ThreadAutoArchiveDuration
+ * @see {@link https://discord-api-types.dev/api/discord-api-types-v10/enum/ThreadAutoArchiveDuration}
  */
 
 /**

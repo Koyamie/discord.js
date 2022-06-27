@@ -159,11 +159,4 @@ const Messages = {
   [DjsErrorCodes.SweepFilterReturn]: 'The return value of the sweepFilter function was not false or a Function',
 };
 
-// Magic needed by WS
-Messages.AuthenticationFailed = Messages[DjsErrorCodes.AuthenticationFailed];
-Messages.InvalidShard = Messages[DjsErrorCodes.ShardingInvalid];
-Messages.ShardingRequired = Messages[DjsErrorCodes.ShardingRequired];
-Messages.InvalidIntents = Messages[DjsErrorCodes.InvalidIntents];
-Messages.DisallowedIntents = Messages[DjsErrorCodes.DisallowedIntents];
-
 module.exports = Messages;
