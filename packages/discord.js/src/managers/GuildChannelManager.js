@@ -199,8 +199,8 @@ class GuildChannelManager extends CachedManager {
   }
 
   /**
-   * The data for a guild channel.
-   * @typedef {Object} ChannelData
+   * Options used to edit a guild channel.
+   * @typedef {Object} GuildChannelEditOptions
    * @property {string} [name] The name of the channel
    * @property {ChannelType} [type] The type of the channel (only conversion between text and news is supported)
    * @property {number} [position] The position of the channel
@@ -224,7 +224,7 @@ class GuildChannelManager extends CachedManager {
   /**
    * Edits the channel.
    * @param {GuildChannelResolvable} channel The channel to edit
-   * @param {ChannelData} data The new data for the channel
+   * @param {GuildChannelEditOptions} data Options for editing the channel
    * @returns {Promise<GuildChannel>}
    * @example
    * // Edit a channel
@@ -253,7 +253,7 @@ class GuildChannelManager extends CachedManager {
           );
         }
       } else if (channel.parent) {
-        permission_overwrites = this.parent.permissionOverwrites.cache.map(o =>
+        permission_overwrites = channel.parent.permissionOverwrites.cache.map(o =>
           PermissionOverwrites.resolve(o, this.guild),
         );
       }
@@ -396,7 +396,7 @@ class GuildChannelManager extends CachedManager {
       id: this.client.channels.resolveId(r.channel),
       position: r.position,
       lock_permissions: r.lockPermissions,
-      parent_id: typeof r.parent !== 'undefined' ? this.channels.resolveId(r.parent) : undefined,
+      parent_id: typeof r.parent !== 'undefined' ? this.resolveId(r.parent) : undefined,
     }));
 
     await this.client.rest.patch(Routes.guildChannels(this.guild.id), { body: channelPositions });

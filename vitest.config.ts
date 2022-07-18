@@ -2,12 +2,19 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
 	test: {
-		exclude: ['**/node_modules', '**/dist', '.idea', '.git', '.cache', 'packages/discord.js', 'packages/voice'],
+		exclude: ['**/node_modules', '**/dist', '.idea', '.git', '.cache'],
 		passWithNoTests: true,
 		coverage: {
 			enabled: true,
-			reporter: ['text', 'lcov', 'clover'],
-			exclude: ['**/dist', '**/__tests__'],
+			all: true,
+			reporter: ['text', 'lcov', 'cobertura'],
+			include: ['src'],
+			exclude: [
+				// All ts files that only contain types, due to ALL
+				'**/*.{interface,type,d}.ts',
+				// All index files that *should* only contain exports from other files
+				'**/index.{js,ts}',
+			],
 		},
 	},
 });

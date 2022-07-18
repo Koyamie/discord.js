@@ -58,7 +58,7 @@ export class VoiceReceiver {
 	/**
 	 * Called when a packet is received on the attached connection's WebSocket.
 	 *
-	 * @param packet The received packet
+	 * @param packet - The received packet
 	 *
 	 * @internal
 	 */
@@ -118,10 +118,10 @@ export class VoiceReceiver {
 	/**
 	 * Parses an audio packet, decrypting it to yield an Opus packet.
 	 *
-	 * @param buffer The buffer to parse
-	 * @param mode The encryption mode
-	 * @param nonce The nonce buffer used by the connection for encryption
-	 * @param secretKey The secret key used by the connection for encryption
+	 * @param buffer - The buffer to parse
+	 * @param mode - The encryption mode
+	 * @param nonce - The nonce buffer used by the connection for encryption
+	 * @param secretKey - The secret key used by the connection for encryption
 	 *
 	 * @returns The parsed Opus packet
 	 */
@@ -130,20 +130,9 @@ export class VoiceReceiver {
 		if (!packet) return;
 
 		// Strip RTP Header Extensions (one-byte only)
-		if (packet[0] === 0xbe && packet[1] === 0xde && packet.length > 4) {
+		if (packet[0] === 0xbe && packet[1] === 0xde) {
 			const headerExtensionLength = packet.readUInt16BE(2);
-			let offset = 4;
-			for (let i = 0; i < headerExtensionLength; i++) {
-				const byte = packet[offset]!;
-				offset++;
-				if (byte === 0) continue;
-				offset += 1 + (byte >> 4);
-			}
-			// Skip over undocumented Discord byte (if present)
-			const byte = packet.readUInt8(offset);
-			if (byte === 0x00 || byte === 0x02) offset++;
-
-			packet = packet.slice(offset);
+			packet = packet.subarray(4 + 4 * headerExtensionLength);
 		}
 
 		return packet;
@@ -152,7 +141,7 @@ export class VoiceReceiver {
 	/**
 	 * Called when the UDP socket of the attached connection receives a message.
 	 *
-	 * @param msg The received message
+	 * @param msg - The received message
 	 *
 	 * @internal
 	 */
@@ -186,7 +175,7 @@ export class VoiceReceiver {
 	/**
 	 * Creates a subscription for the given user id.
 	 *
-	 * @param target The id of the user to subscribe to
+	 * @param target - The id of the user to subscribe to
 	 *
 	 * @returns A readable stream of Opus packets received from the target
 	 */

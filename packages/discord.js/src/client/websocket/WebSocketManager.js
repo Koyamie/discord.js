@@ -9,8 +9,8 @@ const WebSocketShard = require('./WebSocketShard');
 const PacketHandlers = require('./handlers');
 const { Error, ErrorCodes } = require('../../errors');
 const Events = require('../../util/Events');
-const ShardEvents = require('../../util/ShardEvents');
 const Status = require('../../util/Status');
+const WebSocketShardEvents = require('../../util/WebSocketShardEvents');
 
 const BeforeReadyWhitelist = [
   GatewayDispatchEvents.Ready,
@@ -36,7 +36,7 @@ const UNRESUMABLE_CLOSE_CODES = [1000, GatewayCloseCodes.AlreadyAuthenticated, G
  * The WebSocket manager for this client.
  * <info>This class forwards raw dispatch events,
  * read more about it here {@link https://discord.com/developers/docs/topics/gateway}</info>
- * @extends EventEmitter
+ * @extends {EventEmitter}
  */
 class WebSocketManager extends EventEmitter {
   constructor(client) {
@@ -185,7 +185,7 @@ class WebSocketManager extends EventEmitter {
     }
 
     if (!shard.eventsAttached) {
-      shard.on(ShardEvents.AllReady, unavailableGuilds => {
+      shard.on(WebSocketShardEvents.AllReady, unavailableGuilds => {
         /**
          * Emitted when a shard turns ready.
          * @event Client#shardReady
@@ -198,7 +198,7 @@ class WebSocketManager extends EventEmitter {
         this.checkShardsReady();
       });
 
-      shard.on(ShardEvents.Close, event => {
+      shard.on(WebSocketShardEvents.Close, event => {
         if (event.code === 1_000 ? this.destroyed : event.code in unrecoverableErrorCodeMap) {
           /**
            * Emitted when a shard's WebSocket disconnects and will no longer reconnect.
@@ -229,11 +229,11 @@ class WebSocketManager extends EventEmitter {
         this.reconnect();
       });
 
-      shard.on(ShardEvents.InvalidSession, () => {
+      shard.on(WebSocketShardEvents.InvalidSession, () => {
         this.client.emit(Events.ShardReconnecting, shard.id);
       });
 
-      shard.on(ShardEvents.Destroyed, () => {
+      shard.on(WebSocketShardEvents.Destroyed, () => {
         this.debug('Shard was destroyed but no WebSocket connection was present! Reconnecting...', shard);
 
         this.client.emit(Events.ShardReconnecting, shard.id);

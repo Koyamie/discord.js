@@ -9,6 +9,12 @@ import { SequentialHandler } from './handlers/SequentialHandler';
 import { DefaultRestOptions, DefaultUserAgent, RESTEvents } from './utils/constants';
 import { resolveBody } from './utils/utils';
 
+// Make this a lazy dynamic import as file-type is a pure ESM package
+const getFileType = (): Promise<typeof import('file-type')> => {
+	let cached: Promise<typeof import('file-type')>;
+	return (cached ??= import('file-type'));
+};
+
 /**
  * Represents a file to be added to the request
  */
@@ -27,6 +33,10 @@ export interface RawFile {
 	 * The actual data for the file
 	 */
 	data: string | number | boolean | Buffer;
+	/**
+	 * Content-Type of the file
+	 */
+	contentType?: string;
 }
 
 /**
@@ -39,11 +49,13 @@ export interface RequestData {
 	appendToFormData?: boolean;
 	/**
 	 * If this request needs the `Authorization` header
+	 *
 	 * @default true
 	 */
 	auth?: boolean;
 	/**
 	 * The authorization prefix to use for this request, useful if you use this with bearer tokens
+	 *
 	 * @default 'Bot'
 	 */
 	authPrefix?: 'Bot' | 'Bearer';
@@ -79,6 +91,7 @@ export interface RequestData {
 	reason?: string;
 	/**
 	 * If this request should be versioned
+	 *
 	 * @default true
 	 */
 	versioned?: boolean;
@@ -273,7 +286,8 @@ export class RequestManager extends EventEmitter {
 
 	/**
 	 * Sets the default agent to use for requests performed by this manager
-	 * @param agent The agent to use
+	 *
+	 * @param agent - The agent to use
 	 */
 	public setAgent(agent: Dispatcher) {
 		this.agent = agent;
@@ -282,7 +296,8 @@ export class RequestManager extends EventEmitter {
 
 	/**
 	 * Sets the authorization token that should be used for requests
-	 * @param token The authorization token to use
+	 *
+	 * @param token - The authorization token to use
 	 */
 	public setToken(token: string) {
 		this.#token = token;
@@ -291,7 +306,9 @@ export class RequestManager extends EventEmitter {
 
 	/**
 	 * Queues a request to be sent
-	 * @param request All the information needed to make a request
+	 *
+	 * @param request - All the information needed to make a request
+	 *
 	 * @returns The response from the api request
 	 */
 	public async queueRequest(request: InternalRequest): Promise<Dispatcher.ResponseData> {
@@ -321,8 +338,10 @@ export class RequestManager extends EventEmitter {
 
 	/**
 	 * Creates a new rate limit handler from a hash, based on the hash and the major parameter
-	 * @param hash The hash for the route
-	 * @param majorParameter The major parameter for this handler
+	 *
+	 * @param hash - The hash for the route
+	 * @param majorParameter - The major parameter for this handler
+	 *
 	 * @private
 	 */
 	private createHandler(hash: string, majorParameter: string) {
@@ -336,7 +355,8 @@ export class RequestManager extends EventEmitter {
 
 	/**
 	 * Formats the request data to a usable format for fetch
-	 * @param request The request data
+	 *
+	 * @param request - The request data
 	 */
 	private async resolveRequest(request: InternalRequest): Promise<{ url: string; fetchOptions: RequestOptions }> {
 		const { options } = this;
@@ -391,11 +411,14 @@ export class RequestManager extends EventEmitter {
 				// FormData.append only accepts a string or Blob.
 				// https://developer.mozilla.org/en-US/docs/Web/API/Blob/Blob#parameters
 				// The Blob constructor accepts TypedArray/ArrayBuffer, strings, and Blobs.
-				if (Buffer.isBuffer(file.data) || typeof file.data === 'string') {
-					formData.append(fileKey, new Blob([file.data]), file.name);
+				if (Buffer.isBuffer(file.data)) {
+					// Try to infer the content type from the buffer if one isn't passed
+					const { fileTypeFromBuffer } = await getFileType();
+					const contentType = file.contentType ?? (await fileTypeFromBuffer(file.data))?.mime;
+					formData.append(fileKey, new Blob([file.data], { type: contentType }), file.name);
 				} else {
 					// eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-					formData.append(fileKey, new Blob([`${file.data}`]), file.name);
+					formData.append(fileKey, new Blob([`${file.data}`], { type: file.contentType }), file.name);
 				}
 			}
 
@@ -460,8 +483,10 @@ export class RequestManager extends EventEmitter {
 
 	/**
 	 * Generates route data for an endpoint:method
-	 * @param endpoint The raw endpoint to generalize
-	 * @param method The HTTP method this endpoint is called without
+	 *
+	 * @param endpoint - The raw endpoint to generalize
+	 * @param method - The HTTP method this endpoint is called without
+	 *
 	 * @private
 	 */
 	private static generateRouteData(endpoint: RouteLike, method: RequestMethod): RouteData {

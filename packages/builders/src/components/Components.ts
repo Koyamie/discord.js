@@ -1,6 +1,14 @@
 import { APIMessageComponent, APIModalComponent, ComponentType } from 'discord-api-types/v10';
-import type { AnyComponentBuilder, MessageComponentBuilder, ModalComponentBuilder } from './ActionRow';
-import { ActionRowBuilder, ButtonBuilder, ComponentBuilder, SelectMenuBuilder, TextInputBuilder } from '../index';
+import {
+	ActionRowBuilder,
+	type AnyComponentBuilder,
+	type MessageComponentBuilder,
+	type ModalComponentBuilder,
+} from './ActionRow';
+import { ComponentBuilder } from './Component';
+import { ButtonBuilder } from './button/Button';
+import { SelectMenuBuilder } from './selectMenu/SelectMenu';
+import { TextInputBuilder } from './textInput/TextInput';
 
 export interface MappedComponentTypes {
 	[ComponentType.ActionRow]: ActionRowBuilder<AnyComponentBuilder>;
@@ -11,7 +19,8 @@ export interface MappedComponentTypes {
 
 /**
  * Factory for creating components from API data
- * @param data The api data to transform to a component class
+ *
+ * @param data - The api data to transform to a component class
  */
 export function createComponentBuilder<T extends keyof MappedComponentTypes>(
 	data: (APIMessageComponent | APIModalComponent) & { type: T },
