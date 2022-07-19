@@ -15,20 +15,14 @@ jobs:
           cache: 'yarn'
           cache-dependency-path: yarn.lock
 
-      - name: Turbo cache
-        id: turbo-cache
-        uses: actions/cache@v3
-        with:
-          path: .turbo
-          key: turbo-${{ github.job }}-${{ github.ref_name }}-${{ github.sha }}
-          restore-keys: |
-            turbo-${{ github.job }}-${{ github.ref_name }}-
-
       - name: Install dependencies
         run: yarn --immutable
 
+      - name: Build dependencies
+        run: yarn build
+
       - name: ESLint
-        run: yarn lint --cache-dir=".turbo"
+        run: yarn lint
 
       - name: Tests
         run: yarn test
@@ -36,6 +30,3 @@ jobs:
       - name: Upload Coverage
         uses: ./packages/actions/src/uploadCoverage
         if: github.repository_owner == 'discordjs'
-
-      - name: Build
-        run: yarn build --cache-dir=".turbo"
