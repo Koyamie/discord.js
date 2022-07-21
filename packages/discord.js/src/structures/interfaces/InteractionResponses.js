@@ -206,8 +206,6 @@ class InteractionResponses {
    *   .catch(console.error);
    */
   async update(options) {
-    if (this.deferred || this.replied) throw new Error('INTERACTION_ALREADY_REPLIED');
-
     let messagePayload;
     if (options instanceof MessagePayload) messagePayload = options;
     else messagePayload = MessagePayload.create(this, options);
