@@ -548,6 +548,6 @@ class ThreadChannel extends Channel {
   // Doesn't work on Thread channels; setNSFW() {}
 }
 
-TextBasedChannel.applyToClass(ThreadChannel, true, ['setRateLimitPerUser', 'setNSFW']);
+TextBasedChannel.applyToClass(ThreadChannel, true, ['fetchWebhooks', 'setRateLimitPerUser', 'setNSFW']);
 
 module.exports = ThreadChannel;
