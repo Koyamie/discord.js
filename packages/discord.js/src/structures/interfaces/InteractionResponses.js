@@ -279,7 +279,6 @@ class InteractionResponses {
 
   static applyToClass(structure, ignore = []) {
     const props = [
-      'pong',
       'deferReply',
       'reply',
       'fetchReply',
