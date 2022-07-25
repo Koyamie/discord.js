@@ -36,6 +36,7 @@ class ActionsManager {
     this.register(require('./InviteCreate'));
     this.register(require('./InviteDelete'));
     this.register(require('./MessageCreate'));
+    this.register(require('./MessageCreateRaw'));
     this.register(require('./MessageDelete'));
     this.register(require('./MessageDeleteBulk'));
     this.register(require('./MessageReactionAdd'));

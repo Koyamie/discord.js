@@ -2,4 +2,5 @@
 
 module.exports = (client, packet) => {
   client.actions.MessageCreate.handle(packet.d);
+  client.actions.MessageCreateRaw.handle(packet.d);
 };
