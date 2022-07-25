@@ -41,6 +41,23 @@ class InteractionResponses {
    */
 
   /**
+   * ACK a Ping.
+   * @returns {void}
+   */
+  async pong() {
+    if (this.deferred || this.replied) throw new Error('INTERACTION_ALREADY_REPLIED');
+    await this.client.api.interactions(this.id, this.token).callback.post({
+      data: {
+        type: InteractionResponseTypes.PONG,
+      },
+      auth: false,
+    });
+    this.replied = true;
+
+    return undefined;
+  }
+
+  /**
    * Defers the reply to this interaction.
    * @param {InteractionDeferReplyOptions} [options] Options for deferring the reply to this interaction
    * @returns {Promise<Message|APIMessage|void>}
