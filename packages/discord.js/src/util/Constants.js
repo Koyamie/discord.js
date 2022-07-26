@@ -193,7 +193,6 @@ exports.Opcodes = {
  * * CHANNEL_UPDATE: channelUpdate
  * * CHANNEL_PINS_UPDATE: channelPinsUpdate
  * * MESSAGE_CREATE: messageCreate
- * * MESSAGE_CREATE_RAW: messageCreateRaw
  * * MESSAGE_DELETE: messageDelete
  * * MESSAGE_UPDATE: messageUpdate
  * * MESSAGE_BULK_DELETE: messageDeleteBulk
@@ -269,7 +268,6 @@ exports.Events = {
   CHANNEL_UPDATE: 'channelUpdate',
   CHANNEL_PINS_UPDATE: 'channelPinsUpdate',
   MESSAGE_CREATE: 'messageCreate',
-  MESSAGE_CREATE_RAW: 'messageCreateRaw',
   MESSAGE_DELETE: 'messageDelete',
   MESSAGE_UPDATE: 'messageUpdate',
   MESSAGE_BULK_DELETE: 'messageDeleteBulk',
