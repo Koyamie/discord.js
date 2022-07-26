@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import type { TokenDocumentation } from '~/util/parse.server';
 
 export interface HyperlinkedTextProps {
@@ -17,13 +18,17 @@ export function HyperlinkedText({ tokens }: HyperlinkedTextProps) {
 			{tokens.map((token) => {
 				if (token.path) {
 					return (
-						<a key={token.text} href={token.path}>
-							{token.text}
-						</a>
+						<Link key={token.text} href={token.path}>
+							<a className="text-blue-500 dark:text-blue-300">{token.text}</a>
+						</Link>
 					);
 				}
 
-				return token.text;
+				return (
+					<span key={token.text} className="text-blue-500 dark:text-blue-300">
+						{token.text}
+					</span>
+				);
 			})}
 		</>
 	);
