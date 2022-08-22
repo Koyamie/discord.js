@@ -1,31 +1,27 @@
+import { Box, ScrollArea } from '@mantine/core';
 import { HyperlinkedText } from './HyperlinkedText';
 import { Table } from './Table';
+import { TSDoc } from './tsdoc/TSDoc';
 import type { ParameterDocumentation } from '~/util/parse.server';
 
-interface ParameterDetailProps {
-	data: ParameterDocumentation[];
-	className?: string | undefined;
-}
-
-export function ParameterTable({ data, className }: ParameterDetailProps) {
+export function ParameterTable({ data }: { data: ParameterDocumentation[] }) {
 	const rows = data.map((param) => ({
 		Name: param.name,
 		Type: <HyperlinkedText tokens={param.tokens} />,
 		Optional: param.isOptional ? 'Yes' : 'No',
-		Description: 'None',
+		Description: param.paramCommentBlock ? <TSDoc node={param.paramCommentBlock} /> : 'None',
 	}));
 
 	const columnStyles = {
-		Name: 'font-mono',
-		Type: 'font-mono',
+		Name: 'font-mono whitespace-nowrap',
+		Type: 'font-mono whitespace-pre-wrap break-normal',
 	};
 
 	return (
-		<Table
-			className={className}
-			columns={['Name', 'Type', 'Optional', 'Description']}
-			rows={rows}
-			columnStyles={columnStyles}
-		/>
+		<Box>
+			<ScrollArea type="auto">
+				<Table columns={['Name', 'Type', 'Optional', 'Description']} rows={rows} columnStyles={columnStyles} />
+			</ScrollArea>
+		</Box>
 	);
 }

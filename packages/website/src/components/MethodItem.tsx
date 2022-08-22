@@ -1,51 +1,62 @@
-import { FiLink } from 'react-icons/fi';
+import { Badge, Group, Stack, Title } from '@mantine/core';
 import { HyperlinkedText } from './HyperlinkedText';
+import { InheritanceText } from './InheritanceText';
 import { ParameterTable } from './ParameterTable';
-import type { DocMethod } from '~/DocModel/DocMethod';
-import type { DocMethodSignature } from '~/DocModel/DocMethodSignature';
+import { TSDoc } from './tsdoc/TSDoc';
+import type { ApiMethodJSON, ApiMethodSignatureJSON } from '~/DocModel/ApiNodeJSONEncoder';
+import { Visibility } from '~/DocModel/Visibility';
 
-type MethodResolvable = ReturnType<DocMethod['toJSON']> | ReturnType<DocMethodSignature['toJSON']>;
-
-export interface MethodItemProps {
-	data: MethodResolvable;
-}
+type MethodResolvable = ApiMethodJSON | ApiMethodSignatureJSON;
 
 function getShorthandName(data: MethodResolvable) {
-	return `${data.name}(${data.parameters.reduce((prev, cur, index) => {
+	return `${data.name}${data.optional ? '?' : ''}(${data.parameters.reduce((prev, cur, index) => {
 		if (index === 0) {
-			return `${prev}${cur.name}`;
+			return `${prev}${cur.isOptional ? `${cur.name}?` : cur.name}`;
 		}
 
-		return `${prev}, ${cur.name}`;
+		return `${prev}, ${cur.isOptional ? `${cur.name}?` : cur.name}`;
 	}, '')})`;
 }
 
-function onAnchorClick() {
-	console.log('anchor clicked');
-	// Todo implement jump-to links
-}
+export function MethodItem({ data }: { data: MethodResolvable }) {
+	const method = data as ApiMethodJSON;
 
-export function MethodItem({ data }: MethodItemProps) {
 	return (
-		<div className="flex flex-col">
-			<div className="flex">
-				<button className="bg-transparent border-none cursor-pointer dark:text-white" onClick={onAnchorClick}>
-					<FiLink size={16} />
-				</button>
-				<div className="flex flex-col">
-					<div className="w-full flex flex-row gap-3">
-						<h4 className="font-mono m-0 break-all">{`${getShorthandName(data)}`}</h4>
-						<h4 className="m-0">:</h4>
-						<h4 className="font-mono m-0 break-all">
+		<Stack
+			id={`${data.name}${data.overloadIndex && data.overloadIndex > 1 ? `:${data.overloadIndex}` : ''}`}
+			className="scroll-mt-30"
+			spacing="xs"
+		>
+			<Group>
+				<Stack>
+					<Group>
+						{data.deprecated ? (
+							<Badge variant="filled" color="red">
+								Deprecated
+							</Badge>
+						) : null}
+						{data.kind === 'Method' && method.visibility === Visibility.Protected ? (
+							<Badge variant="filled">Protected</Badge>
+						) : null}
+						{data.kind === 'Method' && method.static ? <Badge variant="filled">Static</Badge> : null}
+						<Title sx={{ wordBreak: 'break-all' }} order={4} className="font-mono">{`${getShorthandName(data)}`}</Title>
+						<Title order={4}>:</Title>
+						<Title sx={{ wordBreak: 'break-all' }} order={4} className="font-mono">
 							<HyperlinkedText tokens={data.returnTypeTokens} />
-						</h4>
-					</div>
-				</div>
-			</div>
-			<div className="mx-7 mb-5">
-				{data.summary && <p className="text-dark-100 dark:text-gray-300">{data.summary}</p>}
-				{data.parameters.length ? <ParameterTable data={data.parameters} /> : null}
-			</div>
-		</div>
+						</Title>
+					</Group>
+				</Stack>
+			</Group>
+			<Group sx={{ display: data.summary || data.parameters.length ? 'block' : 'none' }} mb="lg">
+				<Stack>
+					{data.deprecated ? <TSDoc node={data.deprecated} /> : null}
+					{data.summary ? <TSDoc node={data.summary} /> : null}
+					{data.remarks ? <TSDoc node={data.remarks} /> : null}
+					{data.comment ? <TSDoc node={data.comment} /> : null}
+					{data.parameters.length ? <ParameterTable data={data.parameters} /> : null}
+					{data.inheritanceData ? <InheritanceText data={data.inheritanceData} /> : null}
+				</Stack>
+			</Group>
+		</Stack>
 	);
 }

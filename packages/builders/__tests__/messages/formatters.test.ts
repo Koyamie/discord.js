@@ -3,6 +3,7 @@ import { describe, test, expect, vitest } from 'vitest';
 import {
 	blockQuote,
 	bold,
+	channelLink,
 	channelMention,
 	codeBlock,
 	Faces,
@@ -11,6 +12,7 @@ import {
 	hyperlink,
 	inlineCode,
 	italic,
+	messageLink,
 	quote,
 	roleMention,
 	spoiler,
@@ -24,11 +26,11 @@ import {
 describe('Message formatters', () => {
 	describe('codeBlock', () => {
 		test('GIVEN "discord.js" with no language THEN returns "```\\ndiscord.js```"', () => {
-			expect<'```\ndiscord.js```'>(codeBlock('discord.js')).toEqual('```\ndiscord.js```');
+			expect<'```\ndiscord.js\n```'>(codeBlock('discord.js')).toEqual('```\ndiscord.js\n```');
 		});
 
 		test('GIVEN "discord.js" with "js" as language THEN returns "```js\\ndiscord.js```"', () => {
-			expect<'```js\ndiscord.js```'>(codeBlock('js', 'discord.js')).toEqual('```js\ndiscord.js```');
+			expect<'```js\ndiscord.js\n```'>(codeBlock('js', 'discord.js')).toEqual('```js\ndiscord.js\n```');
 		});
 	});
 
@@ -147,6 +149,34 @@ describe('Message formatters', () => {
 
 		test('GIVEN animated emojiId THEN returns "<a:_:${emojiId}>"', () => {
 			expect<`<a:_:827220205352255549>`>(formatEmoji('827220205352255549', true)).toEqual('<a:_:827220205352255549>');
+		});
+	});
+
+	describe('channelLink', () => {
+		test('GIVEN channelId THEN returns "https://discord.com/channels/@me/${channelId}"', () => {
+			expect<'https://discord.com/channels/@me/123456789012345678'>(channelLink('123456789012345678')).toEqual(
+				'https://discord.com/channels/@me/123456789012345678',
+			);
+		});
+
+		test('GIVEN channelId WITH guildId THEN returns "https://discord.com/channels/${guildId}/${channelId}"', () => {
+			expect<'https://discord.com/channels/987654321987654/123456789012345678'>(
+				channelLink('123456789012345678', '987654321987654'),
+			).toEqual('https://discord.com/channels/987654321987654/123456789012345678');
+		});
+	});
+
+	describe('messageLink', () => {
+		test('GIVEN channelId AND messageId THEN returns "https://discord.com/channels/@me/${channelId}/${messageId}"', () => {
+			expect<'https://discord.com/channels/@me/123456789012345678/102938475657483'>(
+				messageLink('123456789012345678', '102938475657483'),
+			).toEqual('https://discord.com/channels/@me/123456789012345678/102938475657483');
+		});
+
+		test('GIVEN channelId AND messageId WITH guildId THEN returns "https://discord.com/channels/${guildId}/${channelId}/${messageId}"', () => {
+			expect<'https://discord.com/channels/987654321987654/123456789012345678/102938475657483'>(
+				messageLink('123456789012345678', '102938475657483', '987654321987654'),
+			).toEqual('https://discord.com/channels/987654321987654/123456789012345678/102938475657483');
 		});
 	});
 

@@ -10,10 +10,12 @@ import {
 	type ApiPropertyItem,
 	type ExcerptToken,
 	type Parameter,
-	type TypeParameter,
+	ApiFunction,
 } from '@microsoft/api-extractor-model';
 import type { DocNode, DocParagraph, DocPlainText } from '@microsoft/tsdoc';
 import { Meaning, ModuleSource } from '@microsoft/tsdoc/lib-commonjs/beta/DeclarationReference';
+import { createCommentNode } from '~/DocModel/comment';
+import type { DocBlockJSON } from '~/DocModel/comment/CommentBlock';
 
 export function findPackage(model: ApiModel, name: string): ApiPackage | undefined {
 	return (model.findMembersByName(name)[0] ?? model.findMembersByName(`@discordjs/${name}`)[0]) as
@@ -21,8 +23,8 @@ export function findPackage(model: ApiModel, name: string): ApiPackage | undefin
 		| undefined;
 }
 
-function generatePath(items: readonly ApiItem[]) {
-	let path = '/docs/main/packages/';
+export function generatePath(items: readonly ApiItem[]) {
+	let path = '/docs/packages';
 	for (const item of items) {
 		switch (item.kind) {
 			case ApiItemKind.Model:
@@ -30,14 +32,28 @@ function generatePath(items: readonly ApiItem[]) {
 			case ApiItemKind.EnumMember:
 				break;
 			case ApiItemKind.Package:
-				path += `${item.displayName}/`;
+				path += `/${item.displayName}`;
+				break;
+			case ApiItemKind.Function:
+				// eslint-disable-next-line no-case-declarations
+				const functionItem = item as ApiFunction;
+				path += `/${functionItem.displayName}${
+					functionItem.overloadIndex && functionItem.overloadIndex > 1 ? `:${functionItem.overloadIndex}` : ''
+				}`;
+				break;
+			case ApiItemKind.Property:
+			case ApiItemKind.Method:
+			case ApiItemKind.MethodSignature:
+			case ApiItemKind.PropertySignature:
+				// TODO: Take overloads into account
+				path += `#${item.displayName}`;
 				break;
 			default:
-				path += `${item.displayName}/`;
+				path += `/${item.displayName}`;
 		}
 	}
 
-	return path.replace(/@discordjs\//, '');
+	return path.replace(/@discordjs\/(.*)\/(.*)?/, '$1/main/$2');
 }
 
 export function resolveDocComment(item: ApiDocumentedItem) {
@@ -134,6 +150,7 @@ export interface ParameterDocumentation {
 	name: string;
 	isOptional: boolean;
 	tokens: TokenDocumentation[];
+	paramCommentBlock: DocBlockJSON | null;
 }
 
 function createDapiTypesURL(meaning: Meaning, name: string) {
@@ -189,32 +206,16 @@ export function genParameter(model: ApiModel, param: Parameter): ParameterDocume
 		name: param.name,
 		isOptional: param.isOptional,
 		tokens: param.parameterTypeExcerpt.spannedTokens.map((token) => genToken(model, token)),
+		paramCommentBlock: param.tsdocParamBlock ? (createCommentNode(param.tsdocParamBlock, model) as DocBlockJSON) : null,
 	};
 }
 
 export function getMembers(pkg: ApiPackage) {
 	return pkg.members[0]!.members.map((member) => ({
 		name: member.displayName,
-		kind: member.kind,
+		kind: member.kind as string,
 		path: generatePath(member.getHierarchy()),
+		containerKey: member.containerKey,
+		overloadIndex: member.kind === 'Function' ? (member as ApiFunction).overloadIndex : null,
 	}));
-}
-
-export interface TypeParameterData {
-	name: string;
-	constraintTokens: TokenDocumentation[];
-	defaultTokens: TokenDocumentation[];
-	optional: boolean;
-}
-
-export function generateTypeParamData(model: ApiModel, typeParam: TypeParameter): TypeParameterData {
-	const constraintTokens = typeParam.constraintExcerpt.spannedTokens.map((token) => genToken(model, token));
-	const defaultTokens = typeParam.defaultTypeExcerpt.spannedTokens.map((token) => genToken(model, token));
-
-	return {
-		name: typeParam.name,
-		constraintTokens,
-		defaultTokens,
-		optional: typeParam.isOptional,
-	};
 }

@@ -1,52 +1,66 @@
-import { AnimatePresence, motion } from 'framer-motion';
+import { createStyles, UnstyledButton, Group, ThemeIcon, Collapse, Box, Text } from '@mantine/core';
 import { type ReactNode, useState } from 'react';
-import { VscChevronDown, VscChevronRight } from 'react-icons/vsc';
-import { Separator } from './Seperator';
+import { VscChevronDown } from 'react-icons/vsc';
 
-export interface SectionProps {
-	children: ReactNode;
+const useStyles = createStyles((theme, { opened }: { opened: boolean }) => ({
+	control: {
+		display: 'block',
+		width: '100%',
+		padding: theme.spacing.xs,
+		color: theme.colorScheme === 'dark' ? theme.colors.dark![0] : theme.black,
+
+		'&:hover': {
+			backgroundColor: theme.colorScheme === 'dark' ? theme.colors.dark![6] : theme.colors.gray![0],
+			color: theme.colorScheme === 'dark' ? theme.white : theme.black,
+		},
+	},
+
+	icon: {
+		transition: 'transform 150ms ease',
+		transform: opened ? 'rotate(180deg)' : 'rotate(0deg)',
+	},
+}));
+
+export function Section({
+	title,
+	icon,
+	padded = false,
+	dense = false,
+	defaultClosed = false,
+	children,
+}: {
 	title: string;
-	className?: string | undefined;
+	icon?: JSX.Element;
+	padded?: boolean;
+	dense?: boolean;
 	defaultClosed?: boolean;
-}
-
-export function Section({ title, children, className, defaultClosed }: SectionProps) {
-	const [collapsed, setCollapsed] = useState(defaultClosed ?? false);
+	children: ReactNode;
+}) {
+	const [opened, setOpened] = useState(!defaultClosed);
+	const { classes } = useStyles({ opened });
 
 	return (
-		<div className={className}>
-			<AnimatePresence initial={false}>
-				<h3 className="flex gap-2 whitespace-pre-wrap font-semibold dark:text-white">
-					<div onClick={() => setCollapsed(!collapsed)}>
-						{collapsed ? <VscChevronRight size={20} /> : <VscChevronDown size={20} />}
-					</div>
-					{title}
-				</h3>
-				{collapsed ? null : (
-					<>
-						<motion.div
-							transition={{ duration: 0.5, ease: [0.04, 0.62, 0.23, 0.98] }}
-							key="content"
-							initial="collapsed"
-							animate="open"
-							exit="collapsed"
-							variants={{
-								open: {
-									opacity: 1,
-									height: 'auto',
-									paddingLeft: '1.75rem',
-									paddingRight: '1.75rem',
-									paddingBottom: '2.5rem',
-								},
-								collapsed: { opacity: 0, height: 0, paddingLeft: '1.75rem', paddingRight: '1.75rem', paddingBottom: 0 },
-							}}
-						>
-							{children}
-						</motion.div>
-						<Separator />
-					</>
+		<Box sx={{ wordBreak: 'break-all' }}>
+			<UnstyledButton className={classes.control} onClick={() => setOpened((o) => !o)}>
+				<Group position="apart">
+					<Group>
+						{icon ? <ThemeIcon size={30}>{icon}</ThemeIcon> : null}
+						<Text weight={600} size="md">
+							{title}
+						</Text>
+					</Group>
+					<VscChevronDown size={20} className={classes.icon} />
+				</Group>
+			</UnstyledButton>
+			<Collapse in={opened}>
+				{padded ? (
+					<Box py={20} px={dense ? 0 : 31} mx={dense ? 10 : 25}>
+						{children}
+					</Box>
+				) : (
+					children
 				)}
-			</AnimatePresence>
-		</div>
+			</Collapse>
+		</Box>
 	);
 }
