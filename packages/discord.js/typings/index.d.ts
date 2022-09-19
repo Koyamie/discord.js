@@ -9,7 +9,6 @@ import {
   hyperlink,
   inlineCode,
   italic,
-  JSONEncodable,
   quote,
   roleMention,
   SlashCommandBuilder,
@@ -24,14 +23,11 @@ import {
 import { Collection } from '@discordjs/collection';
 import {
   APIActionRowComponent,
-  APIActionRowComponentTypes,
-  APIApplicationCommand,
   APIApplicationCommandInteractionData,
   APIApplicationCommandOption,
   APIApplicationCommandPermission,
   APIAuditLogChange,
   APIButtonComponent,
-  APIChannel,
   APIEmbed,
   APIEmoji,
   APIInteractionDataResolvedChannel,
@@ -48,7 +44,6 @@ import {
   APIRole,
   APISelectMenuComponent,
   APITemplateSerializedSourceGuild,
-  APITextInputComponent,
   APIUser,
   GatewayVoiceServerUpdateDispatchData,
   GatewayVoiceStateUpdateDispatchData,
@@ -1632,6 +1627,9 @@ export class MessageActionRow<
     ? APIActionRowComponent<APIModalActionRowComponent>
     : APIActionRowComponent<APIMessageActionRowComponent>,
 > extends BaseMessageComponent {
+  // tslint:disable-next-line:ban-ts-ignore
+  // @ts-ignore (TS:2344, Caused by TypeScript 4.8)
+  // Fixed in DiscordJS >= 14.x / DiscordApiTypes >= 0.37.x, ignoring the type error here.
   public constructor(data?: MessageActionRow<T> | MessageActionRowOptions<U> | V);
   public type: 'ACTION_ROW';
   public components: T[];
@@ -3232,8 +3230,11 @@ export class GuildChannelManager extends CachedManager<Snowflake, GuildBasedChan
     options?: TextChannel | NewsChannel | VoiceChannel | Snowflake,
   ): Promise<Webhook>;
   public edit(channel: GuildChannelResolvable, data: ChannelData, reason?: string): Promise<GuildChannel>;
-  public fetch(id: Snowflake, options?: BaseFetchOptions): Promise<NonThreadGuildBasedChannel | null>;
-  public fetch(id?: undefined, options?: BaseFetchOptions): Promise<Collection<Snowflake, NonThreadGuildBasedChannel>>;
+  public fetch(id: Snowflake, options?: BaseFetchOptions): Promise<GuildBasedChannel | null>;
+  public fetch(
+    id?: undefined,
+    options?: BaseFetchOptions,
+  ): Promise<Collection<Snowflake, NonThreadGuildBasedChannel | null>>;
   public fetchWebhooks(channel: GuildChannelResolvable): Promise<Collection<Snowflake, Webhook>>;
   public setPosition(
     channel: GuildChannelResolvable,
@@ -4034,7 +4035,9 @@ export interface AwaitReactionsOptions extends ReactionCollectorOptions {
 }
 
 export interface BanOptions {
+  /** @deprecated Use {@link deleteMessageSeconds} instead. */
   days?: number;
+  deleteMessageSeconds?: number;
   reason?: string;
 }
 
@@ -5216,6 +5219,7 @@ export type IntentsString =
   | 'DIRECT_MESSAGES'
   | 'DIRECT_MESSAGE_REACTIONS'
   | 'DIRECT_MESSAGE_TYPING'
+  | 'MESSAGE_CONTENT'
   | 'GUILD_SCHEDULED_EVENTS';
 
 export interface InviteGenerationOptions {
