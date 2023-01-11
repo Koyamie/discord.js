@@ -3,13 +3,14 @@
 const { Buffer } = require('node:buffer');
 const { setTimeout } = require('node:timers');
 const { Collection } = require('@discordjs/collection');
-const { DiscordSnowflake } = require('@sapphire/snowflake');
 const CachedManager = require('./CachedManager');
 const { Error, TypeError, RangeError } = require('../errors');
 const BaseGuildVoiceChannel = require('../structures/BaseGuildVoiceChannel');
 const { GuildMember } = require('../structures/GuildMember');
 const { Role } = require('../structures/Role');
 const { Events, Opcodes } = require('../util/Constants');
+const { PartialTypes } = require('../util/Constants');
+const SnowflakeUtil = require('../util/SnowflakeUtil');
 
 /**
  * Manages API methods for GuildMembers and stores their cache.
@@ -119,6 +120,20 @@ class GuildMemberManager extends CachedManager {
   }
 
   /**
+   * The client user as a GuildMember of this guild
+   * @type {?GuildMember}
+   * @readonly
+   */
+  get me() {
+    return (
+      this.resolve(this.client.user.id) ??
+      (this.client.options.partials.includes(PartialTypes.GUILD_MEMBER)
+        ? this._add({ user: { id: this.client.user.id } }, true)
+        : null)
+    );
+  }
+
+  /**
    * Options used to fetch a single member from a guild.
    * @typedef {BaseFetchOptions} FetchMemberOptions
    * @property {UserResolvable} user The user to fetch
@@ -187,6 +202,15 @@ class GuildMemberManager extends CachedManager {
       if (!options.limit && !options.withPresences) return this._fetchSingle(options);
     }
     return this._fetchMany(options);
+  }
+
+  /**
+   * Fetches the client user as a GuildMember of the guild.
+   * @param {BaseFetchOptions} [options] The options for fetching the member
+   * @returns {Promise<GuildMember>}
+   */
+  fetchMe(options) {
+    return this.fetch({ ...options, user: this.client.user.id });
   }
 
   /**
@@ -266,10 +290,7 @@ class GuildMemberManager extends CachedManager {
     _data.roles &&= _data.roles.map(role => (role instanceof Role ? role.id : role));
 
     _data.communication_disabled_until =
-      // eslint-disable-next-line eqeqeq
-      _data.communicationDisabledUntil != null
-        ? new Date(_data.communicationDisabledUntil).toISOString()
-        : _data.communicationDisabledUntil;
+      _data.communicationDisabledUntil && new Date(_data.communicationDisabledUntil).toISOString();
 
     let endpoint = this.client.api.guilds(this.guild.id);
     if (id === this.client.user.id) {
@@ -417,7 +438,7 @@ class GuildMemberManager extends CachedManager {
     user: user_ids,
     query,
     time = 120e3,
-    nonce = DiscordSnowflake.generate().toString(),
+    nonce = SnowflakeUtil.generate(),
   } = {}) {
     return new Promise((resolve, reject) => {
       if (!query && !user_ids) query = '';

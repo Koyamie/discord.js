@@ -20,7 +20,8 @@ const { IntegrationExpireBehaviors } = require('../util/Constants');
  */
 
 /**
- *  Represents a guild integration.
+ * Represents a guild integration.
+ * @extends {Base}
  */
 class Integration extends Base {
   constructor(client, data, guild) {

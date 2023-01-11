@@ -249,6 +249,9 @@ exports.Events = {
   API_RESPONSE: 'apiResponse',
   API_REQUEST: 'apiRequest',
   CLIENT_READY: 'ready',
+  APPLICATION_COMMAND_CREATE: 'applicationCommandCreate',
+  APPLICATION_COMMAND_DELETE: 'applicationCommandDelete',
+  APPLICATION_COMMAND_UPDATE: 'applicationCommandUpdate',
   GUILD_CREATE: 'guildCreate',
   GUILD_DELETE: 'guildDelete',
   GUILD_UPDATE: 'guildUpdate',
@@ -355,6 +358,9 @@ exports.PartialTypes = keyMirror(['USER', 'CHANNEL', 'GUILD_MEMBER', 'MESSAGE', 
  * The type of a WebSocket message event, e.g. `MESSAGE_CREATE`. Here are the available events:
  * * READY
  * * RESUMED
+ * * APPLICATION_COMMAND_CREATE (deprecated)
+ * * APPLICATION_COMMAND_DELETE (deprecated)
+ * * APPLICATION_COMMAND_UPDATE (deprecated)
  * * GUILD_CREATE
  * * GUILD_DELETE
  * * GUILD_UPDATE
@@ -411,6 +417,9 @@ exports.PartialTypes = keyMirror(['USER', 'CHANNEL', 'GUILD_MEMBER', 'MESSAGE', 
 exports.WSEvents = keyMirror([
   'READY',
   'RESUMED',
+  'APPLICATION_COMMAND_CREATE',
+  'APPLICATION_COMMAND_DELETE',
+  'APPLICATION_COMMAND_UPDATE',
   'GUILD_CREATE',
   'GUILD_DELETE',
   'GUILD_UPDATE',
@@ -496,6 +505,7 @@ exports.InviteScopes = [
   'webhook.incoming',
 ];
 
+// TODO: change Integration#expireBehavior to this and clean up Integration
 /**
  * The behavior of expiring subscribers for Integrations. This can be:
  * * REMOVE_ROLE
@@ -526,7 +536,7 @@ exports.IntegrationExpireBehaviors = createEnum(['REMOVE_ROLE', 'KICK']);
  * * GUILD_DISCOVERY_GRACE_PERIOD_FINAL_WARNING
  * * THREAD_CREATED
  * * REPLY
- * * CHAT_INPUT_COMMAND
+ * * APPLICATION_COMMAND
  * * THREAD_STARTER_MESSAGE
  * * GUILD_INVITE_REMINDER
  * * CONTEXT_MENU_COMMAND
@@ -554,7 +564,7 @@ exports.MessageTypes = [
   'GUILD_DISCOVERY_GRACE_PERIOD_FINAL_WARNING',
   'THREAD_CREATED',
   'REPLY',
-  'CHAT_INPUT_COMMAND',
+  'APPLICATION_COMMAND',
   'THREAD_STARTER_MESSAGE',
   'GUILD_INVITE_REMINDER',
   'CONTEXT_MENU_COMMAND',
@@ -585,7 +595,6 @@ exports.SweeperKeys = [
   'invites',
   'guildMembers',
   'messages',
-  'players',
   'presences',
   'reactions',
   'stageInstances',
@@ -600,12 +609,12 @@ exports.SweeperKeys = [
  * The types of messages that are `System`. The available types are `MessageTypes` excluding:
  * * DEFAULT
  * * REPLY
- * * CHAT_INPUT_COMMAND
+ * * APPLICATION_COMMAND
  * * CONTEXT_MENU_COMMAND
  * @typedef {string} SystemMessageType
  */
 exports.SystemMessageTypes = exports.MessageTypes.filter(
-  type => type && !['DEFAULT', 'REPLY', 'CHAT_INPUT_COMMAND', 'CONTEXT_MENU_COMMAND'].includes(type),
+  type => type && !['DEFAULT', 'REPLY', 'APPLICATION_COMMAND', 'CONTEXT_MENU_COMMAND'].includes(type),
 );
 
 /**
@@ -639,6 +648,7 @@ exports.ActivityTypes = createEnum(['PLAYING', 'STREAMING', 'LISTENING', 'WATCHI
  * * `GUILD_PRIVATE_THREAD` - a guild text channel's private thread channel
  * * `GUILD_STAGE_VOICE` - a guild stage voice channel
  * * `GUILD_DIRECTORY` - the channel in a hub containing guilds
+ * * `GUILD_FORUM` - a channel that can only contain threads
  * * `UNKNOWN` - a generic channel of unknown type, could be Channel or GuildChannel
  * @typedef {string} ChannelType
  * @see {@link https://discord.com/developers/docs/resources/channel#channel-object-channel-types}
@@ -658,6 +668,7 @@ exports.ChannelTypes = createEnum([
   'GUILD_PRIVATE_THREAD',
   'GUILD_STAGE_VOICE',
   'GUILD_DIRECTORY',
+  'GUILD_FORUM',
 ]);
 
 /**
@@ -1373,6 +1384,27 @@ exports.GuildScheduledEventEntityTypes = createEnum([null, 'STAGE_INSTANCE', 'VO
  * @see {@link https://discord.com/developers/docs/resources/channel#channel-object-video-quality-modes}
  */
 exports.VideoQualityModes = createEnum([null, 'AUTO', 'FULL']);
+
+/**
+ * Sort {@link ForumChannel} posts by creation time or activity
+ * * LATEST_ACTIVITY
+ * * CREATION_DATE
+ * @typedef {string} SortOrderType
+ * @see {@link https://discord.com/developers/docs/resources/channel/#channel-object-sort-order-types}
+ */
+exports.SortOrderTypes = createEnum([null, 'LATEST_ACTIVITY', 'CREATION_DATE']);
+
+/**
+ * The default forum layout to set on the {@link ForumChannel}
+ * * NOT_SET
+ * * LIST_VIEW
+ * * GALLERY_VIEW
+ * @typedef {string} ForumLayoutType
+ * @see {@link https://discord.com/developers/docs/resources/channel/#channel-object-forum-layout-types}
+ */
+exports.ForumLayoutTypes = createEnum(['NOT_SET', 'LIST_VIEW', 'GALLERY_VIEW']);
+
+exports._cleanupSymbol = Symbol('djsCleanup');
 
 function keyMirror(arr) {
   let tmp = Object.create(null);

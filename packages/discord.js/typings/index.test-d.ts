@@ -94,6 +94,7 @@ import {
   InteractionResponseFields,
   GuildBan,
   GuildBanManager,
+  ForumChannel,
 } from '.';
 import type { ApplicationCommandOptionTypes } from './enums';
 import { expectAssignable, expectDeprecated, expectNotAssignable, expectNotType, expectType } from 'tsd';
@@ -901,7 +902,7 @@ declare const categoryChannel: CategoryChannel;
 
 declare const guildChannelManager: GuildChannelManager;
 {
-  type AnyChannel = TextChannel | VoiceChannel | CategoryChannel | NewsChannel | StoreChannel | StageChannel;
+  type AnyChannel = TextChannel | VoiceChannel | CategoryChannel | NewsChannel | StoreChannel | StageChannel | ForumChannel;
 
   expectType<Promise<TextChannel>>(guildChannelManager.create('name'));
   expectType<Promise<TextChannel>>(guildChannelManager.create('name', {}));
@@ -1324,10 +1325,10 @@ expectType<
   | 'GUILD_VOICE'
 >(TextBasedChannelTypes);
 expectType<StageChannel | VoiceChannel>(VoiceBasedChannel);
-expectType<CategoryChannel | NewsChannel | StageChannel | StoreChannel | TextChannel | ThreadChannel | VoiceChannel>(
+expectType<CategoryChannel | NewsChannel | StageChannel | StoreChannel | TextChannel | ThreadChannel | VoiceChannel | ForumChannel>(
   GuildBasedChannel,
 );
-expectType<CategoryChannel | NewsChannel | StageChannel | StoreChannel | TextChannel | VoiceChannel>(
+expectType<CategoryChannel | NewsChannel | StageChannel | StoreChannel | TextChannel | VoiceChannel | ForumChannel>(
   NonThreadGuildBasedChannel,
 );
 expectType<NewsChannel | TextChannel | ThreadChannel | VoiceChannel>(GuildTextBasedChannel);

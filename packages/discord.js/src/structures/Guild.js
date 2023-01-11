@@ -1,5 +1,6 @@
 'use strict';
 
+const process = require('node:process');
 const { Collection } = require('@discordjs/collection');
 const AnonymousGuild = require('./AnonymousGuild');
 const GuildAuditLogs = require('./GuildAuditLogs');
@@ -24,7 +25,6 @@ const VoiceStateManager = require('../managers/VoiceStateManager');
 const {
   ChannelTypes,
   DefaultMessageNotificationLevels,
-  PartialTypes,
   VerificationLevels,
   ExplicitContentFilterLevels,
   Status,
@@ -34,6 +34,18 @@ const {
 const DataResolver = require('../util/DataResolver');
 const SystemChannelFlags = require('../util/SystemChannelFlags');
 const Util = require('../util/Util');
+
+let deprecationEmittedForSetChannelPositions = false;
+let deprecationEmittedForSetRolePositions = false;
+let deprecationEmittedForDeleted = false;
+let deprecationEmittedForMe = false;
+
+/**
+ * @type {WeakSet<Guild>}
+ * @private
+ * @internal
+ */
+const deletedGuilds = new WeakSet();
 
 /**
  * Represents a guild (or a server) on Discord.
@@ -122,6 +134,36 @@ class Guild extends AnonymousGuild {
      * @type {number}
      */
     this.shardId = data.shardId;
+  }
+
+  /**
+   * Whether or not the structure has been deleted
+   * @type {boolean}
+   * @deprecated This will be removed in the next major version, see https://github.com/discordjs/discord.js/issues/7091
+   */
+  get deleted() {
+    if (!deprecationEmittedForDeleted) {
+      deprecationEmittedForDeleted = true;
+      process.emitWarning(
+        'Guild#deleted is deprecated, see https://github.com/discordjs/discord.js/issues/7091.',
+        'DeprecationWarning',
+      );
+    }
+
+    return deletedGuilds.has(this);
+  }
+
+  set deleted(value) {
+    if (!deprecationEmittedForDeleted) {
+      deprecationEmittedForDeleted = true;
+      process.emitWarning(
+        'Guild#deleted is deprecated, see https://github.com/discordjs/discord.js/issues/7091.',
+        'DeprecationWarning',
+      );
+    }
+
+    if (value) deletedGuilds.add(this);
+    else deletedGuilds.delete(this);
   }
 
   /**
@@ -281,7 +323,7 @@ class Guild extends AnonymousGuild {
        * The timestamp the client user joined the guild at
        * @type {number}
        */
-      this.joinedTimestamp = Date.parse(data.joined_at);
+      this.joinedTimestamp = new Date(data.joined_at).getTime();
     }
 
     if ('default_message_notifications' in data) {
@@ -520,7 +562,7 @@ class Guild extends AnonymousGuild {
 
   /**
    * Widget channel for this guild
-   * @type {?TextChannel}
+   * @type {?(TextChannel|NewsChannel|VoiceChannel|StageChannel|ForumChannel)}
    * @readonly
    */
   get widgetChannel() {
@@ -548,15 +590,16 @@ class Guild extends AnonymousGuild {
   /**
    * The client user as a GuildMember of this guild
    * @type {?GuildMember}
+   * @deprecated Use {@link GuildMemberManager#me} instead.
    * @readonly
    */
   get me() {
-    return (
-      this.members.resolve(this.client.user.id) ??
-      (this.client.options.partials.includes(PartialTypes.GUILD_MEMBER)
-        ? this.members._add({ user: { id: this.client.user.id } }, true)
-        : null)
-    );
+    if (!deprecationEmittedForMe) {
+      process.emitWarning('Guild#me is deprecated. Use Guild#members#me instead.', 'DeprecationWarning');
+      deprecationEmittedForMe = true;
+    }
+
+    return this.members.me;
   }
 
   /**
@@ -733,7 +776,8 @@ class Guild extends AnonymousGuild {
   /**
    * Options used to fetch audit logs.
    * @typedef {Object} GuildAuditLogsFetchOptions
-   * @property {Snowflake|GuildAuditLogsEntry} [before] Only return entries before this entry
+   * @property {Snowflake|GuildAuditLogsEntry} [before] Consider only entries before this entry
+   * @property {Snowflake|GuildAuditLogsEntry} [after] Consider only entries after this entry
    * @property {number} [limit] The number of entries to return
    * @property {UserResolvable} [user] Only return entries for actions made by this user
    * @property {AuditLogAction|number} [type] Only return entries for this action type
@@ -749,18 +793,17 @@ class Guild extends AnonymousGuild {
    *   .then(audit => console.log(audit.entries.first()))
    *   .catch(console.error);
    */
-  async fetchAuditLogs(options = {}) {
-    if (options.before && options.before instanceof GuildAuditLogs.Entry) options.before = options.before.id;
-    if (typeof options.type === 'string') options.type = GuildAuditLogs.Actions[options.type];
-
+  async fetchAuditLogs({ before, after, limit, user, type } = {}) {
     const data = await this.client.api.guilds(this.id)['audit-logs'].get({
       query: {
-        before: options.before,
-        limit: options.limit,
-        user_id: this.client.users.resolveId(options.user),
-        action_type: options.type,
+        before: before?.id ?? before,
+        after: after?.id ?? after,
+        limit,
+        user_id: this.client.users.resolveId(user),
+        action_type: typeof type === 'string' ? GuildAuditLogs.Actions[type] : type,
       },
     });
+
     return GuildAuditLogs.build(this, data);
   }
 
@@ -1180,6 +1223,76 @@ class Guild extends AnonymousGuild {
   }
 
   /**
+   * Data that can be resolved to give a Category Channel object. This can be:
+   * * A CategoryChannel object
+   * * A Snowflake
+   * @typedef {CategoryChannel|Snowflake} CategoryChannelResolvable
+   */
+
+  /**
+   * The data needed for updating a channel's position.
+   * @typedef {Object} ChannelPosition
+   * @property {GuildChannel|Snowflake} channel Channel to update
+   * @property {number} [position] New position for the channel
+   * @property {CategoryChannelResolvable} [parent] Parent channel for this channel
+   * @property {boolean} [lockPermissions] If the overwrites should be locked to the parents overwrites
+   */
+
+  /**
+   * Batch-updates the guild's channels' positions.
+   * <info>Only one channel's parent can be changed at a time</info>
+   * @param {ChannelPosition[]} channelPositions Channel positions to update
+   * @returns {Promise<Guild>}
+   * @deprecated Use {@link GuildChannelManager#setPositions} instead
+   * @example
+   * guild.setChannelPositions([{ channel: channelId, position: newChannelIndex }])
+   *   .then(guild => console.log(`Updated channel positions for ${guild}`))
+   *   .catch(console.error);
+   */
+  setChannelPositions(channelPositions) {
+    if (!deprecationEmittedForSetChannelPositions) {
+      process.emitWarning(
+        'The Guild#setChannelPositions method is deprecated. Use GuildChannelManager#setPositions instead.',
+        'DeprecationWarning',
+      );
+
+      deprecationEmittedForSetChannelPositions = true;
+    }
+
+    return this.channels.setPositions(channelPositions);
+  }
+
+  /**
+   * The data needed for updating a guild role's position
+   * @typedef {Object} GuildRolePosition
+   * @property {RoleResolvable} role The role's id
+   * @property {number} position The position to update
+   */
+
+  /**
+   * Batch-updates the guild's role positions
+   * @param {GuildRolePosition[]} rolePositions Role positions to update
+   * @returns {Promise<Guild>}
+   * @deprecated Use {@link RoleManager#setPositions} instead
+   * @example
+   * guild.setRolePositions([{ role: roleId, position: updatedRoleIndex }])
+   *  .then(guild => console.log(`Role positions updated for ${guild}`))
+   *  .catch(console.error);
+   */
+  setRolePositions(rolePositions) {
+    if (!deprecationEmittedForSetRolePositions) {
+      process.emitWarning(
+        'The Guild#setRolePositions method is deprecated. Use RoleManager#setPositions instead.',
+        'DeprecationWarning',
+      );
+
+      deprecationEmittedForSetRolePositions = true;
+    }
+
+    return this.roles.setPositions(rolePositions);
+  }
+
+  /**
    * Edits the guild's widget settings.
    * @param {GuildWidgetSettingsData} settings The widget settings for the guild
    * @param {string} [reason] Reason for changing the guild's widget settings
@@ -1208,7 +1321,7 @@ class Guild extends AnonymousGuild {
   async leave() {
     if (this.ownerId === this.client.user.id) throw new Error('GUILD_OWNED');
     await this.client.api.users('@me').guilds(this.id).delete();
-    return this;
+    return this.client.actions.GuildDelete.handle({ id: this.id }).guild;
   }
 
   /**
@@ -1222,7 +1335,7 @@ class Guild extends AnonymousGuild {
    */
   async delete() {
     await this.client.api.guilds(this.id).delete();
-    return this;
+    return this.client.actions.GuildDelete.handle({ id: this.id }).guild;
   }
 
   /**
@@ -1319,6 +1432,7 @@ class Guild extends AnonymousGuild {
 }
 
 exports.Guild = Guild;
+exports.deletedGuilds = deletedGuilds;
 
 /**
  * @external APIGuild

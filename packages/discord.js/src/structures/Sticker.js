@@ -2,6 +2,7 @@
 
 const { DiscordSnowflake } = require('@sapphire/snowflake');
 const Base = require('./Base');
+const { Error } = require('../errors');
 const { StickerFormatTypes, StickerTypes } = require('../util/Constants');
 
 /**
