@@ -3,6 +3,7 @@
 const { Buffer } = require('node:buffer');
 const { setTimeout } = require('node:timers');
 const { Collection } = require('@discordjs/collection');
+const { DiscordSnowflake } = require('@sapphire/snowflake');
 const CachedManager = require('./CachedManager');
 const { Error, TypeError, RangeError } = require('../errors');
 const BaseGuildVoiceChannel = require('../structures/BaseGuildVoiceChannel');
@@ -10,7 +11,6 @@ const { GuildMember } = require('../structures/GuildMember');
 const { Role } = require('../structures/Role');
 const { Events, Opcodes } = require('../util/Constants');
 const { PartialTypes } = require('../util/Constants');
-const SnowflakeUtil = require('../util/SnowflakeUtil');
 
 /**
  * Manages API methods for GuildMembers and stores their cache.
@@ -438,7 +438,7 @@ class GuildMemberManager extends CachedManager {
     user: user_ids,
     query,
     time = 120e3,
-    nonce = SnowflakeUtil.generate(),
+    nonce = DiscordSnowflake.generate(),
   } = {}) {
     return new Promise((resolve, reject) => {
       if (!query && !user_ids) query = '';
