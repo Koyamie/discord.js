@@ -16,6 +16,7 @@ const { IntegrationExpireBehaviors } = require('../util/Constants');
  * * `twitch`
  * * `youtube`
  * * `discord`
+ * * `guild_subscription`
  * @typedef {string} IntegrationType
  */
 

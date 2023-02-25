@@ -1,27 +1,15 @@
-chore:
-  - any: ['*']
-    all: ['!packages/*', '!packages/**/*']
-
-'packages:builders':
-  - packages/builders/*
-  - packages/builders/**/*
-
-'packages:collection':
-  - packages/collection/*
-  - packages/collection/**/*
-
-'packages:discord.js':
-  - packages/discord.js/*
-  - packages/discord.js/**/*
-
-'packages:rest':
-  - packages/rest/*
-  - packages/rest/**/*
-
-'packages:voice':
-  - packages/voice/*
-  - packages/voice/**/*
-
-'packages:ws':
-  - packages/ws/*
-  - packages/ws/**/*
+apps:guide:
+  - apps/guide/*
+  - apps/guide/**/*
+apps:website:
+  - apps/website/*
+  - apps/website/**/*
+packages:discord.js:
+  - scripts/*
+  - scripts/**/*
+  - src/*
+  - src/**/*
+  - test/*
+  - test/**/*
+  - typings/*
+  - typings/**/*
