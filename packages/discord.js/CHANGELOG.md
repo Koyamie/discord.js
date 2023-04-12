@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+# [13.15.1](https://github.com/discordjs/discord.js/compare/13.15.0...13.15.1) - (2023-04-07)
+
+## Bug Fixes
+
+- **Message:** Fix permissions check in locked threads (#9338) ([a8d5325](https://github.com/discordjs/discord.js/commit/a8d5325defa781ea9df57f6a109c10f8b9b05f99))
+- **ClientUser:** Fix modifying self (#9318) ([09ca243](https://github.com/discordjs/discord.js/commit/09ca243c2f5a194a0e2f5e5baeac64a2ef4ce9dc))
+- Typo in `src/util/MessageFlags.js` (#9312) ([8f12054](https://github.com/discordjs/discord.js/commit/8f12054c06d4b87ea09f10d63341206c4bb23e66))
+- **AutocompleteInteraction:** Fix responding (#9315) ([f79a9b5](https://github.com/discordjs/discord.js/commit/f79a9b5450b6b868710f7c72fa9410123b46ee05))
+
+# [13.15.0](https://github.com/discordjs/discord.js/compare/13.14.0...13.15.0) - (2023-04-02)
+
+## Bug Fixes
+
+- **ThreadChannel:** Fetch starter message properly (#9217) ([af6a0e5](https://github.com/discordjs/discord.js/commit/af6a0e5d5136424e7c70dc9813456b7e85874087))
+- **Actions:** Inject built data by using a symbol (#9204) ([df68520](https://github.com/discordjs/discord.js/commit/df685203193faeaa392c4cb7cd9e140a241e3af5))
+
+## Features
+
+- Backport `chatInputApplicationCommandMention` (#9245) ([51c3bf1](https://github.com/discordjs/discord.js/commit/51c3bf1f54332e166dd1ca554d09cb5c197be0e4))
+- Add support for gif stickers (v13) (#9158) ([4bc25c4](https://github.com/discordjs/discord.js/commit/4bc25c40f56f79e4aef970d9b689c4329e968382))
+- V13 support `SUPPRESS_NOTIFICATIONS` flag (#9184) ([120270e](https://github.com/discordjs/discord.js/commit/120270e8dc793f2ff2622d394fcd965ee0656636))
+
 # [13.14.0](https://github.com/discordjs/discord.js/compare/13.13.1...13.14.0) - (2023-03-12)
 
 ## Bug Fixes
@@ -44,7 +66,7 @@ All notable changes to this project will be documented in this file.
 
 ## Features
 
-- **WebSocketShard:** V13 add resume url  (#9078) ([0188e36](https://github.com/discordjs/discord.js/commit/0188e362836bd6350a574595dc61d2c8ab3f256a))
+- **WebSocketShard:** V13 add resume url (#9078) ([0188e36](https://github.com/discordjs/discord.js/commit/0188e362836bd6350a574595dc61d2c8ab3f256a))
 - V13 `guildAuditLogEntryCreate` event (#9092) ([84d34dc](https://github.com/discordjs/discord.js/commit/84d34dc258ca2a0953f8c2a0212d8459c7c16b84))
 - **Constants:** Add auto moderation events to WSEvents (#9102) ([61fa6f4](https://github.com/discordjs/discord.js/commit/61fa6f45b43ce5dec79b9cac9398b4e619190542))
 - Role subscriptions (#9040) ([0afa405](https://github.com/discordjs/discord.js/commit/0afa405f5a967ed5d82cfeffedc84d444c034924))

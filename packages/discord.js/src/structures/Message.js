@@ -559,10 +559,15 @@ class Message extends Base {
   get editable() {
     const precheck = Boolean(this.author.id === this.client.user.id && (!this.guild || this.channel?.viewable));
     // Regardless of permissions thread messages cannot be edited if
-    // the thread is locked.
+    // the thread is archived or the thread is locked and the bot does not have permission to manage threads.
     if (this.channel?.isThread()) {
-      return precheck && !this.channel.locked;
+      if (this.channel.archived) return false;
+      if (this.channel.locked) {
+        const permissions = this.channel.permissionsFor(this.client.user);
+        if (!permissions?.has(Permissions.FLAGS.MANAGE_THREADS, true)) return false;
+      }
     }
+
     return precheck;
   }
 
@@ -601,12 +606,11 @@ class Message extends Base {
    * channel.bulkDelete(messages.filter(message => message.bulkDeletable));
    */
   get bulkDeletable() {
-    const permissions = this.channel?.permissionsFor(this.client.user);
     return (
       (this.inGuild() &&
         Date.now() - this.createdTimestamp < MaxBulkDeletableMessageAge &&
         this.deletable &&
-        permissions?.has(Permissions.FLAGS.MANAGE_MESSAGES, false)) ??
+        this.channel?.permissionsFor(this.client.user).has(Permissions.FLAGS.MANAGE_MESSAGES, false)) ??
       false
     );
   }
