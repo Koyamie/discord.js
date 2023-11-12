@@ -11,6 +11,7 @@ exports.WebhookClient = require('./client/WebhookClient');
 // Utilities
 exports.ActivityFlags = require('./util/ActivityFlags');
 exports.ApplicationFlags = require('./util/ApplicationFlags');
+exports.AttachmentFlags = require('./util/AttachmentFlags');
 exports.BaseManager = require('./managers/BaseManager');
 exports.BitField = require('./util/BitField');
 exports.Collection = require('@discordjs/collection').Collection;
@@ -27,6 +28,7 @@ exports.Options = require('./util/Options');
 exports.Permissions = require('./util/Permissions');
 exports.RateLimitError = require('./rest/RateLimitError');
 exports.SnowflakeUtil = require('@sapphire/snowflake').DiscordSnowflake;
+exports.RoleFlags = require('./util/RoleFlags');
 exports.Sweepers = require('./util/Sweepers');
 exports.SystemChannelFlags = require('./util/SystemChannelFlags');
 exports.ThreadMemberFlags = require('./util/ThreadMemberFlags');

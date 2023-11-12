@@ -4,6 +4,7 @@ const { DiscordSnowflake } = require('@sapphire/snowflake');
 const Base = require('./Base');
 const { Error } = require('../errors');
 const Permissions = require('../util/Permissions');
+const RoleFlags = require('../util/RoleFlags');
 
 /**
  * Represents a role on Discord.
@@ -130,6 +131,16 @@ class Role extends Base {
       if ('guild_connections' in data.tags) {
         this.tags.guildConnections = true;
       }
+    }
+
+    if ('flags' in data) {
+      /**
+       * The flags of this role
+       * @type {Readonly<RoleFlags>}
+       */
+      this.flags = new RoleFlags(data.flags).freeze();
+    } else {
+      this.flags ??= new RoleFlags().freeze();
     }
   }
 
