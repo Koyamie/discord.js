@@ -1,5 +1,6 @@
 'use strict';
 
+const { Collection } = require('@discordjs/collection');
 const { DiscordSnowflake } = require('@sapphire/snowflake');
 const Base = require('./Base');
 const { GuildMember } = require('../structures/GuildMember');
@@ -131,6 +132,27 @@ class Interaction extends Base {
      * @type {?Locale}
      */
     this.guildLocale = data.guild_locale ?? null;
+
+    /**
+     * The entitlements for the invoking user, representing access to premium SKUs
+     * @type {Collection<Snowflake, Entitlement>}
+     */
+    this.entitlements = data.entitlements.reduce(
+      (coll, entitlement) => coll.set(entitlement.id, this.client.application.entitlements._add(entitlement)),
+      new Collection(),
+    );
+
+    /**
+     * The context of the interaction
+     * @type {number}
+     */
+    this.context = data.context;
+
+    /**
+     * Mapping of installation contexts that the interaction was authorized for
+     * @type {?object}
+     */
+    this.authorizingIntegrationOwners = data.authorizing_integration_owners ?? null;
   }
 
   /**
