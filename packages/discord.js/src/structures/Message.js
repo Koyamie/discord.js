@@ -352,6 +352,14 @@ class Message extends Base {
     } else {
       this.interaction ??= null;
     }
+
+    if (data.poll) {
+      /**
+       * The message's poll data
+       * @type {?Object}
+       */
+      this.poll = data.poll;
+    }
   }
 
   /**
