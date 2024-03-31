@@ -137,10 +137,7 @@ class Interaction extends Base {
      * The entitlements for the invoking user, representing access to premium SKUs
      * @type {Collection<Snowflake, Entitlement>}
      */
-    this.entitlements = data.entitlements.reduce(
-      (coll, entitlement) => coll.set(entitlement.id, this.client.application.entitlements._add(entitlement)),
-      new Collection(),
-    );
+    this.entitlements = data.entitlements;
 
     /**
      * The context of the interaction
