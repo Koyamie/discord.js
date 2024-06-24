@@ -138,6 +138,11 @@ class MessagePayload {
       }
     }
 
+    const enforce_nonce = Boolean(this.options.enforceNonce);
+    if (enforce_nonce && nonce === undefined) {
+      throw new RangeError('MESSAGE_NONCE_TYPE');
+    }
+
     const components = this.options.components?.map(c => BaseMessageComponent.create(c).toJSON());
 
     let username;
@@ -200,6 +205,7 @@ class MessagePayload {
       content,
       tts,
       nonce,
+      enforce_nonce,
       embeds: this.options.embeds?.map(embed =>
         (embed instanceof MessageEmbed ? embed : new MessageEmbed(embed)).toJSON(),
       ),
