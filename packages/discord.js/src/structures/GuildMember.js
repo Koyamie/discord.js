@@ -212,7 +212,7 @@ class GuildMember extends Base {
    */
   bannerURL({ format, size, dynamic } = {}) {
     if (!this.banner) return this.banner;
-    return this.client.rest.cdn.GuildMemberBanner(this.id, this.banner, format, size, dynamic);
+    return this.client.rest.cdn.GuildMemberBanner(this.guild.id, this.id, this.banner, format, size, dynamic);
   }
 
   /**
