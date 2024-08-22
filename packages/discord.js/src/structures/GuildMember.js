@@ -90,6 +90,16 @@ class GuildMember extends Base {
     } else if (typeof this.avatar !== 'string') {
       this.avatar = null;
     }
+    if ('banner' in data) {
+      /**
+       * The guild member's banner hash
+       * <info>The user must be force fetched for this property to be present or be updated</info>
+       * @type {?string}
+       */
+      this.banner = data.banner;
+    } else if (this.banner !== null) {
+      this.banner ??= undefined;
+    }
     if ('joined_at' in data) this.joinedTimestamp = new Date(data.joined_at).getTime();
     if ('premium_since' in data) {
       this.premiumSinceTimestamp = data.premium_since ? new Date(data.premium_since).getTime() : null;
@@ -193,6 +203,16 @@ class GuildMember extends Base {
    */
   displayAvatarURL(options) {
     return this.avatarURL(options) ?? this.user.displayAvatarURL(options);
+  }
+
+  /**
+   * A link to the member's guild banner if they have one.
+   * @param {ImageURLOptions} [options={}] Options for the Image URL
+   * @returns {?string}
+   */
+  bannerURL({ format, size, dynamic } = {}) {
+    if (!this.banner) return this.banner;
+    return this.client.rest.cdn.Banner(this.id, this.banner, format, size, dynamic);
   }
 
   /**
@@ -484,6 +504,7 @@ class GuildMember extends Base {
       this.joinedTimestamp === member.joinedTimestamp &&
       this.nickname === member.nickname &&
       this.avatar === member.avatar &&
+      this.banner === member.banner &&
       this.pending === member.pending &&
       this.communicationDisabledUntilTimestamp === member.communicationDisabledUntilTimestamp &&
       this.flags.equals(member.flags) &&
@@ -512,6 +533,7 @@ class GuildMember extends Base {
     });
     json.avatarURL = this.avatarURL();
     json.displayAvatarURL = this.displayAvatarURL();
+    json.bannerURL = this.banner ? this.bannerURL() : this.banner;
     return json;
   }
 }

@@ -1240,6 +1240,7 @@ export class GuildMember extends PartialTextBasedChannel(Base) {
   public createDM(force?: boolean): Promise<DMChannel>;
   public deleteDM(): Promise<DMChannel>;
   public displayAvatarURL(options?: ImageURLOptions): string;
+  public bannerURL(options?: ImageURLOptions): string | null;
   public edit(data: GuildMemberEditData, reason?: string): Promise<GuildMember>;
   public isCommunicationDisabled(): this is GuildMember & {
     communicationDisabledUntilTimestamp: number;
