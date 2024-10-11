@@ -1,7 +1,9 @@
 'use strict';
 
+const { Collection } = require('@discordjs/collection');
 const { ApplicationRoleConnectionMetadata } = require('./ApplicationRoleConnectionMetadata');
 const Team = require('./Team');
+const { SKU } = require('./SKU');
 const Application = require('./interfaces/Application');
 const ApplicationCommandManager = require('../managers/ApplicationCommandManager');
 const ApplicationFlags = require('../util/ApplicationFlags');
@@ -208,6 +210,15 @@ class ClientApplication extends Application {
       });
 
     return newRecords.map(data => new ApplicationRoleConnectionMetadata(data));
+  }
+
+  /**
+   * Gets this application's SKUs
+   * @returns {Promise<Collection<Snowflake, SKU>>}
+   */
+  async fetchSKUs() {
+    const skus = await this.client.api.applications(this.client.user.id).skus.get();
+    return skus.reduce((coll, sku) => coll.set(sku.id, new SKU(this.client, sku)), new Collection());
   }
 }
 
