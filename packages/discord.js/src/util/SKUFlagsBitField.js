@@ -1,6 +1,6 @@
 'use strict';
 
-const { SKUFlags } = require('discord-api-types/v10');
+const { SKUFlags } = require('discord-api-types/v9');
 const BitField = require('./BitField');
 
 /**
